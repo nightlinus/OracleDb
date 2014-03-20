@@ -490,6 +490,25 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param $rowCount
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function setPrefetch($rowCount)
+    {
+        if ($this->resource) {
+            $setResult = oci_set_prefetch($this->resource, $rowCount);
+            if ($setResult === false) {
+                $error = $this->getOCIError();
+                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Itereate over all rows in fetched data
      *
      * @param callable $fetchFunction
@@ -550,24 +569,5 @@ class Statement implements \IteratorAggregate
         return is_resource($ociResource) ?
             oci_error($ociResource) :
             oci_error();
-    }
-
-    /**
-     * @param $rowCount
-     *
-     * @return $this
-     * @throws Exception
-     */
-    public function setPrefetch($rowCount)
-    {
-        if ($this->resource) {
-            $setResult = oci_set_prefetch($this->resource, $rowCount);
-            if ($setResult === false) {
-                $error = $this->getOCIError();
-                throw new Exception($error[ 'message' ], $error[ 'code' ]);
-            }
-        }
-
-        return $this;
     }
 }
