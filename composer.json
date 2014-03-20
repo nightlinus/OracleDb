@@ -1,0 +1,17 @@
+{
+    "name": "nightlinus/OracleDb",
+    "description": "Wrapper around oci8 php extension to access Oracle Database",
+    "minimum-stability": "dev",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mikhail.Ogarkov",
+            "email": "m.a.ogarkov@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "OracleDb": "."
+        }
+    }
+}

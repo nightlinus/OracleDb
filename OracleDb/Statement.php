@@ -1,0 +1,573 @@
+<?php
+/**
+ * Class that include databese statement functionality
+ * this is wrapper above php oci extension.
+ *
+ * PHP version 5.5
+ *
+ * @category Database
+ * @package  OracleDb
+ * @author   Ogarkov Mikhail <m.a.ogarkov@gmail.com>
+ * @license  http://opensource.org/licenses/MIT MIT
+ * @version  GIT: 1
+ * @link     http://github.com
+ */
+
+namespace OracleDb;
+
+/**
+ * Implements wrapper above oci8
+ * php extension. Contains method
+ * to execute and fetch data from
+ * database statements
+ *
+ * @package OracleDb
+ */
+class Statement implements \IteratorAggregate
+{
+
+    /**
+     * result of last fetch fucntion
+     *
+     * @var array[]
+     */
+    public $result;
+
+    /**
+     * array that contains all
+     * host-variable bindings
+     *
+     * @var array|null
+     */
+    public $bindings;
+
+    /**
+     * Default fetch function used
+     * to get data from statement
+     * Its wrapper above oci_fetch_array, oci_fetch_object
+     *
+     * @var callable
+     */
+    protected $defaultFetchFunction;
+
+    /**
+     * Rsource of db statement
+     *
+     * @var resource
+     */
+    protected $resource;
+
+    /**
+     * Flag to determine was statement already fetched or not
+     *
+     * @var bool
+     */
+    protected $isFetched;
+
+    /**
+     * Raw sql text, that was used
+     * in oci_parse function
+     *
+     * @var  string
+     */
+    protected $queryString;
+
+    /**
+     * Instance of parent database object
+     *
+     * @var Db
+     */
+    protected $db;
+
+    /**
+     * Flag to know that statement is ready for execute
+     *
+     * @var bool
+     */
+    protected $isPrepared;
+
+    /**
+     * В конструкторе, кроме инициализации ресурсов,
+     * определяем обработчик выборки по умолчанию.
+     *
+     * @param Db     $db          ссылка на родительский объект базы данных
+     * @param string $queryString sql выражение стейтмента в текстовом виде
+     *
+     * @throws Exception
+     */
+    public function __construct(Db $db, $queryString)
+    {
+        if ($queryString === '' || $queryString === null) {
+            throw new Exception("SqlText is empty.");
+        }
+        $this->queryString = $queryString;
+        $this->isFetched = false;
+        $this->isPrepared = false;
+        $this->bindings = [ ];
+        $this->db = $db;
+        $this->defaultFetchFunction = function () {
+            return oci_fetch_array($this->resource, OCI_ASSOC);
+        };
+    }
+
+    /**
+     * Method for free statement resource
+     */
+    public function __destruct()
+    {
+        if ($this->resource) {
+            oci_free_statement($this->resource);
+        }
+    }
+
+    /**
+     * Method to bind host-variables
+     * Example:
+     * $stmt->bind([
+     *  ':host_var' => $value,
+     *  ':host_var2' => $value2
+     * ]);
+     *
+     * @param array $bindings array of host-variable names
+     *                        and values.
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function bind($bindings)
+    {
+        if (!$this->isPrepared) {
+            $this->prepare();
+        }
+
+        if (!is_array($bindings)) {
+            return $this;
+        }
+        foreach ($bindings as $bindingName => $bindingValue) {
+            $bindResult = oci_bind_by_name(
+                $this->resource,
+                $bindingName,
+                $bindings[ $bindingName ]
+            );
+            if (!$bindResult) {
+                $error = $this->getOCIError();
+                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            }
+        }
+        $this->bindings = array_merge($this->bindings, $bindings);
+
+        return $this;
+    }
+
+    /**
+     * Method to bind array host-variables
+     *
+     * @param string $name      name of host variable
+     * @param array  $binding   array to bind
+     * @param int    $maxLength maximum length of array
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function bindArray($name, $binding, $maxLength)
+    {
+        if (!$this->isPrepared) {
+            $this->prepare();
+        }
+        $bindResult = oci_bind_array_by_name(
+            $this->resource,
+            $name,
+            $binding,
+            $maxLength
+        );
+        if (!$bindResult) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+
+        $this->bindings[ $name ] = $binding;
+
+        return $this;
+    }
+
+    /**
+     * Proxy to db commit method
+     * Needed here for convinient method chaining.
+     *
+     * @return Db
+     */
+    public function commit()
+    {
+        return $this->db->commit();
+    }
+
+    /**
+     * Method to execute sql inside statement
+     *
+     * @param int|null $mode this parameter is
+     *                       powered by autocommit setting
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function execute($mode = null)
+    {
+        if (!$this->isPrepared) {
+            $this->prepare();
+        }
+
+        //If $mode not in oci constants list, then use db config value
+        if ($mode !== OCI_COMMIT_ON_SUCCESS && $mode !== OCI_NO_AUTO_COMMIT) {
+            $mode = $this->db->config('session.autocommit') ? OCI_COMMIT_ON_SUCCESS : OCI_NO_AUTO_COMMIT;
+        }
+
+        $this->db->startProfile($this->queryString, $this->bindings);
+        $executeResult = oci_execute($this->resource, $mode);
+        $this->db->endProfile();
+
+        $this->db->setLastStatement($this);
+
+        if (!$executeResult) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+        $this->isFetched = false; //reset flag because of new data set after execute
+
+        return $this;
+    }
+
+    /**
+     * Fetch data as simple numeric keys array
+     *
+     * @param int $mode constant that describe
+     *                  type of fetched array:
+     *                  with numeric keys or strings
+     *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
+     *
+     * @return array[]
+     */
+    public function fetchArray($mode = OCI_NUM)
+    {
+        $fetchFunction = function () use ($mode) {
+            return oci_fetch_array($this->resource, $mode);
+        };
+        $this->iterateTuples($fetchFunction);
+
+        return $this->result;
+    }
+
+    /**
+     * Fetch data as asscociative
+     * array
+     *
+     * @param int $mode constant that describe
+     *                  type of fetched array:
+     *                  with numeric keys or strings
+     *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
+     *
+     * @return array[]
+     */
+    public function fetchAssoc($mode = OCI_ASSOC)
+    {
+        return $this->fetchArray($mode);
+    }
+
+    /**
+     * Method for fetching data into 1
+     * dimension array with values from
+     * $column, index is numeric
+     *
+     * @param int|string $column set column to fetch from
+     *
+     * @return array
+     */
+    public function fetchColumn($column = 0)
+    {
+        if (is_numeric($column)) {
+            $mode = OCI_NUM;
+        } else {
+            $mode = OCI_ASSOC;
+        }
+
+        $fetchFunction = function () use ($mode) {
+            return oci_fetch_array($this->resource, $mode);
+        };
+
+        /** @noinspection PhpUnusedParameterInspection */
+        $callback = function ($item, $index, &$result) use ($column) {
+            $result[ ] = $item[ $column ];
+        };
+
+        $this->iterateTuples($fetchFunction, $callback);
+
+        return $this->result;
+    }
+
+    /**
+     * Method for fetching data as map
+     */
+    public function fetchMap()
+    {
+        throw new Exception("Not implemented yet");
+    }
+
+    /**
+     * Fetch data from statement to the php object
+     *
+     * @return array[]
+     */
+    public function fetchObject()
+    {
+        $fetchFunction = function () {
+            return oci_fetch_object($this->resource);
+        };
+        $this->iterateTuples($fetchFunction);
+
+        return $this->result;
+    }
+
+    /**
+     * Fetches single value from first row
+     * and column specified by $index
+     *
+     * @param int|string $index number or string
+     *                          that indicates column
+     *                          to fetch value from
+     *
+     * @return string
+     */
+    public function fetchOne($index = 1)
+    {
+        if (is_numeric($index)) {
+            $mode = OCI_NUM;
+            //make proper index to indicate that first column has index of 0
+            $index--;
+        } else {
+            $mode = OCI_ASSOC;
+        }
+
+
+        $fetchFunction = function () use ($mode) {
+            return oci_fetch_array($this->resource, $mode);
+        };
+        $this->result = $this->tupleGenerator($fetchFunction)->current()[ $index ];
+        $this->isFetched = true;
+
+        return $this->result;
+    }
+
+    /**
+     * Fetches data into key-values pair.
+     * implemented as associative array
+     * where keys are $firstCol values and
+     * values are $secondCol values
+     *
+     * @param int|string $firstCol  колонка с ключом
+     * @param int|string $secondCol колонка со значением
+     *
+     * @return array
+     */
+    public function fetchPairs($firstCol = 1, $secondCol = 2)
+    {
+        if (is_numeric($firstCol) && is_numeric($secondCol)) {
+            $mode = OCI_NUM;
+            //make proper index to indicate that first column has index of 0
+            $firstCol--;
+            $secondCol--;
+        } else {
+            $mode = OCI_ASSOC;
+        }
+
+        $fetchFunction = function () use ($mode) {
+            return oci_fetch_array($this->resource, $mode);
+        };
+
+        /** @noinspection PhpUnusedParameterInspection */
+        $callback = function ($item, $index, &$result) use ($firstCol, $secondCol) {
+            $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
+        };
+
+        $this->iterateTuples($fetchFunction, $callback);
+
+        return $this->result;
+    }
+
+    /**
+     * Get the number of rows affected by statement
+     * as an integer
+     *
+     * @throws Exception
+     * @return int
+     */
+    public function getAffectedRowsNumber()
+    {
+        $rows = oci_num_rows($this->resource);
+        if (!$rows) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Retrieve an external iterator
+     *
+     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
+     * @return \Iterator An instance of an object implementing <b>Iterator</b>
+     */
+    public function getIterator()
+    {
+        return $this->tupleGenerator();
+    }
+
+    /**
+     * Getter for queryString
+     *
+     * @return string
+     */
+    public function getQueryString()
+    {
+        return $this->queryString;
+    }
+
+    /**
+     * Get type of statement.
+     * It can return any from:
+     * SELECT UPDATE DELETE INSERT CREATE DROP ALTER BEGIN DECLARE CALL
+     *
+     * @throws Exception
+     * @return string
+     */
+    public function getType()
+    {
+        if (!$this->isPrepared) {
+            $this->prepare();
+        }
+        $type = oci_statement_type($this->resource);
+        if (!$type) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+
+        return $type;
+    }
+
+    /**
+     * Method prepare oci8 statement for execute
+     *
+     * @return Statement $this
+     * @throws Exception
+     */
+    public function prepare()
+    {
+        if ($this->isPrepared) {
+            throw new Exception('This statement has already been prepared');
+        }
+
+        // get oci8 statement resource
+        $this->resource = oci_parse($this->db->getConnection(), $this->queryString);
+
+        if (!$this->resource) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+
+        $this->isPrepared = true;
+
+        return $this;
+    }
+
+    /**
+     * Proxy to db rollback method.
+     * Needed here for convinient method chaining.
+     *
+     * @return Db
+     */
+    public function rollback()
+    {
+        return $this->db->rollback();
+    }
+
+    /**
+     * Itereate over all rows in fetched data
+     *
+     * @param callable $fetchFunction
+     *
+     * @param callable $callback Функция для обработки элементов выборки
+     *                           Передаются параметры $item, $index, &result
+     *
+     * @return $this
+     */
+    protected function iterateTuples($fetchFunction = null, $callback = null)
+    {
+        $this->result = [ ];
+        $index = 0;
+        if (!is_callable($callback)) {
+            /** @noinspection PhpUnusedParameterInspection */
+            $callback = function ($item, $index, &$result) {
+                $result[ ] = $item;
+            };
+        }
+        foreach ($this->tupleGenerator($fetchFunction) as $tuple) {
+            $callback($tuple, $index++, $this->result);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Generator for iterating over fetched rows
+     *
+     * @param callable|null $fetchFunction
+     *
+     * @throws Exception
+     * @return \Generator
+     */
+    protected function tupleGenerator($fetchFunction = null)
+    {
+        if ($this->isFetched) {
+            throw new Exception("Statement is already fetched. Need to execute it before fetching again.");
+        }
+        $fetchFunction = $fetchFunction ? : $this->defaultFetchFunction;
+
+        while (($tuple = $fetchFunction()) !== false) {
+            yield $tuple;
+        }
+
+        $this->isFetched = true;
+    }
+
+    /**
+     * Fetches oci error for statement
+     *
+     * @return array
+     */
+    protected function getOCIError()
+    {
+        $ociResource = $this->resource;
+
+        return is_resource($ociResource) ?
+            oci_error($ociResource) :
+            oci_error();
+    }
+
+    /**
+     * @param $rowCount
+     *
+     * @return $this
+     * @throws Exception
+     */
+    public function setPrefetch($rowCount)
+    {
+        if ($this->resource) {
+            $setResult = oci_set_prefetch($this->resource, $rowCount);
+            if ($setResult === false) {
+                $error = $this->getOCIError();
+                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            }
+        }
+
+        return $this;
+    }
+}
