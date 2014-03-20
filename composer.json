@@ -10,8 +10,8 @@
         }
     ],
     "autoload": {
-        "psr-0": {
-            "OracleDb": "."
+        "psr-4": {
+            "OracleDb\\": "src/"
         }
     }
 }
