@@ -166,17 +166,27 @@ class Statement implements \IteratorAggregate
             return $this;
         }
         foreach ($bindings as $bindingName => $bindingValue) {
+            $type = SQLT_CHR;
+            $length = -1;
+            $value = $bindingValue;
+            if (is_array($bindingValue)) {
+                $value = isset($bindingValue[ 0 ]) ? $bindingValue[ 0 ] : (isset($bindingValue['value']) ? $bindingValue['value'] : null);
+                $length = isset($bindingValue[ 1 ]) ? $bindingValue[ 1 ] : (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : $length);
+                $type = isset($bindingValue[ 2 ]) ? $bindingValue[ 2 ] : (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : $type);
+            }
+            $this->bindings[$bindingName] = $value;
             $bindResult = oci_bind_by_name(
                 $this->resource,
                 $bindingName,
-                $bindings[ $bindingName ]
+                $this->bindings[ $bindingName ],
+                $length,
+                $type
             );
             if (!$bindResult) {
                 $error = $this->getOCIError();
                 throw new Exception($error[ 'message' ], $error[ 'code' ]);
             }
         }
-        $this->bindings = array_merge($this->bindings, $bindings);
 
         return $this;
     }
