@@ -26,6 +26,28 @@ namespace OracleDb;
 class Statement implements \IteratorAggregate
 {
 
+    const TYPE_ALTER = 'ALTER';
+
+    const TYPE_BEGIN = 'BEGIN';
+
+    const TYPE_CALL = 'CALL';
+
+    const TYPE_CREATE = 'CREATE';
+
+    const TYPE_DECLARE = 'DECLARE';
+
+    const TYPE_DELETE = 'DELETE';
+
+    const TYPE_DROP = 'DROP';
+
+    const TYPE_INSERT = 'INSERT';
+
+    const TYPE_SELECT = 'SELECT';
+
+    const TYPE_UPDATE = 'UPDATE';
+
+    const TYPE_UNKNOWN = 'UNKNOWN';
+
     /**
      * result of last fetch fucntion
      *
@@ -569,5 +591,25 @@ class Statement implements \IteratorAggregate
         return is_resource($ociResource) ?
             oci_error($ociResource) :
             oci_error();
+    }
+
+    /**
+     * Method to get count of rows for SELECT and
+     * count of affected rows from other stetement types
+     *
+     * @return int
+     */
+    public function count()
+    {
+        $type = $this->getType();
+        if ($type === self::TYPE_SELECT && !$this->isFetched) {
+            $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
+            $prevStatement = $this->db->getLastStatement();
+            $count = $this->db->query($sql, $this->bindings)->fetchOne();
+            $this->db->setLastStatement($prevStatement);
+        } else {
+            $count = oci_num_rows($this->resource);
+        }
+        return $count;
     }
 }
