@@ -28,7 +28,7 @@ class Db
     /**
      * @var Statement
      */
-    public $lastStatement;
+    protected $lastStatement;
 
     /**
      * Profiler for db instance
@@ -476,5 +476,13 @@ class Db
             'client.moduleName'     => '',
             'profiler.enabled'      => false
         ];
+    }
+
+    /**
+     * @return Statement
+     */
+    public function getLastStatement()
+    {
+        return $this->lastStatement;
     }
 }
