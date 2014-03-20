@@ -260,7 +260,6 @@ class Db
         }
         $charset = $this->config('session.charset');
         $connectionMode = $this->config('connection.privileged');
-        $prefetch = $this->config('connection.prefetch');
         if ($this->config('connection.persistent')) {
             $connectFunction = 'oci_pconnect';
         } else {
@@ -276,10 +275,6 @@ class Db
         if (!$this->connection) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
-        }
-
-        if ($prefetch !== false) {
-          $this->setPrefetch($prefetch);
         }
 
         /** @noinspection PhpUndefinedFunctionInspection */
@@ -411,7 +406,6 @@ class Db
             'session.autocommit'    => false,
             'connection.persistent' => false,
             'connection.privileged' => OCI_DEFAULT,
-            'connection.prefetch'   => false,
             'connection.cache'      => false,
             'client.identifier'     => '',
             'client.info'           => '',
