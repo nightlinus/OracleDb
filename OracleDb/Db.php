@@ -26,16 +26,16 @@ class Db
     public static $OCI_SESSION_MODE;
 
     /**
-     * @var Statement
-     */
-    protected $lastStatement;
-
-    /**
      * Profiler for db instance
      *
      * @var Profiler
      */
     public $profiler;
+
+    /**
+     * @var Statement
+     */
+    protected $lastStatement;
 
     /**
      * @var resource connection resource
@@ -279,6 +279,30 @@ class Db
     }
 
     /**
+     * @return Statement
+     */
+    public function getLastStatement()
+    {
+        return $this->lastStatement;
+    }
+
+    /**
+     * Setter for lastStatement
+     *
+     * @see $lastStatement
+     *
+     * @param $statement
+     *
+     * @return $this
+     */
+    public function setLastStatement($statement)
+    {
+        $this->lastStatement = $statement;
+
+        return $this;
+    }
+
+    /**
      * Get oracle RDBMS version
      *
      * @return string
@@ -392,22 +416,6 @@ class Db
     }
 
     /**
-     * Setter for lastStatement
-     *
-     * @see $lastStatement
-     *
-     * @param $statement
-     *
-     * @return $this
-     */
-    public function setLastStatement($statement)
-    {
-        $this->lastStatement = $statement;
-
-        return $this;
-    }
-
-    /**
      * @param $sql
      * @param $bindings
      *
@@ -476,13 +484,5 @@ class Db
             'client.moduleName'     => '',
             'profiler.enabled'      => false
         ];
-    }
-
-    /**
-     * @return Statement
-     */
-    public function getLastStatement()
-    {
-        return $this->lastStatement;
     }
 }
