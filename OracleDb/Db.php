@@ -270,13 +270,25 @@ class Db
                 $connectionMode
             );
         } else {
-            $this->connection = oci_connect(
-                $this->userName,
-                $this->password,
-                $this->connectionString,
-                $charset,
-                $connectionMode
-            );
+            $cacheConnection = $this->config('connection.cache');
+            if ($cacheConnection) {
+                $this->connection = oci_connect(
+                    $this->userName,
+                    $this->password,
+                    $this->connectionString,
+                    $charset,
+                    $connectionMode
+                );
+
+            } else {
+                $this->connection = oci_new_connect(
+                    $this->userName,
+                    $this->password,
+                    $this->connectionString,
+                    $charset,
+                    $connectionMode
+                );
+            }
         }
         if (!$this->connection) {
             $error = $this->getOCIError();
@@ -417,6 +429,7 @@ class Db
             'connection.persistent' => false,
             'connection.privileged' => OCI_DEFAULT,
             'connection.prefetch'   => false,
+            'connection.cache'      => false,
             'client.identifier'     => '',
             'client.info'           => '',
             'client.moduleName'     => '',
