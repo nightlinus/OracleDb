@@ -262,34 +262,17 @@ class Db
         $connectionMode = $this->config('connection.privileged');
         $prefetch = $this->config('connection.prefetch');
         if ($this->config('connection.persistent')) {
-            $this->connection = oci_pconnect(
-                $this->userName,
-                $this->password,
-                $this->connectionString,
-                $charset,
-                $connectionMode
-            );
+            $connectFunction = 'oci_pconnect';
         } else {
-            $cacheConnection = $this->config('connection.cache');
-            if ($cacheConnection) {
-                $this->connection = oci_connect(
-                    $this->userName,
-                    $this->password,
-                    $this->connectionString,
-                    $charset,
-                    $connectionMode
-                );
-
-            } else {
-                $this->connection = oci_new_connect(
-                    $this->userName,
-                    $this->password,
-                    $this->connectionString,
-                    $charset,
-                    $connectionMode
-                );
-            }
+            $connectFunction = $this->config('connection.cache') ? 'oci_connect' : 'oci_new_connect';
         }
+        $this->connection = $connectFunction(
+            $this->userName,
+            $this->password,
+            $this->connectionString,
+            $charset,
+            $connectionMode
+        );
         if (!$this->connection) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
