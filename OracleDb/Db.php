@@ -87,7 +87,8 @@ class Db
         $password,
         $connectionString,
         $profiler = null
-    ) {
+    )
+    {
         //Заполняем массив возможных значений session mode
         self::$OCI_SESSION_MODE = [
             OCI_DEFAULT,
@@ -155,25 +156,6 @@ class Db
     }
 
     /**
-     * Cleaning memory by dissposing connection
-     * handlers
-     *
-     * @return $this
-     * @throws Exception
-     */
-    protected function disconnect()
-    {
-        if (!$this->connection) {
-            return $this;
-        }
-        if (!oci_close($this->connection)) {
-            throw new Exception("Can't close connection");
-        }
-
-        return $this;
-    }
-
-    /**
      * Commit session changes to server
      *
      * @throws Exception
@@ -191,58 +173,32 @@ class Db
     }
 
     /**
-     * Get current Oracle client version
+     * General function to get and set
+     * configuration values
      *
+     * @param string     $name
+     * @param null|mixed $value
+     *
+     * @throws Exception
      * @return mixed
      */
-    public function getClientVersion()
+    public function config($name, $value = null)
     {
-        /** @noinspection PhpUndefinedFunctionInspection */
-        return oci_client_version();
-    }
-
-    /**
-     * Method to fetch OCI8 error
-     * Returns associative array with
-     * "code" and "message" keys.
-     *
-     * @return array
-     */
-    protected function getOCIError()
-    {
-        $ociConnection = $this->connection;
-
-        return is_resource($ociConnection) ?
-            oci_error($ociConnection) :
-            oci_error();
-    }
-
-    /**
-     * Function to access current connection
-     *
-     * @return resource
-     */
-    public function getConnection()
-    {
-        return $this->connection;
-    }
-
-    /**
-     * Get oracle RDBMS version
-     *
-     * @return string
-     * @throws Exception
-     */
-    public function getServerVersion()
-    {
-        $this->connect();
-        $version = oci_server_version($this->connection);
-        if (!$version) {
-            $error = $this->getOCIError();
-            throw new Exception($error['message'], $error['code']);
+        if (func_num_args() === 1) {
+            if (is_array($name)) {
+                $this->config = array_merge($this->config, $name);
+            } else {
+                if (isset($this->config[ $name ])) {
+                    return $this->config[ $name ];
+                } else {
+                    throw new Exception("No such config entry: $name");
+                }
+            }
+        } else {
+            $this->config[ $name ] = $value;
         }
 
-        return $version;
+        return $value;
     }
 
     /**
@@ -288,32 +244,74 @@ class Db
     }
 
     /**
-     * General function to get and set
-     * configuration values
+     * Method to stop measuring profile
      *
-     * @param string     $name
-     * @param null|mixed $value
-     *
-     * @throws Exception
-     * @return mixed
+     * @return $this
      */
-    public function config($name, $value = null)
+    public function endProfile()
     {
-        if (func_num_args() === 1) {
-            if (is_array($name)) {
-                $this->config = array_merge($this->config, $name);
-            } else {
-                if (isset($this->config[ $name ])) {
-                    return $this->config[ $name ];
-                } else {
-                    throw new Exception("No such config entry: $name");
-                }
-            }
-        } else {
-            $this->config[ $name ] = $value;
+        if ($this->config('profiler.enabled')) {
+            $this->profiler->end();
         }
 
-        return $value;
+        return $this;
+    }
+
+    /**
+     * Get current Oracle client version
+     *
+     * @return mixed
+     */
+    public function getClientVersion()
+    {
+        /** @noinspection PhpUndefinedFunctionInspection */
+        return oci_client_version();
+    }
+
+    /**
+     * Function to access current connection
+     *
+     * @return resource
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    /**
+     * Get oracle RDBMS version
+     *
+     * @return string
+     * @throws Exception
+     */
+    public function getServerVersion()
+    {
+        $this->connect();
+        $version = oci_server_version($this->connection);
+        if (!$version) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+
+        return $version;
+    }
+
+    /**
+     * Methods to prepare Db statement
+     * object from raw queryString
+     *
+     * @param string $sqlText
+     *
+     * @return Statement
+     * @throws Exception
+     */
+    public function prepare($sqlText)
+    {
+        $this->connect();
+        $this->lastStatement = new Statement($this, $sqlText);
+        $this->lastStatement->prepare();
+
+        return $this->lastStatement;
     }
 
     /**
@@ -345,24 +343,6 @@ class Db
     }
 
     /**
-     * Methods to prepare Db statement
-     * object from raw queryString
-     *
-     * @param string $sqlText
-     *
-     * @return Statement
-     * @throws Exception
-     */
-    public function prepare($sqlText)
-    {
-        $this->connect();
-        $this->lastStatement = new Statement($this, $sqlText);
-        $this->lastStatement->prepare();
-
-        return $this->lastStatement;
-    }
-
-    /**
      * Rollback changes within session
      *
      * @return $this
@@ -379,9 +359,43 @@ class Db
     }
 
     /**
+     * Method for batch running «;» delimited queries
+     *
+     * @param $scriptText
+     *
+     * @throws Exception
+     * @return $this
+     */
+    public function runScript($scriptText)
+    {
+        $queries = explode(";", $scriptText);
+        $exceptions = [ ];
+        $exceptionMessage = '';
+        foreach ($queries as $query) {
+            try {
+                $query = trim($query);
+                $len = strlen($query);
+                if ($len > 0) {
+                    $this->query($query);
+                }
+            } catch (Exception $e) {
+                $exceptions[ ] = $e;
+                $exceptionMessage .= $e->getMessage() . PHP_EOL;
+            }
+        }
+
+        if (count($exceptions)) {
+            throw new Exception($exceptionMessage);
+        }
+
+        return $this;
+    }
+
+    /**
      * Setter for lastStatement
      *
      * @see $lastStatement
+     *
      * @param $statement
      *
      * @return $this
@@ -391,6 +405,56 @@ class Db
         $this->lastStatement = $statement;
 
         return $this;
+    }
+
+    /**
+     * @param $sql
+     * @param $bindings
+     *
+     * @return $this
+     */
+    public function startProfile($sql, $bindings)
+    {
+        if ($this->config('profiler.enabled')) {
+            $this->profiler->start($sql, $bindings);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Cleaning memory by dissposing connection
+     * handlers
+     *
+     * @return $this
+     * @throws Exception
+     */
+    protected function disconnect()
+    {
+        if (!$this->connection) {
+            return $this;
+        }
+        if (!oci_close($this->connection)) {
+            throw new Exception("Can't close connection");
+        }
+
+        return $this;
+    }
+
+    /**
+     * Method to fetch OCI8 error
+     * Returns associative array with
+     * "code" and "message" keys.
+     *
+     * @return array
+     */
+    protected function getOCIError()
+    {
+        $ociConnection = $this->connection;
+
+        return is_resource($ociConnection) ?
+            oci_error($ociConnection) :
+            oci_error();
     }
 
     /**
@@ -412,66 +476,5 @@ class Db
             'client.moduleName'     => '',
             'profiler.enabled'      => false
         ];
-    }
-
-    /**
-     * @param $sql
-     * @param $bindings
-     *
-     * @return $this
-     */
-    public function startProfile($sql, $bindings)
-    {
-        if ($this->config('profiler.enabled')) {
-            $this->profiler->start($sql, $bindings);
-        }
-        return $this;
-    }
-
-    /**
-     * Method to stop measuring profile
-     *
-     * @return $this
-     */
-    public function endProfile()
-    {
-        if ($this->config('profiler.enabled')) {
-            $this->profiler->end();
-        }
-        return $this;
-    }
-
-    /**
-     * Method for batch running «;» delimited queries
-     *
-     * @param $scriptText
-     *
-     * @throws Exception
-     * @return $this
-     */
-    public function runScript($scriptText)
-    {
-        $queries = explode(";", $scriptText);
-        $exceptions = [];
-        $exceptionMessage = '';
-        foreach ($queries as $query) {
-            try {
-                $query = trim($query);
-                $len = strlen($query);
-                if ($len > 0) {
-                    $this->query($query);
-                }
-            } catch (Exception $e) {
-                $exceptions[] = $e;
-                $exceptionMessage .= $e->getMessage() .PHP_EOL;
-            }
-        }
-
-        if (count($exceptions)) {
-            $e = new Exception();
-            throw new Exception($exceptionMessage);
-        }
-
-        return $this;
     }
 }
