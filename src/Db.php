@@ -226,7 +226,7 @@ class Db
      *
      * @return mixed
      */
-    public function getClientVersion()
+    public function version()
     {
         /** @noinspection PhpUndefinedFunctionInspection */
         return oci_client_version();
@@ -328,6 +328,16 @@ class Db
         $statement->execute($mode);
 
         return $statement;
+    }
+
+    public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
+    {
+        $returnName = "r___".sha1(microtime(true));
+        $bindings[$returnName] = [null, $returnSize];
+        $sqlText = "BEGIN :$returnName := $sqlText; END;";
+        $statement = $this->query($sqlText, $bindings, $mode);
+
+        return $statement->bindings[ $returnName ];
     }
 
     /**
