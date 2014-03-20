@@ -198,10 +198,13 @@ class Statement implements \IteratorAggregate
      * @param array  $binding   array to bind
      * @param int    $maxLength maximum length of array
      *
-     * @return $this
+     * @param        $maxItemLength
+     * @param int    $type
+     *
      * @throws Exception
+     * @return $this
      */
-    public function bindArray($name, $binding, $maxLength)
+    public function bindArray($name, $binding, $maxLength, $maxItemLength = -1, $type = SQLT_AFC)
     {
         if (!$this->isPrepared) {
             $this->prepare();
@@ -210,7 +213,9 @@ class Statement implements \IteratorAggregate
             $this->resource,
             $name,
             $binding,
-            $maxLength
+            $maxLength,
+            $maxItemLength,
+            $type
         );
         if (!$bindResult) {
             $error = $this->getOCIError();
