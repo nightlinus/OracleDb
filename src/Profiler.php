@@ -44,7 +44,7 @@ class Profiler
      *
      * @return $this
      */
-    public function start($sql, array $data = [])
+    public function start($sql, array $data = null)
     {
         $profileInformation = [
             'sql'        => $sql,
