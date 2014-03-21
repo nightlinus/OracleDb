@@ -70,18 +70,17 @@ class Db
      * Consttructor for Db class implements
      * base parametrs checking
      *
-     * @param string        $userName
-     * @param string        $password
-     * @param string        $connectionString
-     * @param Profiler|null $profiler
+     * @param string $userName
+     * @param string $password
+     * @param string $connectionString
      *
      * @throws Exception
+     *
      */
     public function __construct(
         $userName,
         $password,
-        $connectionString,
-        $profiler = null
+        $connectionString
     )
     {
         if (!isset($userName) || !isset($password) || !isset($connectionString)) {
@@ -91,7 +90,6 @@ class Db
         $this->userName = $userName;
         $this->password = $password;
         $this->connectionString = $connectionString;
-        $this->profiler = $profiler ? : new Profiler();
     }
 
     /**
@@ -445,10 +443,13 @@ class Db
             'connection.persistent' => false,
             'connection.privileged' => OCI_DEFAULT,
             'connection.cache'      => false,
+            'connection.class'      => false,
+            'connection.edition'    => false,
             'client.identifier'     => '',
             'client.info'           => '',
             'client.moduleName'     => '',
-            'profiler.enabled'      => false
+            'profiler.enabled'      => false,
+            'profiler.class'        => __NAMESPACE__.'\\Profiler'
         ];
     }
 
@@ -480,6 +481,12 @@ class Db
      */
     protected function setUpSessionAfter()
     {
+        //Set up profiler
+        if ($this->config('profiler.enabled')) {
+            $class = $this->config('profiler.class');
+            $this->profiler = is_string($class) ? new $class() : $class;
+        }
+
         /** @noinspection PhpUndefinedFunctionInspection */
         oci_set_client_identifier($this->connection, $this->config('client.identifier'));
         /** @noinspection PhpUndefinedFunctionInspection */
@@ -506,6 +513,10 @@ class Db
      */
     private function setUpSessionBefore()
     {
+        $connectionClass = $this->config('connection.class');
+        if ($connectionClass) {
+            ini_set('oci8.connection_class', $connectionClass);
+        }
         $edition = $this->config('connection.edition');
         if ($edition) {
             /** @noinspection PhpUndefinedFunctionInspection */
