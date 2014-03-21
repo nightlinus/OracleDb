@@ -109,6 +109,13 @@ class Statement implements \IteratorAggregate
     protected $isPrepared;
 
     /**
+     * Index of profile associated with statement
+     *
+     * @var int
+     */
+    protected $profileId;
+
+    /**
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
@@ -182,7 +189,7 @@ class Statement implements \IteratorAggregate
                 $length,
                 $type
             );
-            if (!$bindResult) {
+            if ($bindResult === false) {
                 $error = $this->getOCIError();
                 throw new Exception($error[ 'message' ], $error[ 'code' ]);
             }
@@ -217,7 +224,7 @@ class Statement implements \IteratorAggregate
             $maxItemLength,
             $type
         );
-        if (!$bindResult) {
+        if ($bindResult === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -258,13 +265,12 @@ class Statement implements \IteratorAggregate
             $mode = $this->db->config('session.autocommit') ? OCI_COMMIT_ON_SUCCESS : OCI_NO_AUTO_COMMIT;
         }
 
-        $this->db->startProfile($this->queryString, $this->bindings);
+        $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
         $executeResult = oci_execute($this->resource, $mode);
         $this->db->endProfile();
-
         $this->db->setLastStatement($this);
 
-        if (!$executeResult) {
+        if ($executeResult === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -439,7 +445,7 @@ class Statement implements \IteratorAggregate
     public function getAffectedRowsNumber()
     {
         $rows = oci_num_rows($this->resource);
-        if (!$rows) {
+        if ($rows === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -482,7 +488,7 @@ class Statement implements \IteratorAggregate
             $this->prepare();
         }
         $type = oci_statement_type($this->resource);
-        if (!$type) {
+        if ($type === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -505,7 +511,7 @@ class Statement implements \IteratorAggregate
         // get oci8 statement resource
         $this->resource = oci_parse($this->db->getConnection(), $this->queryString);
 
-        if (!$this->resource) {
+        if ($this->resource === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -623,7 +629,7 @@ class Statement implements \IteratorAggregate
             $count = $this->db->query($sql, $this->bindings)->fetchOne();
             $this->db->setLastStatement($prevStatement);
         } else {
-            $count = oci_num_rows($this->resource);
+            $count = $this->getAffectedRowsNumber();
         }
         return $count;
     }
