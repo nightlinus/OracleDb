@@ -329,6 +329,14 @@ class Db
         return $statement;
     }
 
+    /**
+     * @param string  $sqlText
+     * @param int     $returnSize
+     * @param null    $bindings
+     * @param null    $mode
+     *
+     * @return mixed
+     */
     public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
     {
         $returnName = "r___".sha1(microtime(true));
@@ -461,6 +469,13 @@ class Db
         ];
     }
 
+    /**
+     * Method to set session variables via ALTER SESSION SET variable = value
+     *
+     * @param array $variables
+     *
+     * @return $this
+     */
     protected function alterSession($variables)
     {
         if (count($variables) === 0) {
@@ -475,6 +490,11 @@ class Db
         return $this;
     }
 
+    /**
+     * Setup session after connection is estabilished
+     *
+     * @return $this
+     */
     protected function setUpSessionAfter()
     {
         /** @noinspection PhpUndefinedFunctionInspection */
@@ -495,6 +515,12 @@ class Db
         return $this;
     }
 
+    /**
+     * Method to set up connection before call of oci_connect
+     *
+     * @return $this
+     * @throws Exception
+     */
     private function setUpSessionBefore()
     {
         $edition = $this->config('connection.edition');
