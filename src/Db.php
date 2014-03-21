@@ -21,11 +21,6 @@ namespace OracleDb;
 class Db
 {
     /**
-     * @var array
-     */
-    public static $OCI_SESSION_MODE;
-
-    /**
      * Profiler for db instance
      *
      * @var Profiler
@@ -89,22 +84,10 @@ class Db
         $profiler = null
     )
     {
-        //Заполняем массив возможных значений session mode
-        self::$OCI_SESSION_MODE = [
-            OCI_DEFAULT,
-            OCI_SYSOPER,
-            OCI_SYSDBA,
-            OCI_CRED_EXT,
-            OCI_CRED_EXT + OCI_SYSDBA,
-            OCI_CRED_EXT + OCI_SYSOPER
-        ];
-
         if (!isset($userName) || !isset($password) || !isset($connectionString)) {
             throw new Exception("One of connection parameters is null or not set");
         }
-
         $this->config = $this->getDefaultSettings();
-
         $this->userName = $userName;
         $this->password = $password;
         $this->connectionString = $connectionString;
