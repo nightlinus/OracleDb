@@ -184,8 +184,7 @@ class Db
         if ($this->connection) {
             return $this;
         }
-        $charset = $this->config('session.charset');
-        $connectionMode = $this->config('connection.privileged');
+        $this->setUpSessionBefore();
         if ($this->config('connection.persistent')) {
             $connectFunction = 'oci_pconnect';
         } else {
@@ -195,14 +194,14 @@ class Db
             $this->userName,
             $this->password,
             $this->connectionString,
-            $charset,
-            $connectionMode
+            $this->config('session.charset'),
+            $this->config('connection.privileged')
         );
         if (!$this->connection) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
-        $this->setUpSession();
+        $this->setUpSessionAfter();
 
         return $this;
     }
@@ -468,7 +467,6 @@ class Db
             return $this;
         }
         $sql = "ALTER SESSION SET ";
-        $set = [];
         foreach ($variables as $key => $value) {
             $sql .= "$key = '$value' ";
         }
@@ -477,7 +475,7 @@ class Db
         return $this;
     }
 
-    protected function setUpSession()
+    protected function setUpSessionAfter()
     {
         /** @noinspection PhpUndefinedFunctionInspection */
         oci_set_client_identifier($this->connection, $this->config('client.identifier'));
@@ -493,6 +491,20 @@ class Db
             $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config('session.dateLanguage');
         }
         $this->alterSession($setUp);
+
+        return $this;
+    }
+
+    private function setUpSessionBefore()
+    {
+        $edition = $this->config('connection.edition');
+        if ($edition) {
+            /** @noinspection PhpUndefinedFunctionInspection */
+            $result = oci_set_edition($edition);
+            if (!$result) {
+                throw new Exception("Edition setup failed: $edition");
+            }
+        }
 
         return $this;
     }
