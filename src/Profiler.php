@@ -56,7 +56,7 @@ class Profiler
         ];
 
         $e = new Exception;
-        $profileInformation['stack'] = $e->getTraceAsString();
+        $profileInformation['stack'] = $e->getTrace();
         $this->profiles[ $this->currentIndex ] = $profileInformation;
 
         return $this;
