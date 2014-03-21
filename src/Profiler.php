@@ -59,7 +59,7 @@ class Profiler
         $profileInformation['stack'] = $e->getTrace();
         $this->profiles[ $this->currentIndex ] = $profileInformation;
 
-        return $this;
+        return $this->currentIndex;
     }
 
     /**
