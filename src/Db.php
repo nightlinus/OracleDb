@@ -150,6 +150,12 @@ class Db
     {
         if (func_num_args() === 1) {
             if (is_array($name)) {
+                $intersect = array_intersect_key($this->config, $name);
+                if (count($intersect) !== count($name)) {
+                    $diff = array_diff_key($name, $intersect);
+                    $diff = implode(',', $diff);
+                    throw new Exception("Not all config entries are valid: $diff");
+                }
                 $this->config = array_merge($this->config, $name);
             } else {
                 if (isset($this->config[ $name ])) {
@@ -196,13 +202,7 @@ class Db
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
-
-        /** @noinspection PhpUndefinedFunctionInspection */
-        oci_set_client_identifier($this->connection, $this->config('client.identifier'));
-        /** @noinspection PhpUndefinedFunctionInspection */
-        oci_set_client_info($this->connection, $this->config('client.info'));
-        /** @noinspection PhpUndefinedFunctionInspection */
-        oci_set_module_name($this->connection, $this->config('client.moduleName'));
+        $this->setUpSession();
 
         return $this;
     }
@@ -450,6 +450,8 @@ class Db
         return [
             'session.charset'       => 'AL32UTF8',
             'session.autocommit'    => false,
+            'session.dateFormat'    => 'DD.MM.YYYY HH24:MI:SS',
+            'session.dateLanguage'  => false,
             'connection.persistent' => false,
             'connection.privileged' => OCI_DEFAULT,
             'connection.cache'      => false,
@@ -458,5 +460,40 @@ class Db
             'client.moduleName'     => '',
             'profiler.enabled'      => false
         ];
+    }
+
+    protected function alterSession($variables)
+    {
+        if (count($variables) === 0) {
+            return $this;
+        }
+        $sql = "ALTER SESSION SET ";
+        $set = [];
+        foreach ($variables as $key => $value) {
+            $sql .= "$key = '$value' ";
+        }
+        $this->query($sql);
+
+        return $this;
+    }
+
+    protected function setUpSession()
+    {
+        /** @noinspection PhpUndefinedFunctionInspection */
+        oci_set_client_identifier($this->connection, $this->config('client.identifier'));
+        /** @noinspection PhpUndefinedFunctionInspection */
+        oci_set_client_info($this->connection, $this->config('client.info'));
+        /** @noinspection PhpUndefinedFunctionInspection */
+        oci_set_module_name($this->connection, $this->config('client.moduleName'));
+        $setUp = [];
+        if ($this->config('session.dateFormat')) {
+            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config('session.dateFormat');
+        }
+        if ($this->config('session.dateLanguage')) {
+            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config('session.dateLanguage');
+        }
+        $this->alterSession($setUp);
+
+        return $this;
     }
 }
