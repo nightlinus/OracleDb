@@ -127,7 +127,7 @@ class Db
     public function commit()
     {
         $commitResult = oci_commit($this->connection);
-        if (!$commitResult) {
+        if ($commitResult === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -196,7 +196,7 @@ class Db
             $this->config('session.charset'),
             $this->config('connection.privileged')
         );
-        if (!$this->connection) {
+        if ($this->connection === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -263,7 +263,7 @@ class Db
     {
         $this->connect();
         $version = oci_server_version($this->connection);
-        if (!$version) {
+        if ($version === false) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -326,7 +326,7 @@ class Db
     public function rollback()
     {
         $rollbackResult = oci_rollback($this->connection);
-        if (!$rollbackResult) {
+        if ($rollbackResult === false) {
             throw new Exception('Can not rollback');
         }
 
@@ -375,10 +375,10 @@ class Db
     public function startProfile($sql, $bindings)
     {
         if ($this->config('profiler.enabled')) {
-            $this->profiler->start($sql, $bindings);
+            return $this->profiler->start($sql, $bindings);
         }
 
-        return $this;
+        return null;
     }
 
     /**
@@ -521,7 +521,7 @@ class Db
         if ($edition) {
             /** @noinspection PhpUndefinedFunctionInspection */
             $result = oci_set_edition($edition);
-            if (!$result) {
+            if ($result === false) {
                 throw new Exception("Edition setup failed: $edition");
             }
         }
