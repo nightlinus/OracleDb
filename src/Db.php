@@ -120,6 +120,24 @@ class Db
     }
 
     /**
+     * @param string $sqlText
+     * @param int    $returnSize
+     * @param null   $bindings
+     * @param null   $mode
+     *
+     * @return mixed
+     */
+    public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
+    {
+        $returnName = "r___" . sha1(microtime(true));
+        $bindings[ $returnName ] = [ null, $returnSize ];
+        $sqlText = "BEGIN :$returnName := $sqlText; END;";
+        $statement = $this->query($sqlText, $bindings, $mode);
+
+        return $statement->bindings[ $returnName ];
+    }
+
+    /**
      * Commit session changes to server
      *
      * @throws Exception
@@ -221,17 +239,6 @@ class Db
     }
 
     /**
-     * Get current Oracle client version
-     *
-     * @return mixed
-     */
-    public function version()
-    {
-        /** @noinspection PhpUndefinedFunctionInspection */
-        return oci_client_version();
-    }
-
-    /**
      * Function to access current connection
      *
      * @return resource
@@ -330,24 +337,6 @@ class Db
     }
 
     /**
-     * @param string  $sqlText
-     * @param int     $returnSize
-     * @param null    $bindings
-     * @param null    $mode
-     *
-     * @return mixed
-     */
-    public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
-    {
-        $returnName = "r___".sha1(microtime(true));
-        $bindings[$returnName] = [null, $returnSize];
-        $sqlText = "BEGIN :$returnName := $sqlText; END;";
-        $statement = $this->query($sqlText, $bindings, $mode);
-
-        return $statement->bindings[ $returnName ];
-    }
-
-    /**
      * Rollback changes within session
      *
      * @return $this
@@ -409,6 +398,17 @@ class Db
         }
 
         return $this;
+    }
+
+    /**
+     * Get current Oracle client version
+     *
+     * @return mixed
+     */
+    public function version()
+    {
+        /** @noinspection PhpUndefinedFunctionInspection */
+        return oci_client_version();
     }
 
     /**
@@ -503,7 +503,7 @@ class Db
         oci_set_client_info($this->connection, $this->config('client.info'));
         /** @noinspection PhpUndefinedFunctionInspection */
         oci_set_module_name($this->connection, $this->config('client.moduleName'));
-        $setUp = [];
+        $setUp = [ ];
         if ($this->config('session.dateFormat')) {
             $setUp[ 'NLS_DATE_FORMAT' ] = $this->config('session.dateFormat');
         }
