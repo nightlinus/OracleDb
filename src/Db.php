@@ -372,7 +372,7 @@ class Db
      *
      * @return $this
      */
-    public function startProfile($sql, $bindings)
+    public function startProfile($sql, $bindings = null)
     {
         if ($this->config('profiler.enabled')) {
             return $this->profiler->start($sql, $bindings);
