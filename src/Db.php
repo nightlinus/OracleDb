@@ -60,12 +60,6 @@ class Db
      */
     protected $config;
 
-    /********************************************************************************
-     * PSR-0 Autoloader
-     *
-     * Do not use if you are using Composer to autoload dependencies.
-     *******************************************************************************/
-
     /**
      * Consttructor for Db class implements
      * base parametrs checking
@@ -367,6 +361,18 @@ class Db
     }
 
     /**
+     * @param $profileId
+     *
+     * @return $this
+     */
+    public function startFetchProfile($profileId)
+    {
+        if ($this->config('profiler.enabled')) {
+            return $this->profiler->startFetch($profileId);
+        }
+    }
+
+    /**
      * @param $sql
      * @param $bindings
      *
@@ -379,6 +385,18 @@ class Db
         }
 
         return null;
+    }
+
+    /**
+     * @param $profileId
+     *
+     * @return $this
+     */
+    public function stopFetchProfile($profileId)
+    {
+        if ($this->config('profiler.enabled')) {
+            return $this->profiler->stopFetch($profileId);
+        }
     }
 
     /**
