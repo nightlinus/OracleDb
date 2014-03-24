@@ -47,12 +47,13 @@ class Profiler
     public function start($sql, array $data = null)
     {
         $profileInformation = [
-            'sql'        => $sql,
-            'parameters' => $data,
-            'start'      => microtime(true),
-            'end'        => null,
-            'elapsed'     => null,
-            'stack'      => null
+            'sql'           => $sql,
+            'parameters'    => $data,
+            'start'         => microtime(true),
+            'end'           => null,
+            'executeTime'   => null,
+            'fetchTime'     => null,
+            'stack'         => null
         ];
 
         $e = new Exception;
@@ -75,7 +76,7 @@ class Profiler
         }
         $current = & $this->profiles[ $this->currentIndex ];
         $current[ 'end' ] = microtime(true);
-        $current[ 'elapsed' ] = $current[ 'end' ] - $current[ 'start' ];
+        $current[ 'executeTime' ] = $current[ 'end' ] - $current[ 'start' ];
         $this->currentIndex++;
 
         return $this;
@@ -99,5 +100,18 @@ class Profiler
     public function getProfiles()
     {
         return $this->profiles;
+    }
+
+    public function startFetch($profileId)
+    {
+        $this->profiles[ $profileId ][ 'lastFetchStart' ] = microtime(true);
+        return $this;
+    }
+
+    public function stopFetch($profileId)
+    {
+        $this->profiles[ $profileId ][ 'fetchTime' ] += microtime(true) - $this->profiles[ $profileId ][ 'lastFetchStart' ];
+        unset($this->profiles[ $profileId ][ 'lastFetchStart' ]);
+        return $this;
     }
 }
