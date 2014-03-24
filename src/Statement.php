@@ -603,7 +603,17 @@ class Statement implements \IteratorAggregate
         if (!$this->isFetchable()) {
             $this->execute();
         }
-        $fetchFunction = $fetchFunction ? : $this->defaultFetchFunction;
+        $profiledFetchFunction = null;
+        $notProfiledFetchFunction = $fetchFunction ? : $this->defaultFetchFunction;
+        if ($this->profileId) {
+            $profiledFetchFunction = function() use ($notProfiledFetchFunction) {
+                $this->db->startFetchProfile($this->profileId);
+                $res = $notProfiledFetchFunction();
+                $this->db->stopFetchProfile($this->profileId);
+                return $res;
+            };
+        }
+        $fetchFunction = $profiledFetchFunction ? : $notProfiledFetchFunction;
 
         while (($tuple = $fetchFunction()) !== false) {
             yield $tuple;
