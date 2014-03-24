@@ -19,10 +19,7 @@ class DbTest extends \PHPUnit_Framework_TestCase
         self::$dbParams->user = 'MTK_MAIN_UNIT';
         self::$dbParams->password = 'MTK_MAIN_UNIT';
         self::$dbParams->connection = 'ASRZ_TEST';
-        require "../Db.php";
-        require "../Statement.php";
-        require "../Profiler.php";
-        require "../Exception.php";
+        require "../autoload.php";
     }
 
     public function testGetClientVersion()
@@ -30,7 +27,7 @@ class DbTest extends \PHPUnit_Framework_TestCase
         $params = self::$dbParams;
         $db = new \OracleDb\Db($params->user, $params->password, $params->connection);
         /** @noinspection PhpUndefinedFunctionInspection */
-        $this->assertEquals(oci_client_version(), $db->getClientVersion(), 'Shoud be oracle client version.');
+        $this->assertEquals(oci_client_version(), $db->version(), 'Shoud be oracle client version.');
     }
 
     public function testGetServerVersion()
