@@ -147,9 +147,17 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Method for free statement resource
+     * Class destructor called on script exit;
      */
     public function __destruct()
+    {
+        $this->free();
+    }
+
+    /**
+     * Method for free statement resource
+     */
+    public function free()
     {
         if ($this->resource) {
             oci_free_statement($this->resource);
