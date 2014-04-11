@@ -48,6 +48,23 @@ class Statement implements \IteratorAggregate
 
     const TYPE_UNKNOWN = 'UNKNOWN';
 
+    const STATE_FREED = 0;
+
+    const STATE_PREPARED = 1;
+
+    const STATE_FETCHED = 2;
+
+    const STATE_EXECUTED_DESCRIBE = 3;
+
+    const STATE_EXECUTED = 4;
+
+    /**
+     * Internal state of Statement
+     *
+     * @var int
+     */
+    protected $state;
+
     /**
      * result of last fetch fucntion
      *
@@ -80,13 +97,6 @@ class Statement implements \IteratorAggregate
     protected $resource;
 
     /**
-     * Flag to determine was statement already fetched or not
-     *
-     * @var bool
-     */
-    protected $isFetched;
-
-    /**
      * Raw sql text, that was used
      * in oci_parse function
      *
@@ -100,20 +110,6 @@ class Statement implements \IteratorAggregate
      * @var Db
      */
     protected $db;
-
-    /**
-     * Flag to know that statement is ready for execute
-     *
-     * @var bool
-     */
-    protected $isPrepared;
-
-    /**
-     * flag to know that statement is executed already
-     *
-     * @var int
-     */
-    protected $executedMode;
 
     /**
      * Index of profile associated with statement
@@ -137,9 +133,6 @@ class Statement implements \IteratorAggregate
             throw new Exception("SqlText is empty.");
         }
         $this->queryString = $queryString;
-        $this->isFetched = false;
-        $this->isPrepared = false;
-        $this->executedMode = -1;
         $this->db = $db;
         $this->defaultFetchFunction = function () {
             return oci_fetch_array($this->resource, OCI_ASSOC);
@@ -159,6 +152,7 @@ class Statement implements \IteratorAggregate
      */
     public function free()
     {
+        $this->state = self::STATE_FREED;
         if ($this->resource) {
             oci_free_statement($this->resource);
             $this->resource = null;
@@ -181,9 +175,7 @@ class Statement implements \IteratorAggregate
      */
     public function bind($bindings)
     {
-        if (!$this->isPrepared) {
-            $this->prepare();
-        }
+        $this->prepare();
 
         if (!is_array($bindings)) {
             return $this;
@@ -229,9 +221,7 @@ class Statement implements \IteratorAggregate
      */
     public function bindArray($name, $binding, $maxLength, $maxItemLength = -1, $type = SQLT_AFC)
     {
-        if (!$this->isPrepared) {
-            $this->prepare();
-        }
+        $this->prepare();
         $bindResult = oci_bind_array_by_name(
             $this->resource,
             $name,
@@ -272,9 +262,7 @@ class Statement implements \IteratorAggregate
      */
     public function execute($mode = null)
     {
-        if (!$this->isPrepared) {
-            $this->prepare();
-        }
+        $this->prepare();
 
         //If $mode not in oci constants list, then use db config value
         if (array_search($mode,[OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY]) === false) {
@@ -290,8 +278,11 @@ class Statement implements \IteratorAggregate
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
-        $this->executedMode = $mode;
-        $this->isFetched = false; //reset flag because of new data set after execute
+        if ($mode | OCI_DESCRIBE_ONLY) {
+            $this->state = self::STATE_EXECUTED_DESCRIBE;
+        } else {
+            $this->state = self::STATE_EXECUTED;
+        }
 
         return $this;
     }
@@ -411,7 +402,7 @@ class Statement implements \IteratorAggregate
             return oci_fetch_array($this->resource, $mode);
         };
         $this->result = $this->tupleGenerator($fetchFunction)->current()[ $index ];
-        $this->isFetched = true;
+        $this->state = self::STATE_FETCHED;
 
         return $this->result;
     }
@@ -501,9 +492,7 @@ class Statement implements \IteratorAggregate
      */
     public function getType()
     {
-        if (!$this->isPrepared) {
-            $this->prepare();
-        }
+        $this->prepare();
         $type = oci_statement_type($this->resource);
         if ($type === false) {
             $error = $this->getOCIError();
@@ -521,8 +510,8 @@ class Statement implements \IteratorAggregate
      */
     public function prepare()
     {
-        if ($this->isPrepared) {
-            throw new Exception('This statement has already been prepared');
+        if ($this->state >= self::STATE_PREPARED) {
+            return $this;
         }
 
         // get oci8 statement resource
@@ -533,7 +522,7 @@ class Statement implements \IteratorAggregate
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
 
-        $this->isPrepared = true;
+        $this->state = self::STATE_PREPARED;
 
         return $this;
     }
@@ -605,7 +594,7 @@ class Statement implements \IteratorAggregate
      */
     protected function tupleGenerator($fetchFunction = null)
     {
-        if ($this->isFetched) {
+        if ($this->state === self::STATE_FETCHED) {
             throw new Exception("Statement is already fetched. Need to execute it before fetching again.");
         }
 
@@ -628,7 +617,7 @@ class Statement implements \IteratorAggregate
             yield $tuple;
         }
 
-        $this->isFetched = true;
+        $this->state = self::STATE_FETCHED;
     }
 
     /**
@@ -654,7 +643,7 @@ class Statement implements \IteratorAggregate
     public function count()
     {
         $type = $this->getType();
-        if ($type === self::TYPE_SELECT && !$this->isFetched) {
+        if ($type === self::TYPE_SELECT && $this->state !== self::STATE_FETCHED) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
             $prevStatement = $this->db->getLastStatement();
             $count = $this->db->query($sql, $this->bindings)->fetchOne();
@@ -673,7 +662,7 @@ class Statement implements \IteratorAggregate
      */
     public function getFieldMetadata($index)
     {
-        if ($this->executedMode === -1) {
+        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
             $this->execute(OCI_DESCRIBE_ONLY);
         }
         if (is_numeric($index) && $index < 1) {
@@ -704,7 +693,7 @@ class Statement implements \IteratorAggregate
      */
     public function getFieldNumber()
     {
-        if ($this->executedMode === -1) {
+        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
             $this->execute(OCI_DESCRIBE_ONLY);
         }
 
@@ -738,6 +727,6 @@ class Statement implements \IteratorAggregate
      */
     public function isFetchable()
     {
-        return $this->executedMode !== -1 && $this->executedMode !== OCI_DESCRIBE_ONLY;
+        return $this->state === self::STATE_EXECUTED ? true : false;
     }
 }
