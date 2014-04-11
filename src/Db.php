@@ -33,6 +33,11 @@ class Db
     protected $lastStatement;
 
     /**
+     * @var Statement[]
+     */
+    protected $statementCache;
+
+    /**
      * @var resource connection resource
      */
     protected $connection;
@@ -545,5 +550,34 @@ class Db
         }
 
         return $this;
+    }
+
+    /**
+     * @param $statement Statement
+     *
+     * @return $this
+     */
+    protected function setStatementCache($statement)
+    {
+        $hash = hash('md5', $statement->getQueryString());
+        $this->statementCache[ $hash ] = $statement;
+
+        return $this;
+    }
+
+    /**
+     * @param $sql
+     *
+     * @return null|Statement
+     */
+    protected function getStatementCache($sql)
+    {
+        $statement = null;
+        $hash = hash('md5', $sql);
+        if (isset($this->statementCache[$hash])) {
+            $statement = $this->statementCache[ $hash ];
+        }
+
+        return $statement;
     }
 }
