@@ -27,13 +27,9 @@ class Db
      */
     public $profiler;
 
-    /**
-     * @var Statement
-     */
-    protected $lastStatement;
 
     /**
-     * @var Statement[]
+     * @var StatementCache
      */
     protected $statementCache;
 
@@ -233,7 +229,7 @@ class Db
      */
     public function getLastStatement()
     {
-        return $this->lastStatement;
+        return $this->statementCache->getLast();
     }
 
     /**
@@ -282,10 +278,10 @@ class Db
     public function prepare($sqlText)
     {
         $this->connect();
-        $this->lastStatement = new Statement($this, $sqlText);
-        $this->lastStatement->prepare();
+        $statement = $this->getStatement($sqlText);
+        $statement->prepare();
 
-        return $this->lastStatement;
+        return $statement;
     }
 
     /**
@@ -301,15 +297,7 @@ class Db
      */
     public function query($sqlText, $bindings = null, $mode = null)
     {
-        /*
-         * Simple caching of last statement
-         */
-        if (isset($this->lastStatement) && $sqlText === $this->lastStatement->getQueryString()) {
-            $statement = $this->lastStatement;
-        } else {
-            $statement = $this->prepare($sqlText);
-        }
-
+        $statement = $this->prepare($sqlText);
         $statement->bind($bindings);
         $statement->execute($mode);
 
@@ -375,6 +363,8 @@ class Db
         if ($this->config('profiler.enabled')) {
             return $this->profiler->startFetch($profileId);
         }
+
+        return null;
     }
 
     /**
@@ -402,6 +392,8 @@ class Db
         if ($this->config('profiler.enabled')) {
             return $this->profiler->stopFetch($profileId);
         }
+
+        return null;
     }
 
     /**
@@ -472,7 +464,10 @@ class Db
             'client.info'           => '',
             'client.moduleName'     => '',
             'profiler.enabled'      => false,
-            'profiler.class'        => __NAMESPACE__.'\\Profiler'
+            'profiler.class'        => __NAMESPACE__.'\\Profiler',
+            'statement.cache'       => true,
+            'statement.cache.size'  => 50,
+            'statement.cache.class' => __NAMESPACE__.'\\StatementCache'
         ];
     }
 
@@ -508,6 +503,12 @@ class Db
         if ($this->config('profiler.enabled')) {
             $class = $this->config('profiler.class');
             $this->profiler = is_string($class) ? new $class() : $class;
+        }
+
+        //Set up cache
+        if ($this->config('statement.cache')) {
+            $class = $this->config('statement.cache.class');
+            $this->statementCache = is_string($class) ? new $class() : $class;
         }
 
         /** @noinspection PhpUndefinedFunctionInspection */
@@ -553,29 +554,31 @@ class Db
     }
 
     /**
-     * @param $statement Statement
-     *
-     * @return $this
-     */
-    protected function setStatementCache($statement)
-    {
-        $hash = hash('md5', $statement->getQueryString());
-        $this->statementCache[ $hash ] = $statement;
-
-        return $this;
-    }
-
-    /**
      * @param $sql
      *
-     * @return null|Statement
+     * @return Statement
+     * @throws Exception
      */
-    protected function getStatementCache($sql)
+    protected function getStatement($sql)
     {
+        $statementCacheEnabled = $this->config('statement.cache');
         $statement = null;
-        $hash = hash('md5', $sql);
-        if (isset($this->statementCache[$hash])) {
-            $statement = $this->statementCache[ $hash ];
+
+        if ($statementCacheEnabled) {
+            $statement = $this->statementCache->get($sql);
+        }
+
+        $statement = $statement ? : new Statement($this, $sql);
+
+        if ($statementCacheEnabled) {
+            $trashStatements = $this->statementCache->add($statement);
+            /**
+             * @var Statement $trashStatement
+             */
+            foreach ($trashStatements as $trashStatement) {
+                $trashStatement->free();
+            }
+
         }
 
         return $statement;
