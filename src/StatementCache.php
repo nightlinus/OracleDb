@@ -38,11 +38,13 @@ class StatementCache {
 
     /**
      * @param mixed $cacheSize
+     *
+     * @return \Generator
      */
     public function setCacheSize($cacheSize)
     {
         $this->cacheSize = $cacheSize;
-        $this->cleanOldCache();
+        return $this->cleanOldCache();
     }
 
     /**
@@ -55,13 +57,15 @@ class StatementCache {
 
     /**
      * @param $statement Statement
+     *
+     * @return \Generator
      */
     public function add($statement)
     {
         $hash = $this->getHash($statement);
         $this->hashCache[ $hash ] = $statement;
         array_push($this->orderCache, $statement);
-        $this->cleanOldCache();
+        return $this->cleanOldCache();
     }
 
     /**
@@ -77,7 +81,7 @@ class StatementCache {
     }
 
     /**
-     * @return $this
+     * @return \Generator
      */
     protected function cleanOldCache()
     {
@@ -85,9 +89,8 @@ class StatementCache {
             $statement = array_shift($this->orderCache);
             $hash = $this->getHash($statement);
             unset($this->hashCache[ $hash ]);
+            yield $statement;
         }
-
-        return $this;
     }
 
     /**
