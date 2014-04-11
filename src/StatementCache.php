@@ -14,6 +14,10 @@
 namespace OracleDb;
 
 
+/**
+ * Class StatementCache
+ * @package OracleDb
+ */
 class StatementCache {
 
     /**
@@ -63,8 +67,9 @@ class StatementCache {
     public function add($statement)
     {
         $hash = $this->getHash($statement);
-        $this->hashCache[ $hash ] = $statement;
-        array_push($this->orderCache, $statement);
+        $this->hashCache[ $hash ]['value'] = $statement;
+        $this->orderCache[] = $statement;
+        $this->hashCache[ $hash ]['position'] = count($this->orderCache) - 1;
         return $this->cleanOldCache();
     }
 
@@ -76,8 +81,15 @@ class StatementCache {
     public function get($sql)
     {
         $hash = $this->getHash($sql);
-
-        return isset($this->hashCache[ $hash ]) ? $this->hashCache[ $hash ] : null;
+        $inCache = isset($this->hashCache[ $hash ]['value']);
+        if ($inCache) {
+            $statement = $this->hashCache[ $hash ][ 'value' ];
+            array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
+            $this->orderCache[ ] = $statement;
+            return $statement;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -106,5 +118,13 @@ class StatementCache {
         }
 
         return hash('md5', $sql);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLast()
+    {
+        return end($this->orderCache);
     }
 } 
