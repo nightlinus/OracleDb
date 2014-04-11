@@ -161,6 +161,7 @@ class Statement implements \IteratorAggregate
     {
         if ($this->resource) {
             oci_free_statement($this->resource);
+            $this->resource = null;
         }
     }
 
