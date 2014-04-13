@@ -302,9 +302,8 @@ class Statement implements \IteratorAggregate
         $fetchFunction = function () use ($mode) {
             return oci_fetch_array($this->resource, $mode);
         };
-        $this->iterateTuples($fetchFunction);
 
-        return $this->result;
+        return $this->iterateTuples($fetchFunction);
     }
 
     /**
@@ -346,12 +345,10 @@ class Statement implements \IteratorAggregate
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($column) {
-            $result[ ] = $item[ $column ];
+           return $result[ ] = $item[ $column ];
         };
 
-        $this->iterateTuples($fetchFunction, $callback);
-
-        return $this->result;
+        return $this->iterateTuples($fetchFunction, $callback);
     }
 
     /**
@@ -372,9 +369,8 @@ class Statement implements \IteratorAggregate
         $fetchFunction = function () {
             return oci_fetch_object($this->resource);
         };
-        $this->iterateTuples($fetchFunction);
 
-        return $this->result;
+        return $this->iterateTuples($fetchFunction);
     }
 
     /**
@@ -435,12 +431,10 @@ class Statement implements \IteratorAggregate
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($firstCol, $secondCol) {
-            $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
+           return $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
         };
 
-        $this->iterateTuples($fetchFunction, $callback);
-
-        return $this->result;
+        return $this->iterateTuples($fetchFunction, $callback);
     }
 
     /**
@@ -565,7 +559,7 @@ class Statement implements \IteratorAggregate
      * @param callable $callback Функция для обработки элементов выборки
      *                           Передаются параметры $item, $index, &result
      *
-     * @return $this
+     * @return mixed
      */
     protected function iterateTuples($fetchFunction = null, $callback = null)
     {
@@ -574,14 +568,14 @@ class Statement implements \IteratorAggregate
         if (!is_callable($callback)) {
             /** @noinspection PhpUnusedParameterInspection */
             $callback = function ($item, $index, &$result) {
-                $result[ ] = $item;
+                return $result[ ] = $item;
             };
         }
         foreach ($this->tupleGenerator($fetchFunction) as $tuple) {
-            $callback($tuple, $index++, $this->result);
+          $res =  $callback($tuple, $index++, $this->result);
         }
 
-        return $this;
+        return $this->result;
     }
 
     /**
@@ -728,5 +722,43 @@ class Statement implements \IteratorAggregate
     public function isFetchable()
     {
         return $this->state === self::STATE_EXECUTED ? true : false;
+    }
+
+    /**
+     * @param      $fetchMode
+     *
+     * @param null $ociMode
+     *
+     * @return callable|null
+     */
+    protected function getFetchFunction($fetchMode, $ociMode = null)
+    {
+        $fetchFunction = null;
+        switch ($fetchMode) {
+            case 1:
+                $fetchFunction = function () use ($ociMode) {
+                    return oci_fetch_array($this->resource, $ociMode);
+                };
+                break;
+            case 2:
+                $fetchFunction = function () {
+                    return oci_fetch_object($this->resource);
+                };
+                break;
+            case 3:
+                $fetchFunction = function () {
+                    $result = [];
+                    oci_fetch_all($this->resource, $result);
+
+                    return $result;
+                };
+                break;
+            default:
+                $fetchFunction = function () {
+                    return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
+                };
+        }
+
+        return $fetchFunction;
     }
 }
