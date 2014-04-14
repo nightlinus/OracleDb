@@ -473,7 +473,7 @@ class Db
             'client.moduleName'     => '',
             'profiler.enabled'      => false,
             'profiler.class'        => __NAMESPACE__.'\\Profiler',
-            'statement.cache'       => true,
+            'statement.cache.enabled'   => true,
             'statement.cache.size'  => 50,
             'statement.cache.class' => __NAMESPACE__.'\\StatementCache'
         ];
