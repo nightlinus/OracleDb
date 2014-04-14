@@ -84,8 +84,7 @@ class Db
         $userName,
         $password,
         $connectionString
-    )
-    {
+    ) {
         if (!isset($userName) || !isset($password) || !isset($connectionString)) {
             throw new Exception("One of connection parameters is null or not set");
         }
@@ -416,6 +415,27 @@ class Db
     }
 
     /**
+     * Method to set session variables via ALTER SESSION SET variable = value
+     *
+     * @param array $variables
+     *
+     * @return $this
+     */
+    protected function alterSession($variables)
+    {
+        if (count($variables) === 0) {
+            return $this;
+        }
+        $sql = "ALTER SESSION SET ";
+        foreach ($variables as $key => $value) {
+            $sql .= "$key = '$value' ";
+        }
+        $this->query($sql);
+
+        return $this;
+    }
+
+    /**
      * Cleaning memory by dissposing connection
      * handlers
      *
@@ -435,6 +455,35 @@ class Db
     }
 
     /**
+     * Method returns default settings
+     * for Db class
+     *
+     * @return array
+     */
+    protected function getDefaultSettings()
+    {
+        return [
+            'session.charset'         => 'AL32UTF8',
+            'session.autocommit'      => false,
+            'session.dateFormat'      => 'DD.MM.YYYY HH24:MI:SS',
+            'session.dateLanguage'    => false,
+            'connection.persistent'   => false,
+            'connection.privileged'   => OCI_DEFAULT,
+            'connection.cache'        => false,
+            'connection.class'        => false,
+            'connection.edition'      => false,
+            'client.identifier'       => '',
+            'client.info'             => '',
+            'client.moduleName'       => '',
+            'profiler.enabled'        => false,
+            'profiler.class'          => __NAMESPACE__ . '\\Profiler',
+            'statement.cache.enabled' => true,
+            'statement.cache.size'    => 50,
+            'statement.cache.class'   => __NAMESPACE__ . '\\StatementCache'
+        ];
+    }
+
+    /**
      * Method to fetch OCI8 error
      * Returns associative array with
      * "code" and "message" keys.
@@ -451,53 +500,39 @@ class Db
     }
 
     /**
-     * Method returns default settings
-     * for Db class
+     * @param $sql
      *
-     * @return array
+     * @return Statement
+     * @throws Exception
      */
-    protected function getDefaultSettings()
+    protected function getStatement($sql)
     {
-        return [
-            'session.charset'       => 'AL32UTF8',
-            'session.autocommit'    => false,
-            'session.dateFormat'    => 'DD.MM.YYYY HH24:MI:SS',
-            'session.dateLanguage'  => false,
-            'connection.persistent' => false,
-            'connection.privileged' => OCI_DEFAULT,
-            'connection.cache'      => false,
-            'connection.class'      => false,
-            'connection.edition'    => false,
-            'client.identifier'     => '',
-            'client.info'           => '',
-            'client.moduleName'     => '',
-            'profiler.enabled'      => false,
-            'profiler.class'        => __NAMESPACE__.'\\Profiler',
-            'statement.cache.enabled'   => true,
-            'statement.cache.size'  => 50,
-            'statement.cache.class' => __NAMESPACE__.'\\StatementCache'
-        ];
-    }
+        $statementCacheEnabled = $this->config('statement.cache');
+        $statementCache = null;
 
-    /**
-     * Method to set session variables via ALTER SESSION SET variable = value
-     *
-     * @param array $variables
-     *
-     * @return $this
-     */
-    protected function alterSession($variables)
-    {
-        if (count($variables) === 0) {
-            return $this;
+        if ($statementCacheEnabled) {
+            $statementCache = $this->statementCache->get($sql);
         }
-        $sql = "ALTER SESSION SET ";
-        foreach ($variables as $key => $value) {
-            $sql .= "$key = '$value' ";
-        }
-        $this->query($sql);
 
-        return $this;
+        $statement = $statementCache ? : new Statement($this, $sql);
+
+        if ($statementCacheEnabled && $statementCache === null) {
+            $trashStatements = $this->statementCache->add($statement);
+            /**
+             * @var Statement $trashStatement
+             */
+            foreach ($this->statementCache as $trashStatement) {
+                if ($trashStatement->canBeFreed()) {
+                    $trashStatement->free();
+                    if (--$trashStatements) {
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        return $statement;
     }
 
     /**
@@ -560,41 +595,5 @@ class Db
         }
 
         return $this;
-    }
-
-    /**
-     * @param $sql
-     *
-     * @return Statement
-     * @throws Exception
-     */
-    protected function getStatement($sql)
-    {
-        $statementCacheEnabled = $this->config('statement.cache');
-        $statementCache = null;
-
-        if ($statementCacheEnabled) {
-            $statementCache = $this->statementCache->get($sql);
-        }
-
-        $statement = $statementCache ? : new Statement($this, $sql);
-
-        if ($statementCacheEnabled && $statementCache === null) {
-            $trashStatements = $this->statementCache->add($statement);
-            /**
-             * @var Statement $trashStatement
-             */
-            foreach ($this->statementCache as $trashStatement) {
-                if ($trashStatement->canBeFreed()) {
-                    $trashStatement->free();
-                    if (--$trashStatements) {
-                       break;
-                   }
-                }
-            }
-
-        }
-
-        return $statement;
     }
 }
