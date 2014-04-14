@@ -23,6 +23,7 @@ namespace OracleDb;
  *
  * @package OracleDb
  */
+/** @noinspection PhpInconsistentReturnPointsInspection */
 class Statement implements \IteratorAggregate
 {
 
@@ -735,9 +736,7 @@ class Statement implements \IteratorAggregate
                 yield $key => $this->result[$key];
             }
         }
-        if ($this->returnType === self::RETURN_ITERATOR) {
-            return null;
-        } else {
+        if (!$this->returnType === self::RETURN_ITERATOR) {
             return $this->result;
         }
     }
