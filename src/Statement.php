@@ -716,7 +716,6 @@ class Statement implements \IteratorAggregate
      *                           Передаются параметры $item, $index, &result
      *
      * @throws Exception
-     * @internal param $returnIterator
      * @return mixed
      */
     protected function iterateTuples($fetchMode = null, $ociMode = null, $callback = null)
