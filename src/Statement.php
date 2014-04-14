@@ -54,9 +54,17 @@ class Statement implements \IteratorAggregate
 
     const STATE_FETCHED = 2;
 
-    const STATE_EXECUTED_DESCRIBE = 3;
+    const STATE_EXECUTED_DESCRIBE = 4;
 
-    const STATE_EXECUTED = 4;
+    const STATE_EXECUTED = 8;
+
+    const FETCH_ARRAY = 1;
+
+    const FETCH_ASSOC = 2;
+
+    const FETCH_OBJ = 4;
+
+    const FETCH_ALL = 8;
 
     /**
      * Internal state of Statement
@@ -735,21 +743,20 @@ class Statement implements \IteratorAggregate
     {
         $fetchFunction = null;
         switch ($fetchMode) {
-            case 1:
+            case self::FETCH_ARRAY:
                 $fetchFunction = function () use ($ociMode) {
                     return oci_fetch_array($this->resource, $ociMode);
                 };
                 break;
-            case 2:
+            case self::FETCH_OBJ:
                 $fetchFunction = function () {
                     return oci_fetch_object($this->resource);
                 };
                 break;
-            case 3:
-                $fetchFunction = function () {
+            case self::FETCH_ALL:
+                $fetchFunction = function () use ($ociMode) {
                     $result = [];
-                    oci_fetch_all($this->resource, $result);
-
+                    oci_fetch_all($this->resource, $result, null, $ociMode);
                     return $result;
                 };
                 break;
@@ -757,6 +764,16 @@ class Statement implements \IteratorAggregate
                 $fetchFunction = function () {
                     return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
                 };
+        }
+
+        if ($this->profileId) {
+            $fetchFunction = function () use ($fetchFunction) {
+                $this->db->startFetchProfile($this->profileId);
+                $res = $fetchFunction();
+                $this->db->stopFetchProfile($this->profileId);
+
+                return $res;
+            };
         }
 
         return $fetchFunction;
