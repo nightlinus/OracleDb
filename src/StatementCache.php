@@ -71,10 +71,15 @@ class StatementCache implements \IteratorAggregate {
     public function add($statement)
     {
         $hash = $this->getHash($statement);
-        $this->hashCache[ $hash ]['value'] = $statement;
-        $this->orderCache[] = $statement;
-        $this->hashCache[ $hash ]['position'] = count($this->orderCache) - 1;
-        return $this->getCleanCount();
+        $toClean = 0;
+        $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
+        if (!$inCache) {
+            $this->hashCache[ $hash ]['value'] = $statement;
+            $this->orderCache[] = $statement;
+            $this->hashCache[ $hash ]['position'] = count($this->orderCache) - 1;
+            $toClean = $this->getCleanCount();
+        }
+        return $toClean;
     }
 
     /**
