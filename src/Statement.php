@@ -319,11 +319,15 @@ class Statement implements \IteratorAggregate
      *                  with numeric keys or strings
      *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
-     * @return array[]
+     * @return array[] | \Generator
      */
     public function fetchArray($mode = OCI_NUM)
     {
-        return $this->iterateTuples(self::FETCH_ARRAY, $mode);
+        if (($mode | OCI_NUM) === 0) {
+            $mode = OCI_NUM + $mode;
+        }
+
+        return $this->getResultObject(null, self::FETCH_ARRAY, $mode);
     }
 
     /**
@@ -335,10 +339,13 @@ class Statement implements \IteratorAggregate
      *                  with numeric keys or strings
      *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
-     * @return array[]
+     * @return array[] | \Generator
      */
-    public function fetchAssoc($mode = OCI_ASSOC)
+    public function fetchAssoc($mode = OCI_RETURN_NULLS)
     {
+        if (($mode | OCI_ASSOC) === 0) {
+            $mode = OCI_ASSOC + $mode;
+        }
         return $this->fetchArray($mode);
     }
 
@@ -349,7 +356,7 @@ class Statement implements \IteratorAggregate
      *
      * @param int|string $column set column to fetch from
      *
-     * @return array
+     * @return array | \Generator
      */
     public function fetchColumn($column = 0)
     {
@@ -361,7 +368,7 @@ class Statement implements \IteratorAggregate
             return key($result);
         };
 
-        return $this->iterateTuples(self::FETCH_ARRAY, $mode, $callback);
+        return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
     }
 
     /**
@@ -376,11 +383,11 @@ class Statement implements \IteratorAggregate
     /**
      * Fetch data from statement to the php object
      *
-     * @return array[]
+     * @return array[] | \Generator
      */
     public function fetchObject()
     {
-        return $this->iterateTuples(self::FETCH_OBJ);
+        return $this->aggregateTupples(null, self::FETCH_OBJ);
     }
 
     /**
@@ -403,7 +410,7 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        $this->result = $this->tupleGenerator(self::FETCH_ARRAY, $mode)->current()[ $index ];
+        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current()[ $index ];
         $this->state = self::STATE_FETCHED;
 
         return $this->result;
@@ -418,7 +425,7 @@ class Statement implements \IteratorAggregate
      * @param int|string $firstCol  колонка с ключом
      * @param int|string $secondCol колонка со значением
      *
-     * @return array
+     * @return array | \Generator
      */
     public function fetchPairs($firstCol = 1, $secondCol = 2)
     {
@@ -438,7 +445,7 @@ class Statement implements \IteratorAggregate
             return $index;
         };
 
-        return $this->iterateTuples(self::FETCH_ARRAY, $mode, $callback);
+        return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
     }
 
     /**
@@ -652,7 +659,7 @@ class Statement implements \IteratorAggregate
      */
     protected function getFetchFunction($fetchMode, $ociMode = null)
     {
-        $fetchFunction = null;
+        $ociMode = $ociMode ? : OCI_ASSOC + OCI_RETURN_NULLS;
         switch ($fetchMode) {
             case self::FETCH_ARRAY:
                 $fetchFunction = function () use ($ociMode) {
@@ -709,28 +716,20 @@ class Statement implements \IteratorAggregate
     /**
      * Itereate over all rows in fetched data
      *
+     * @param callable $callback Функция для обработки элементов выборки
+     *                           Передаются параметры $item, $index, &result
+     *
      * @param int      $fetchMode
      *
      * @param int|null $ociMode
-     * @param callable $callback Функция для обработки элементов выборки
-     *                           Передаются параметры $item, $index, &result
      *
      * @throws Exception
      * @return mixed
      */
-    protected function iterateTuples($fetchMode = null, $ociMode = null, $callback = null)
+    protected function aggregateTupples($callback = null, $fetchMode = null, $ociMode = null)
     {
-        $this->result = [ ];
-        $index = 0;
-        if (!is_callable($callback)) {
-            /** @noinspection PhpUnusedParameterInspection */
-            $callback = function ($item, $index, &$result) {
-                $result[ ] = $item;
-                return key($result);
-            };
-        }
-        foreach ($this->tupleGenerator($fetchMode, $ociMode) as $tuple) {
-            $callback($tuple, $index++, $this->result);
+        foreach ($this->tupleGenerator($callback, $fetchMode, $ociMode) as $tuple) {
+
         }
 
         return $this->result;
@@ -739,13 +738,15 @@ class Statement implements \IteratorAggregate
     /**
      * Generator for iterating over fetched rows
      *
+     * @param      $callback
+     *
      * @param int  $fetchMode
      * @param null $ociMode
      *
      * @throws Exception
      * @return \Generator
      */
-    protected function tupleGenerator($fetchMode = null, $ociMode = null)
+    protected function tupleGenerator($callback = null, $fetchMode = null, $ociMode = null)
     {
         if ($this->state === self::STATE_FETCHED) {
             throw new Exception("Statement is already fetched. Need to execute it before fetching again.");
@@ -755,11 +756,40 @@ class Statement implements \IteratorAggregate
             $this->execute();
         }
         $fetchFunction = $this->getFetchFunction($fetchMode, $ociMode);
+        $this->result = [ ];
 
+        if (!is_callable($callback)) {
+            /** @noinspection PhpUnusedParameterInspection */
+            $callback = function ($item, $index, &$result) {
+                $result[ ] = $item;
+
+                return key($result);
+            };
+        }
+
+        $index = 0;
         while (($tuple = $fetchFunction()) !== false) {
-            yield $tuple;
+            $key = $callback($tuple, $index++, $this->result);
+            yield $key => $this->result[$key];
         }
 
         $this->state = self::STATE_FETCHED;
+    }
+
+    /**
+     * @param $callback
+     * @param $fetchMode
+     * @param $ociMode
+     *
+     * @return \Generator|mixed
+     * @throws Exception
+     */
+    protected function getResultObject($callback, $fetchMode, $ociMode)
+    {
+        if ($this->returnType === self::RETURN_ITERATOR) {
+            return $this->tupleGenerator($callback, $fetchMode, $ociMode);
+        } else {
+            return $this->aggregateTupples($callback, $fetchMode, $ociMode);
+        }
     }
 }
