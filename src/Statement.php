@@ -26,6 +26,24 @@ namespace OracleDb;
 class Statement implements \IteratorAggregate
 {
 
+    const FETCH_ALL = 8;
+
+    const FETCH_ARRAY = 1;
+
+    const FETCH_ASSOC = 2;
+
+    const FETCH_OBJ = 4;
+
+    const STATE_EXECUTED = 8;
+
+    const STATE_EXECUTED_DESCRIBE = 4;
+
+    const STATE_FETCHED = 2;
+
+    const STATE_FREED = 0;
+
+    const STATE_PREPARED = 1;
+
     const TYPE_ALTER = 'ALTER';
 
     const TYPE_BEGIN = 'BEGIN';
@@ -44,34 +62,9 @@ class Statement implements \IteratorAggregate
 
     const TYPE_SELECT = 'SELECT';
 
-    const TYPE_UPDATE = 'UPDATE';
-
     const TYPE_UNKNOWN = 'UNKNOWN';
 
-    const STATE_FREED = 0;
-
-    const STATE_PREPARED = 1;
-
-    const STATE_FETCHED = 2;
-
-    const STATE_EXECUTED_DESCRIBE = 4;
-
-    const STATE_EXECUTED = 8;
-
-    const FETCH_ARRAY = 1;
-
-    const FETCH_ASSOC = 2;
-
-    const FETCH_OBJ = 4;
-
-    const FETCH_ALL = 8;
-
-    /**
-     * Internal state of Statement
-     *
-     * @var int
-     */
-    protected $state;
+    const TYPE_UPDATE = 'UPDATE';
 
     /**
      * result of last fetch fucntion
@@ -87,6 +80,13 @@ class Statement implements \IteratorAggregate
      * @var array|null
      */
     public $bindings;
+
+    /**
+     * Internal state of Statement
+     *
+     * @var int
+     */
+    protected $state;
 
     /**
      * Default fetch function used
@@ -156,18 +156,6 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Method for free statement resource
-     */
-    public function free()
-    {
-        $this->state = self::STATE_FREED;
-        if ($this->resource) {
-            oci_free_statement($this->resource);
-            $this->resource = null;
-        }
-    }
-
-    /**
      * Method to bind host-variables
      * Example:
      * $stmt->bind([
@@ -193,11 +181,11 @@ class Statement implements \IteratorAggregate
             $length = -1;
             $value = $bindingValue;
             if (is_array($bindingValue)) {
-                $value = isset($bindingValue[ 0 ]) ? $bindingValue[ 0 ] : (isset($bindingValue['value']) ? $bindingValue['value'] : null);
+                $value = isset($bindingValue[ 0 ]) ? $bindingValue[ 0 ] : (isset($bindingValue[ 'value' ]) ? $bindingValue[ 'value' ] : null);
                 $length = isset($bindingValue[ 1 ]) ? $bindingValue[ 1 ] : (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : $length);
                 $type = isset($bindingValue[ 2 ]) ? $bindingValue[ 2 ] : (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : $type);
             }
-            $this->bindings[$bindingName] = $value;
+            $this->bindings[ $bindingName ] = $value;
             $bindResult = oci_bind_by_name(
                 $this->resource,
                 $bindingName,
@@ -260,6 +248,27 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Method to get count of rows for SELECT and
+     * count of affected rows from other stetement types
+     *
+     * @return int
+     */
+    public function count()
+    {
+        $type = $this->getType();
+        if ($type === self::TYPE_SELECT && $this->state !== self::STATE_FETCHED) {
+            $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
+            $prevStatement = $this->db->getLastStatement();
+            $count = $this->db->query($sql, $this->bindings)->fetchOne();
+            $this->db->setLastStatement($prevStatement);
+        } else {
+            $count = $this->getAffectedRowsNumber();
+        }
+
+        return $count;
+    }
+
+    /**
      * Method to execute sql inside statement
      *
      * @param int|null $mode this parameter is
@@ -273,7 +282,7 @@ class Statement implements \IteratorAggregate
         $this->prepare();
 
         //If $mode not in oci constants list, then use db config value
-        if (array_search($mode,[OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY]) === false) {
+        if (array_search($mode, [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ]) === false) {
             $mode = $this->db->config('session.autocommit') ? OCI_COMMIT_ON_SUCCESS : OCI_NO_AUTO_COMMIT;
         }
 
@@ -353,7 +362,7 @@ class Statement implements \IteratorAggregate
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($column) {
-           return $result[ ] = $item[ $column ];
+            return $result[ ] = $item[ $column ];
         };
 
         return $this->iterateTuples($fetchFunction, $callback);
@@ -439,10 +448,22 @@ class Statement implements \IteratorAggregate
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($firstCol, $secondCol) {
-           return $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
+            return $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
         };
 
         return $this->iterateTuples($fetchFunction, $callback);
+    }
+
+    /**
+     * Method for free statement resource
+     */
+    public function free()
+    {
+        $this->state = self::STATE_FREED;
+        if ($this->resource) {
+            oci_free_statement($this->resource);
+            $this->resource = null;
+        }
     }
 
     /**
@@ -464,6 +485,58 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param $index
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function getFieldMetadata($index)
+    {
+        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
+            $this->execute(OCI_DESCRIBE_ONLY);
+        }
+        if (is_numeric($index) && $index < 1) {
+            throw new Exception("Index must be larger then 1, index: $index");
+        }
+        $result = [
+            'name'       => oci_field_name($this->resource, $index),
+            'size'       => oci_field_size($this->resource, $index),
+            'precision'  => oci_field_precision($this->resource, $index),
+            'scale'      => oci_field_scale($this->resource, $index),
+            'type'       => oci_field_type($this->resource, $index),
+            'typeDriver' => oci_field_type_raw($this->resource, $index)
+        ];
+
+        foreach ($result as $field) {
+            if ($field === false) {
+                $error = $this->getOCIError();
+                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return int
+     * @throws Exception
+     */
+    public function getFieldNumber()
+    {
+        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
+            $this->execute(OCI_DESCRIBE_ONLY);
+        }
+
+        $result = oci_num_fields($this->resource);
+        if ($result === false) {
+            $error = $this->getOCIError();
+            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+        }
+
+        return $result;
+    }
+
+    /**
      * Retrieve an external iterator
      *
      * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
@@ -472,6 +545,22 @@ class Statement implements \IteratorAggregate
     public function getIterator()
     {
         return $this->tupleGenerator();
+    }
+
+    /**
+     * Method to get full statement metadata for each field
+     *
+     * @return array[]
+     */
+    public function getMetadata()
+    {
+        $fieldNmber = $this->getFieldNumber() + 1;
+        $result = [ ];
+        for ($i = 1; $i < $fieldNmber; $i++) {
+            $result[ ] = $this->getFieldMetadata($i);
+        }
+
+        return $result;
     }
 
     /**
@@ -502,6 +591,14 @@ class Statement implements \IteratorAggregate
         }
 
         return $type;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFetchable()
+    {
+        return $this->state === self::STATE_EXECUTED ? true : false;
     }
 
     /**
@@ -560,6 +657,68 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param      $fetchMode
+     *
+     * @param null $ociMode
+     *
+     * @return callable|null
+     */
+    protected function getFetchFunction($fetchMode, $ociMode = null)
+    {
+        $fetchFunction = null;
+        switch ($fetchMode) {
+            case self::FETCH_ARRAY:
+                $fetchFunction = function () use ($ociMode) {
+                    return oci_fetch_array($this->resource, $ociMode);
+                };
+                break;
+            case self::FETCH_OBJ:
+                $fetchFunction = function () {
+                    return oci_fetch_object($this->resource);
+                };
+                break;
+            case self::FETCH_ALL:
+                $fetchFunction = function () use ($ociMode) {
+                    $result = [ ];
+                    oci_fetch_all($this->resource, $result, null, $ociMode);
+
+                    return $result;
+                };
+                break;
+            default:
+                $fetchFunction = function () {
+                    return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
+                };
+        }
+
+        if ($this->profileId) {
+            $fetchFunction = function () use ($fetchFunction) {
+                $this->db->startFetchProfile($this->profileId);
+                $res = $fetchFunction();
+                $this->db->stopFetchProfile($this->profileId);
+
+                return $res;
+            };
+        }
+
+        return $fetchFunction;
+    }
+
+    /**
+     * Fetches oci error for statement
+     *
+     * @return array
+     */
+    protected function getOCIError()
+    {
+        $ociResource = $this->resource;
+
+        return is_resource($ociResource) ?
+            oci_error($ociResource) :
+            oci_error();
+    }
+
+    /**
      * Itereate over all rows in fetched data
      *
      * @param callable $fetchFunction
@@ -580,7 +739,7 @@ class Statement implements \IteratorAggregate
             };
         }
         foreach ($this->tupleGenerator($fetchFunction) as $tuple) {
-          $res =  $callback($tuple, $index++, $this->result);
+            $res = $callback($tuple, $index++, $this->result);
         }
 
         return $this->result;
@@ -606,10 +765,11 @@ class Statement implements \IteratorAggregate
         $profiledFetchFunction = null;
         $notProfiledFetchFunction = $fetchFunction ? : $this->defaultFetchFunction;
         if ($this->profileId) {
-            $profiledFetchFunction = function() use ($notProfiledFetchFunction) {
+            $profiledFetchFunction = function () use ($notProfiledFetchFunction) {
                 $this->db->startFetchProfile($this->profileId);
                 $res = $notProfiledFetchFunction();
                 $this->db->stopFetchProfile($this->profileId);
+
                 return $res;
             };
         }
@@ -620,162 +780,5 @@ class Statement implements \IteratorAggregate
         }
 
         $this->state = self::STATE_FETCHED;
-    }
-
-    /**
-     * Fetches oci error for statement
-     *
-     * @return array
-     */
-    protected function getOCIError()
-    {
-        $ociResource = $this->resource;
-
-        return is_resource($ociResource) ?
-            oci_error($ociResource) :
-            oci_error();
-    }
-
-    /**
-     * Method to get count of rows for SELECT and
-     * count of affected rows from other stetement types
-     *
-     * @return int
-     */
-    public function count()
-    {
-        $type = $this->getType();
-        if ($type === self::TYPE_SELECT && $this->state !== self::STATE_FETCHED) {
-            $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
-            $prevStatement = $this->db->getLastStatement();
-            $count = $this->db->query($sql, $this->bindings)->fetchOne();
-            $this->db->setLastStatement($prevStatement);
-        } else {
-            $count = $this->getAffectedRowsNumber();
-        }
-        return $count;
-    }
-
-    /**
-     * @param $index
-     *
-     * @return array
-     * @throws Exception
-     */
-    public function getFieldMetadata($index)
-    {
-        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
-            $this->execute(OCI_DESCRIBE_ONLY);
-        }
-        if (is_numeric($index) && $index < 1) {
-            throw new Exception("Index must be larger then 1, index: $index");
-        }
-        $result = [
-            'name'      => oci_field_name($this->resource, $index),
-            'size'      => oci_field_size($this->resource, $index),
-            'precision' => oci_field_precision($this->resource, $index),
-            'scale'     => oci_field_scale($this->resource, $index),
-            'type'      => oci_field_type($this->resource, $index),
-            'typeDriver'   => oci_field_type_raw($this->resource, $index)
-        ];
-
-        foreach ($result as $field) {
-            if ($field === false) {
-                $error = $this->getOCIError();
-                throw new Exception($error[ 'message' ], $error[ 'code' ]);
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return int
-     * @throws Exception
-     */
-    public function getFieldNumber()
-    {
-        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
-            $this->execute(OCI_DESCRIBE_ONLY);
-        }
-
-        $result = oci_num_fields($this->resource);
-        if ($result === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Method to get full statement metadata for each field
-     *
-     * @return array[]
-     */
-    public function getMetadata()
-    {
-        $fieldNmber = $this->getFieldNumber() + 1;
-        $result = [ ];
-        for ($i = 1; $i < $fieldNmber; $i++) {
-            $result[ ] = $this->getFieldMetadata($i);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isFetchable()
-    {
-        return $this->state === self::STATE_EXECUTED ? true : false;
-    }
-
-    /**
-     * @param      $fetchMode
-     *
-     * @param null $ociMode
-     *
-     * @return callable|null
-     */
-    protected function getFetchFunction($fetchMode, $ociMode = null)
-    {
-        $fetchFunction = null;
-        switch ($fetchMode) {
-            case self::FETCH_ARRAY:
-                $fetchFunction = function () use ($ociMode) {
-                    return oci_fetch_array($this->resource, $ociMode);
-                };
-                break;
-            case self::FETCH_OBJ:
-                $fetchFunction = function () {
-                    return oci_fetch_object($this->resource);
-                };
-                break;
-            case self::FETCH_ALL:
-                $fetchFunction = function () use ($ociMode) {
-                    $result = [];
-                    oci_fetch_all($this->resource, $result, null, $ociMode);
-                    return $result;
-                };
-                break;
-            default:
-                $fetchFunction = function () {
-                    return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
-                };
-        }
-
-        if ($this->profileId) {
-            $fetchFunction = function () use ($fetchFunction) {
-                $this->db->startFetchProfile($this->profileId);
-                $res = $fetchFunction();
-                $this->db->stopFetchProfile($this->profileId);
-
-                return $res;
-            };
-        }
-
-        return $fetchFunction;
     }
 }
