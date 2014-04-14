@@ -571,15 +571,15 @@ class Db
     protected function getStatement($sql)
     {
         $statementCacheEnabled = $this->config('statement.cache');
-        $statement = null;
+        $statementCache = null;
 
         if ($statementCacheEnabled) {
-            $statement = $this->statementCache->get($sql);
+            $statementCache = $this->statementCache->get($sql);
         }
 
-        $statement = $statement ? : new Statement($this, $sql);
+        $statement = $statementCache ? : new Statement($this, $sql);
 
-        if ($statementCacheEnabled) {
+        if ($statementCacheEnabled && $statementCache === null) {
             $trashStatements = $this->statementCache->add($statement);
             /**
              * @var Statement $trashStatement
