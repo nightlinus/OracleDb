@@ -376,12 +376,23 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Method for fetching data as map
+     * @param int|string $mapIndex
+     *
+     * @return \Generator|array[]
      */
-    public function fetchMap()
+    public function fetchMap($mapIndex)
     {
-        //TODO implement fetchMap method
-        throw new Exception("Not implemented yet");
+        $mode = is_numeric($mapIndex) ? OCI_NUM + OCI_RETURN_NULLS : OCI_ASSOC + OCI_RETURN_NULLS;
+
+        /** @noinspection PhpUnusedParameterInspection */
+        $callback = function ($item, $index, &$result) use ($mapIndex) {
+            $key = $item[ $mapIndex ];
+            $result[ $key ] = $item;
+
+            return key($result);
+        };
+
+        return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
     }
 
     /**
