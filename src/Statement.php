@@ -316,11 +316,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchArray($mode = OCI_NUM)
     {
-        $fetchFunction = function () use ($mode) {
-            return oci_fetch_array($this->resource, $mode);
-        };
-
-        return $this->iterateTuples($fetchFunction);
+        return $this->iterateTuples(self::FETCH_ARRAY, $mode);
     }
 
     /**
@@ -350,22 +346,14 @@ class Statement implements \IteratorAggregate
      */
     public function fetchColumn($column = 0)
     {
-        if (is_numeric($column)) {
-            $mode = OCI_NUM;
-        } else {
-            $mode = OCI_ASSOC;
-        }
-
-        $fetchFunction = function () use ($mode) {
-            return oci_fetch_array($this->resource, $mode);
-        };
+        $mode = is_numeric($column) ? OCI_NUM + OCI_RETURN_NULLS : OCI_ASSOC + OCI_RETURN_NULLS;
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($column) {
             return $result[ ] = $item[ $column ];
         };
 
-        return $this->iterateTuples($fetchFunction, $callback);
+        return $this->iterateTuples(self::FETCH_ARRAY, $mode, $callback);
     }
 
     /**
@@ -383,11 +371,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchObject()
     {
-        $fetchFunction = function () {
-            return oci_fetch_object($this->resource);
-        };
-
-        return $this->iterateTuples($fetchFunction);
+        return $this->iterateTuples(self::FETCH_OBJ);
     }
 
     /**
@@ -403,18 +387,14 @@ class Statement implements \IteratorAggregate
     public function fetchOne($index = 1)
     {
         if (is_numeric($index)) {
-            $mode = OCI_NUM;
+            $mode = OCI_NUM + OCI_RETURN_NULLS;
             //make proper index to indicate that first column has index of 0
             $index--;
         } else {
-            $mode = OCI_ASSOC;
+            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-
-        $fetchFunction = function () use ($mode) {
-            return oci_fetch_array($this->resource, $mode);
-        };
-        $this->result = $this->tupleGenerator($fetchFunction)->current()[ $index ];
+        $this->result = $this->tupleGenerator(self::FETCH_ARRAY, $mode)->current()[ $index ];
         $this->state = self::STATE_FETCHED;
 
         return $this->result;
@@ -434,24 +414,20 @@ class Statement implements \IteratorAggregate
     public function fetchPairs($firstCol = 1, $secondCol = 2)
     {
         if (is_numeric($firstCol) && is_numeric($secondCol)) {
-            $mode = OCI_NUM;
+            $mode = OCI_NUM + OCI_RETURN_NULLS;
             //make proper index to indicate that first column has index of 0
             $firstCol--;
             $secondCol--;
         } else {
-            $mode = OCI_ASSOC;
+            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
-
-        $fetchFunction = function () use ($mode) {
-            return oci_fetch_array($this->resource, $mode);
-        };
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($firstCol, $secondCol) {
             return $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
         };
 
-        return $this->iterateTuples($fetchFunction, $callback);
+        return $this->iterateTuples(self::FETCH_ARRAY, $mode, $callback);
     }
 
     /**
@@ -721,14 +697,16 @@ class Statement implements \IteratorAggregate
     /**
      * Itereate over all rows in fetched data
      *
-     * @param callable $fetchFunction
+     * @param int      $fetchMode
      *
+     * @param int|null $ociMode
      * @param callable $callback Функция для обработки элементов выборки
      *                           Передаются параметры $item, $index, &result
      *
+     * @throws Exception
      * @return mixed
      */
-    protected function iterateTuples($fetchFunction = null, $callback = null)
+    protected function iterateTuples($fetchMode = null, $ociMode = null, $callback = null)
     {
         $this->result = [ ];
         $index = 0;
@@ -738,7 +716,7 @@ class Statement implements \IteratorAggregate
                 return $result[ ] = $item;
             };
         }
-        foreach ($this->tupleGenerator($fetchFunction) as $tuple) {
+        foreach ($this->tupleGenerator($fetchMode, $ociMode) as $tuple) {
             $res = $callback($tuple, $index++, $this->result);
         }
 
@@ -748,12 +726,13 @@ class Statement implements \IteratorAggregate
     /**
      * Generator for iterating over fetched rows
      *
-     * @param callable|null $fetchFunction
+     * @param int  $fetchMode
+     * @param null $ociMode
      *
      * @throws Exception
      * @return \Generator
      */
-    protected function tupleGenerator($fetchFunction = null)
+    protected function tupleGenerator($fetchMode = null, $ociMode = null)
     {
         if ($this->state === self::STATE_FETCHED) {
             throw new Exception("Statement is already fetched. Need to execute it before fetching again.");
@@ -762,18 +741,7 @@ class Statement implements \IteratorAggregate
         if (!$this->isFetchable()) {
             $this->execute();
         }
-        $profiledFetchFunction = null;
-        $notProfiledFetchFunction = $fetchFunction ? : $this->defaultFetchFunction;
-        if ($this->profileId) {
-            $profiledFetchFunction = function () use ($notProfiledFetchFunction) {
-                $this->db->startFetchProfile($this->profileId);
-                $res = $notProfiledFetchFunction();
-                $this->db->stopFetchProfile($this->profileId);
-
-                return $res;
-            };
-        }
-        $fetchFunction = $profiledFetchFunction ? : $notProfiledFetchFunction;
+        $fetchFunction = $this->getFetchFunction($fetchMode, $ociMode);
 
         while (($tuple = $fetchFunction()) !== false) {
             yield $tuple;
