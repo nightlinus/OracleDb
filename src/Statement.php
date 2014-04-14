@@ -34,6 +34,10 @@ class Statement implements \IteratorAggregate
 
     const FETCH_OBJ = 4;
 
+    const RETURN_ITERATOR = 0;
+
+    const RETURN_ARRAY = 1;
+
     const STATE_EXECUTED = 8;
 
     const STATE_EXECUTED_DESCRIBE = 4;
@@ -89,15 +93,6 @@ class Statement implements \IteratorAggregate
     protected $state;
 
     /**
-     * Default fetch function used
-     * to get data from statement
-     * Its wrapper above oci_fetch_array, oci_fetch_object
-     *
-     * @var callable
-     */
-    protected $defaultFetchFunction;
-
-    /**
      * Rsource of db statement
      *
      * @var resource
@@ -127,6 +122,19 @@ class Statement implements \IteratorAggregate
     protected $profileId;
 
     /**
+     * @var int
+     */
+    protected $returnType;
+
+    /**
+     * @param int $returnType
+     */
+    public function setReturnType($returnType)
+    {
+        $this->returnType = $returnType;
+    }
+
+    /**
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
@@ -142,9 +150,7 @@ class Statement implements \IteratorAggregate
         }
         $this->queryString = $queryString;
         $this->db = $db;
-        $this->defaultFetchFunction = function () {
-            return oci_fetch_array($this->resource, OCI_ASSOC);
-        };
+        $this->returnType = self::RETURN_ARRAY;
     }
 
     /**
@@ -350,7 +356,8 @@ class Statement implements \IteratorAggregate
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($column) {
-            return $result[ ] = $item[ $column ];
+            $result[ ] = $item[ $column ];
+            return key($result);
         };
 
         return $this->iterateTuples(self::FETCH_ARRAY, $mode, $callback);
@@ -361,6 +368,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchMap()
     {
+        //TODO implement fetchMap method
         throw new Exception("Not implemented yet");
     }
 
@@ -424,7 +432,9 @@ class Statement implements \IteratorAggregate
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($firstCol, $secondCol) {
-            return $result[ $item[ $firstCol ] ] = $item[ $secondCol ];
+            $index = $item[ $firstCol ];
+            $result[ $index ] = $item[ $secondCol ];
+            return $index;
         };
 
         return $this->iterateTuples(self::FETCH_ARRAY, $mode, $callback);
@@ -661,6 +671,7 @@ class Statement implements \IteratorAggregate
                     return $result;
                 };
                 break;
+            case self::FETCH_ASSOC:
             default:
                 $fetchFunction = function () {
                     return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
@@ -704,6 +715,7 @@ class Statement implements \IteratorAggregate
      *                           Передаются параметры $item, $index, &result
      *
      * @throws Exception
+     * @internal param $returnIterator
      * @return mixed
      */
     protected function iterateTuples($fetchMode = null, $ociMode = null, $callback = null)
@@ -713,14 +725,21 @@ class Statement implements \IteratorAggregate
         if (!is_callable($callback)) {
             /** @noinspection PhpUnusedParameterInspection */
             $callback = function ($item, $index, &$result) {
-                return $result[ ] = $item;
+                $result[ ] = $item;
+                return key($result);
             };
         }
         foreach ($this->tupleGenerator($fetchMode, $ociMode) as $tuple) {
-            $res = $callback($tuple, $index++, $this->result);
+            $key = $callback($tuple, $index++, $this->result);
+            if ($this->returnType === self::RETURN_ITERATOR) {
+                yield $key => $this->result[$key];
+            }
         }
-
-        return $this->result;
+        if ($this->returnType === self::RETURN_ITERATOR) {
+            return null;
+        } else {
+            return $this->result;
+        }
     }
 
     /**
