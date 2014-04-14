@@ -584,8 +584,13 @@ class Db
             /**
              * @var Statement $trashStatement
              */
-            foreach ($trashStatements as $trashStatement) {
-                $trashStatement->free();
+            foreach ($this->statementCache as $trashStatement) {
+                if ($trashStatement->canBeFreed()) {
+                    $trashStatement->free();
+                    if (--$trashStatements) {
+                       break;
+                   }
+                }
             }
 
         }

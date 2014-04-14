@@ -45,6 +45,8 @@ class Statement implements \IteratorAggregate
 
     const STATE_FETCHED = 2;
 
+    const STATE_FETCHING = 16;
+
     const STATE_FREED = 0;
 
     const STATE_PREPARED = 1;
@@ -233,6 +235,14 @@ class Statement implements \IteratorAggregate
         $this->bindings[ $name ] = $binding;
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canBeFreed()
+    {
+        return $this->state < self::STATE_FETCHING;
     }
 
     /**
@@ -780,6 +790,8 @@ class Statement implements \IteratorAggregate
         if (!$this->isFetchable()) {
             $this->execute();
         }
+        $this->state = self::STATE_FETCHING;
+
         $fetchFunction = $this->getFetchFunction($fetchMode, $ociMode);
         $this->result = [ ];
 

@@ -12,13 +12,14 @@
  */
 
 namespace OracleDb;
+use Traversable;
 
 
 /**
  * Class StatementCache
  * @package OracleDb
  */
-class StatementCache {
+class StatementCache implements \IteratorAggregate {
 
     /**
      * @var Statement[];
@@ -51,7 +52,7 @@ class StatementCache {
     public function setCacheSize($cacheSize)
     {
         $this->cacheSize = $cacheSize;
-        return $this->cleanOldCache();
+        return $this->getCleanCount();
     }
 
     /**
@@ -73,7 +74,7 @@ class StatementCache {
         $this->hashCache[ $hash ]['value'] = $statement;
         $this->orderCache[] = $statement;
         $this->hashCache[ $hash ]['position'] = count($this->orderCache) - 1;
-        return $this->cleanOldCache();
+        return $this->getCleanCount();
     }
 
     /**
@@ -96,16 +97,28 @@ class StatementCache {
     }
 
     /**
-     * @return \Generator
+     * @return int
      */
-    protected function cleanOldCache()
+    protected function getCleanCount()
     {
-        while (count($this->orderCache) >= $this->cacheSize) {
-            $statement = array_shift($this->orderCache);
-            $hash = $this->getHash($statement);
-            unset($this->hashCache[ $hash ]);
-            yield $statement;
-        }
+        $count = count($this->orderCache) - $this->cacheSize;
+
+        return $count > 0 ? $count : 0;
+    }
+
+    /**
+     * @param $statement
+     *
+     * @return mixed
+     */
+    public function remove($statement)
+    {
+        $hash = $this->getHash($statement);
+        $position = $this->hashCache[$hash]['position'];
+        array_splice($this->orderCache, $position, 1);
+        unset($this->hashCache[ $hash ]);
+
+        return $statement;
     }
 
     /**
@@ -130,4 +143,19 @@ class StatementCache {
     {
         return end($this->orderCache);
     }
-} 
+
+    /**
+     * (PHP 5 &gt;= 5.0.0)<br/>
+     * Retrieve an external iterator
+     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
+     * @return Traversable An instance of an object implementing <b>Iterator</b> or
+     * <b>Traversable</b>
+     */
+    public function getIterator()
+    {
+        $count = count($this->orderCache);
+        for( $i = 0; $i < $count; $i++) {
+            yield $this->orderCache[ $i ];
+        }
+    }
+}
