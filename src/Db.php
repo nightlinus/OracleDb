@@ -516,7 +516,8 @@ class Db
         //Set up cache
         if ($this->config('statement.cache')) {
             $class = $this->config('statement.cache.class');
-            $this->statementCache = is_string($class) ? new $class() : $class;
+            $cacheSize = $this->config('statement.cache.size');
+            $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
         }
 
         /** @noinspection PhpUndefinedFunctionInspection */
