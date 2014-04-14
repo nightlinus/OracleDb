@@ -61,6 +61,14 @@ class Db
      */
     protected $config;
 
+
+    /**
+     * last executed statement
+     *
+     * @var Statement | null
+     */
+    protected $lastStatement;
+
     /**
      * Consttructor for Db class implements
      * base parametrs checking
@@ -229,7 +237,7 @@ class Db
      */
     public function getLastStatement()
     {
-        return $this->statementCache->getLast();
+        return $this->lastStatement;
     }
 
     /**
