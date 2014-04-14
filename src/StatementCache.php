@@ -30,7 +30,10 @@ class StatementCache {
      */
     protected $orderCache = [];
 
-    protected $cacheSize;
+    /**
+     * @var int
+     */
+    protected $cacheSize = 50;
 
     /**
      * @return mixed
