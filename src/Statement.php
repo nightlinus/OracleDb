@@ -731,14 +731,10 @@ class Statement implements \IteratorAggregate
             };
         }
         foreach ($this->tupleGenerator($fetchMode, $ociMode) as $tuple) {
-            $key = $callback($tuple, $index++, $this->result);
-            if ($this->returnType === self::RETURN_ITERATOR) {
-                yield $key => $this->result[$key];
-            }
+            $callback($tuple, $index++, $this->result);
         }
-        if (!$this->returnType === self::RETURN_ITERATOR) {
-            return $this->result;
-        }
+
+        return $this->result;
     }
 
     /**
