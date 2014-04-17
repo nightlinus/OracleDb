@@ -13,7 +13,7 @@
  * @link     http://github.com
  */
 
-namespace OracleDb;
+namespace nightlinus\OracleDb;
 
 /**
  * Class Profiler

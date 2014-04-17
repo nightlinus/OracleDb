@@ -12,7 +12,7 @@
  * @version  GIT: 1
  * @link     http://github.com
  */
-namespace OracleDb;
+namespace nightlinus\OracleDb;
 
 /**
  * Class OracleDb
