@@ -1,16 +1,15 @@
 <?php
 /**
- * Class that include databese statement functionality
- * this is wrapper above php oci extension.
+ * Package exception Class
  *
  * PHP version 5
  *
  * @category Database
  * @package  OracleDb
- * @author   Ogarkov Mikhail <m.a.ogarkov@gmail.com>
+ * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
  * @version  GIT: 1
- * @link     http://github.com
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb;

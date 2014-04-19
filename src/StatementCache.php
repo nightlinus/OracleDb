@@ -1,14 +1,15 @@
 <?php
 /**
- * Date: 03.04.14
- * Time: 14:53
+ * Class that include cache functionality
  *
- * @category 
+ * PHP version 5.5
+ *
+ * @category Database
  * @package  OracleDb
- * @author   nightlinus <user@localhost>
+ * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  
- * @link     
+ * @version  GIT: 1
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb;

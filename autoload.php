@@ -1,5 +1,7 @@
 <?php
 /**
+ * Autoload file for package
+ *
  * Date: 20.03.14
  * Time: 13:28
  *

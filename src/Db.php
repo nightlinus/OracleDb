@@ -1,7 +1,6 @@
 <?php
 /**
- * Class that include databese statement functionality
- * this is wrapper above php oci extension.
+ * Class that include database functions and configuration
  *
  * PHP version 5.5
  *
@@ -10,7 +9,7 @@
  * @author   Ogarkov Mikhail <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
  * @version  GIT: 1
- * @link     http://github.com
+ * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb;
 

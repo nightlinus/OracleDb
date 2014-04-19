@@ -1,29 +1,28 @@
 <?php
 /**
- * Class that include databese statement functionality
+ * Class that include database statement functionality
  * this is wrapper above php oci extension.
  *
  * PHP version 5.5
  *
  * @category Database
  * @package  OracleDb
- * @author   Ogarkov Mikhail <m.a.ogarkov@gmail.com>
+ * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
  * @version  GIT: 1
- * @link     http://github.com
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb;
 
-    /**
-     * Implements wrapper above oci8
-     * php extension. Contains method
-     * to execute and fetch data from
-     * database statements
-     *
-     * @package OracleDb
-     */
-/** @noinspection PhpInconsistentReturnPointsInspection */
+/**
+ * Implements wrapper above oci8
+ * php extension. Contains method
+ * to execute and fetch data from
+ * database statements
+ *
+ * @package OracleDb
+ */
 class Statement implements \IteratorAggregate
 {
 
