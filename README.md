@@ -38,30 +38,30 @@ $db->config('connection.cache', false);
 В таком — будет использовать всегда новое соединение с базой данных. Данное воведение выставлено по умолчанию.
 
 Список текущих настроек и их значения по умолчанию:
-* 'session.charset'         => 'AL32UTF8',
-* 'session.autocommit'      => false,
-* 'session.dateFormat'      => 'DD.MM.YYYY HH24:MI:SS',
-* 'session.dateLanguage'    => false,
-* 'connection.persistent'   => false,
-* 'connection.privileged'   => OCI_DEFAULT,
-* 'connection.cache'        => false,
-* 'connection.class'        => false,
-* 'connection.edition'      => false,
-* 'client.identifier'       => '',
-* 'client.info'             => '',
-* 'client.moduleName'       => '',
-* 'profiler.enabled'        => false,
-* 'profiler.class'          => __NAMESPACE__ . '\\Profiler',
-* 'statement.cache.enabled' => true,
-* 'statement.cache.size'    => 50,
-* 'statement.cache.class'   => __NAMESPACE__ . '\\StatementCache'
+* session.charset         => AL32UTF8
+* session.autocommit      => false
+* session.dateFormat      => DD.MM.YYYY HH24:MI:SS
+* session.dateLanguage    => false
+* connection.persistent   => false
+* connection.privileged   => OCI_DEFAULT
+* connection.cache        => false
+* connection.class        => false
+* connection.edition      => false
+* client.identifier       => 
+* client.info             => 
+* client.moduleName       => 
+* profiler.enabled        => false
+* profiler.class          => __NAMESPACE__ . \\Profiler
+* statement.cache.enabled => true
+* statement.cache.size    => 50
+* statement.cache.class   => __NAMESPACE__ . \\StatementCache
 
 ### Создание Statement'a
 
 В библиотеке представлены 2 способа  инстанциировать `Statement`:
 
 ```php
-$sql = 'SelEct * FROM DUAL';
+$sql = 'SELECT * FROM DUAL';
 $statement = $db->prepare($sql);
 ```
 
@@ -69,7 +69,7 @@ $statement = $db->prepare($sql);
 
 ```php
 
-$sql = 'SelEct * FROM DUAL';
+$sql = 'SELECT * FROM DUAL';
 $statement = $db->query($sql);
 ```
 
