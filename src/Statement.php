@@ -139,7 +139,7 @@ class Statement implements \IteratorAggregate
      */
     public function __construct(Db $db, $queryString)
     {
-        if ($queryString === '' || $queryString === null) {
+        if ('' === $queryString || null === $queryString) {
             throw new Exception("SqlText is empty.");
         }
         $this->queryString = $queryString;
@@ -193,7 +193,7 @@ class Statement implements \IteratorAggregate
                 $length,
                 $type
             );
-            if ($bindResult === false) {
+            if (false === $bindResult) {
                 $error = $this->getOCIError();
                 throw new Exception($error[ 'message' ], $error[ 'code' ]);
             }
@@ -226,7 +226,7 @@ class Statement implements \IteratorAggregate
             $maxItemLength,
             $type
         );
-        if ($bindResult === false) {
+        if (false === $bindResult) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -264,7 +264,7 @@ class Statement implements \IteratorAggregate
     public function count()
     {
         $type = $this->getType();
-        if ($type === self::TYPE_SELECT && $this->state !== self::STATE_FETCHED) {
+        if (self::TYPE_SELECT === $type && self::STATE_FETCHED !== $this->state) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
             $prevStatement = $this->db->getLastStatement();
             $count = $this->db->query($sql, $this->bindings)->fetchOne();
@@ -369,8 +369,7 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        /** @noinspection PhpUnusedParameterInspection */
-        $callback = function ($item, $index, &$result) use ($column) {
+        $callback = function ($item, &$result) use ($column) {
             $result[ ] = $item[ $column ];
 
             return key($result);
@@ -397,8 +396,7 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        /** @noinspection PhpUnusedParameterInspection */
-        $callback = function ($item, $index, &$result) use ($mapIndex) {
+        $callback = function ($item, &$result) use ($mapIndex) {
             $key = $item[ $mapIndex ];
             $result[ $key ] = $item;
 
@@ -474,8 +472,7 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        /** @noinspection PhpUnusedParameterInspection */
-        $callback = function ($item, $index, &$result) use ($firstCol, $secondCol) {
+        $callback = function ($item, &$result) use ($firstCol, $secondCol) {
             $index = $item[ $firstCol ];
             $result[ $index ] = $item[ $secondCol ];
 
@@ -507,7 +504,7 @@ class Statement implements \IteratorAggregate
     public function getAffectedRowsNumber()
     {
         $rows = oci_num_rows($this->resource);
-        if ($rows === false) {
+        if (false === $rows) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -539,7 +536,7 @@ class Statement implements \IteratorAggregate
         ];
 
         foreach ($result as $field) {
-            if ($field === false) {
+            if (false === $field) {
                 $error = $this->getOCIError();
                 throw new Exception($error[ 'message' ], $error[ 'code' ]);
             }
@@ -559,7 +556,7 @@ class Statement implements \IteratorAggregate
         }
 
         $result = oci_num_fields($this->resource);
-        if ($result === false) {
+        if (false === $result) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -616,7 +613,7 @@ class Statement implements \IteratorAggregate
     {
         $this->prepare();
         $type = oci_statement_type($this->resource);
-        if ($type === false) {
+        if (false === $type) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -629,7 +626,7 @@ class Statement implements \IteratorAggregate
      */
     public function isFetchable()
     {
-        return $this->state === self::STATE_EXECUTED ? true : false;
+        return self::STATE_EXECUTED === $this->state ? true : false;
     }
 
     /**
@@ -647,7 +644,7 @@ class Statement implements \IteratorAggregate
         // get oci8 statement resource
         $this->resource = oci_parse($this->db->getConnection(), $this->queryString);
 
-        if ($this->resource === false) {
+        if (false === $this->resource) {
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
@@ -678,7 +675,7 @@ class Statement implements \IteratorAggregate
     {
         if ($this->resource) {
             $setResult = oci_set_prefetch($this->resource, $rowCount);
-            if ($setResult === false) {
+            if (false === $setResult) {
                 $error = $this->getOCIError();
                 throw new Exception($error[ 'message' ], $error[ 'code' ]);
             }
@@ -795,7 +792,7 @@ class Statement implements \IteratorAggregate
      */
     protected function getResultObject($callback, $fetchMode, $ociMode)
     {
-        if ($this->returnType === self::RETURN_ITERATOR) {
+        if (self::RETURN_ITERATOR === $this->returnType) {
             return $this->tupleGenerator($callback, $fetchMode, $ociMode);
         } else {
             return $this->aggregateTupples($callback, $fetchMode, $ociMode);
@@ -815,7 +812,7 @@ class Statement implements \IteratorAggregate
      */
     protected function tupleGenerator($callback = null, $fetchMode = null, $ociMode = null)
     {
-        if ($this->state === self::STATE_FETCHED) {
+        if (self::STATE_FETCHED === $this->state) {
             throw new Exception("Statement is already fetched. Need to execute it before fetching again.");
         }
 
@@ -828,17 +825,15 @@ class Statement implements \IteratorAggregate
         $this->result = [ ];
 
         if (!is_callable($callback)) {
-            /** @noinspection PhpUnusedParameterInspection */
-            $callback = function ($item, $index, &$result) {
+            $callback = function ($item, &$result) {
                 $result[ ] = $item;
 
                 return key($result);
             };
         }
 
-        $index = 0;
-        while (($tuple = $fetchFunction()) !== false) {
-            $key = $callback($tuple, $index++, $this->result);
+        while (false !== ($tuple = $fetchFunction())) {
+            $key = $callback($tuple, $this->result);
             yield $key => $this->result[ $key ];
         }
 
