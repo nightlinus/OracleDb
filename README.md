@@ -1,6 +1,5 @@
 # OracleDb
 Пакет OrackleDb предоставляет собой легковесную обертку вокруг расширения oci8 для php.
-Основные возможности
 
 ## Введение
 ### Установка
@@ -90,3 +89,20 @@ $statement = $db->query($sql, ['b_var' => 1]);
 NB: связывание происходит не с переданным массивом, а со свойством `Statement`а `bindings` в котором хранятся значение IN, а так же OUT переменных.
 
 ### Получение данных
+Библиотека основана на генераторах, которые моут быть возвращены из любого метода получения данных, возвращающего несколько кортежей.
+
+```php
+
+$sql = 'SELECT * FROM customers';
+$statement = $db->query($sql);
+
+foreach($statement as $row) {
+  var_dump($row);
+}
+
+$statement->execute() //Делаем вохможным получение данных повторно
+          ->setReturnType($statement::RETURN_ITERATOR); //из fetch* функция возвращаем итератор, а не готовый массив
+foreach($statement->fetchMap() as $map) {
+  var_dump($map['123'])
+}
+```
