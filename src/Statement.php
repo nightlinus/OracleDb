@@ -290,7 +290,7 @@ class Statement implements \IteratorAggregate
         $this->prepare();
 
         //If $mode not in oci constants list, then use db config value
-        if (array_search($mode, [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ]) === false) {
+        if (array_search($mode, [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ], true) === false) {
             $mode = $this->db->config('session.autocommit') ? OCI_COMMIT_ON_SUCCESS : OCI_NO_AUTO_COMMIT;
         }
 
@@ -303,7 +303,7 @@ class Statement implements \IteratorAggregate
             $error = $this->getOCIError();
             throw new Exception($error[ 'message' ], $error[ 'code' ]);
         }
-        if ($mode | OCI_DESCRIBE_ONLY) {
+        if ($mode & OCI_DESCRIBE_ONLY) {
             $this->state = self::STATE_EXECUTED_DESCRIBE;
         } else {
             $this->state = self::STATE_EXECUTED;
