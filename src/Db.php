@@ -517,18 +517,20 @@ class Db
 
         if ($statementCacheEnabled && $statementCache === null) {
             $trashStatements = $this->statementCache->add($statement);
-            /**
-             * @var Statement $trashStatement
-             */
-            foreach ($this->statementCache as $trashStatement) {
+            $iter = $this->statementCache->getIterator();
+            while ($trashStatements) {
+                /**
+                 * @var Statement $trashStatement
+                 */
+                $trashStatement = $iter->current();
                 if ($trashStatement->canBeFreed()) {
                     $trashStatement->free();
                     if (--$trashStatements) {
                         break;
                     }
                 }
+                $iter->next();
             }
-
         }
 
         return $statement;
