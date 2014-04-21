@@ -324,7 +324,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchArray($mode = OCI_NUM)
     {
-        if (($mode | OCI_NUM) === 0) {
+        if (($mode & OCI_NUM) === 0) {
             $mode = OCI_NUM + $mode;
         }
 
@@ -344,7 +344,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchAssoc($mode = OCI_RETURN_NULLS)
     {
-        if (($mode | OCI_ASSOC) === 0) {
+        if (($mode & OCI_ASSOC) === 0) {
             $mode = OCI_ASSOC + $mode;
         }
 
