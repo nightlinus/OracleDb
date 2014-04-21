@@ -360,9 +360,14 @@ class Statement implements \IteratorAggregate
      *
      * @return array | \Generator
      */
-    public function fetchColumn($column = 0)
+    public function fetchColumn($column = 1)
     {
-        $mode = is_numeric($column) ? OCI_NUM + OCI_RETURN_NULLS : OCI_ASSOC + OCI_RETURN_NULLS;
+        if (is_numeric($column)) {
+            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            $column--;
+        } else {
+            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+        }
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($column) {
@@ -377,11 +382,20 @@ class Statement implements \IteratorAggregate
     /**
      * @param int|string $mapIndex
      *
+     * @throws Exception
      * @return \Generator|array[]
      */
-    public function fetchMap($mapIndex)
+    public function fetchMap($mapIndex = 1)
     {
-        $mode = is_numeric($mapIndex) ? OCI_NUM + OCI_RETURN_NULLS : OCI_ASSOC + OCI_RETURN_NULLS;
+        if (is_numeric($mapIndex)) {
+            if ($mapIndex < 1) {
+                throw new Exception("Column index start from 1, but <$mapIndex> was passed");
+            }
+            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            $mapIndex--;
+        } else {
+            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+        }
 
         /** @noinspection PhpUnusedParameterInspection */
         $callback = function ($item, $index, &$result) use ($mapIndex) {
@@ -412,11 +426,15 @@ class Statement implements \IteratorAggregate
      *                          that indicates column
      *                          to fetch value from
      *
+     * @throws Exception
      * @return string
      */
     public function fetchOne($index = 1)
     {
         if (is_numeric($index)) {
+            if ($index < 1) {
+                throw new Exception("Column index start from 1, but <$index> was passed");
+            }
             $mode = OCI_NUM + OCI_RETURN_NULLS;
             //make proper index to indicate that first column has index of 0
             $index--;
@@ -439,11 +457,15 @@ class Statement implements \IteratorAggregate
      * @param int|string $firstCol  колонка с ключом
      * @param int|string $secondCol колонка со значением
      *
+     * @throws Exception
      * @return array | \Generator
      */
     public function fetchPairs($firstCol = 1, $secondCol = 2)
     {
         if (is_numeric($firstCol) && is_numeric($secondCol)) {
+            if ($firstCol < 1 || $secondCol < 1) {
+                throw new Exception("Column index start from 1, but <$firstCol>, <$secondCol> were passed");
+            }
             $mode = OCI_NUM + OCI_RETURN_NULLS;
             //make proper index to indicate that first column has index of 0
             $firstCol--;
