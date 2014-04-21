@@ -1,17 +1,14 @@
 # OracleDb
-
 Пакет OrackleDb предоставляет собой легковесную обертку вокруг расширения oci8 для php.
 Основные возможности
 
 ## Введение
-
 ### Установка
 
 Эта библиотека требует PHP 5.5 или более позднюю версию.
 Установка возможна через composer из custom repository.
 
 ## Начинаем работать
-
 Создать новый инстанс БД можно следующим образом
 
 ```php
@@ -57,7 +54,6 @@ $db->config('connection.cache', false);
 * statement.cache.class   => __NAMESPACE__ . \\StatementCache
 
 ### Создание Statement'a
-
 В библиотеке представлены 2 способа  инстанциировать `Statement`:
 
 ```php
@@ -73,4 +69,24 @@ $sql = 'SELECT * FROM DUAL';
 $statement = $db->query($sql);
 ```
 
-Во втором случае `Statement` будет сразу выполнен (будет неявно вызван метод `execute`).
+Во втором случае `Statement` будет сразу выполнен (неявно вызван метод `execute`).
+
+### Связывание переменных
+Связывание можно выполнить 2 способами:
+Через функции bind*
+```php
+
+$sql = 'SELECT *, :b_var FROM DUAL';
+$statement = $db->prepare($sql);
+$statement->bind(['b_var' => 1]);
+```
+Или же непосредственно из функции `query`:
+
+```php
+
+$sql = 'SELECT *, :b_var FROM DUAL';
+$statement = $db->query($sql, ['b_var' => 1]);
+```
+NB: связывание происходит не с переданным массивом, а со свойством `Statement`а `bindings` в котором хранятся значение IN, а так же OUT переменных.
+
+### Получение данных
