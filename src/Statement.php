@@ -369,10 +369,9 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        $callback = function ($item, &$result) use ($column) {
-            $result[ ] = $item[ $column ];
-
-            return key($result);
+        $callback = function ($item, $index) use ($column) {
+            $result[ $index ] = $item[ $column ];
+            return $result;
         };
 
         return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
@@ -396,11 +395,11 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        $callback = function ($item, &$result) use ($mapIndex) {
+        $callback = function ($item) use ($mapIndex) {
             $key = $item[ $mapIndex ];
             $result[ $key ] = $item;
 
-            return key($result);
+            return $result;
         };
 
         return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
@@ -472,11 +471,10 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
-        $callback = function ($item, &$result) use ($firstCol, $secondCol) {
+        $callback = function ($item) use ($firstCol, $secondCol) {
             $index = $item[ $firstCol ];
             $result[ $index ] = $item[ $secondCol ];
-
-            return $index;
+            return $result;
         };
 
         return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
@@ -711,9 +709,8 @@ class Statement implements \IteratorAggregate
      */
     protected function aggregateTupples($callback = null, $fetchMode = null, $ociMode = null)
     {
-        /** @noinspection PhpUnusedLocalVariableInspection */
-        foreach ($this->tupleGenerator($callback, $fetchMode, $ociMode) as $tuple) {
-
+        foreach ($this->tupleGenerator($callback, $fetchMode, $ociMode) as $key => $tuple) {
+            $this->result[ $key ] = $tuple;
         }
 
         return $this->result;
@@ -825,16 +822,16 @@ class Statement implements \IteratorAggregate
         $this->result = [ ];
 
         if (!is_callable($callback)) {
-            $callback = function ($item, &$result) {
-                $result[ ] = $item;
-
-                return key($result);
+            $callback = function ($item, $index) {
+                $result[$index] = $item;
+                return $result;
             };
         }
-
+        $index = 0;
         while (false !== ($tuple = $fetchFunction())) {
-            $key = $callback($tuple, $this->result);
-            yield $key => $this->result[ $key ];
+            $result = $callback($tuple, $index++);
+            $key = key($result);
+            yield $key => $result[$key];
         }
 
         $this->state = self::STATE_FETCHED;
