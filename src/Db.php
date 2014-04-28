@@ -466,6 +466,7 @@ class Db
             'session.autocommit'      => false,
             'session.dateFormat'      => 'DD.MM.YYYY HH24:MI:SS',
             'session.dateLanguage'    => false,
+            'session.currentSchema'   => false,
             'connection.persistent'   => false,
             'connection.privileged'   => OCI_DEFAULT,
             'connection.cache'        => false,
@@ -506,7 +507,7 @@ class Db
      */
     protected function getStatement($sql)
     {
-        $statementCacheEnabled = $this->config('statement.cache');
+        $statementCacheEnabled = $this->config('statement.cache.enabled');
         $statementCache = null;
 
         if ($statementCacheEnabled) {
@@ -550,7 +551,7 @@ class Db
         }
 
         //Set up cache
-        if ($this->config('statement.cache')) {
+        if ($this->config('statement.cache.enabled')) {
             $class = $this->config('statement.cache.class');
             $cacheSize = $this->config('statement.cache.size');
             $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
@@ -568,6 +569,9 @@ class Db
         }
         if ($this->config('session.dateLanguage')) {
             $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config('session.dateLanguage');
+        }
+        if ($this->config('session.currentSchema')) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $this->config('session.currentSchema');
         }
         $this->alterSession($setUp);
 
