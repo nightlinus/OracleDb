@@ -181,9 +181,12 @@ class Statement implements \IteratorAggregate
             $length = -1;
             $value = $bindingValue;
             if (is_array($bindingValue)) {
-                $value = isset($bindingValue[ 0 ]) ? $bindingValue[ 0 ] : (isset($bindingValue[ 'value' ]) ? $bindingValue[ 'value' ] : null);
-                $length = isset($bindingValue[ 1 ]) ? $bindingValue[ 1 ] : (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : $length);
-                $type = isset($bindingValue[ 2 ]) ? $bindingValue[ 2 ] : (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : $type);
+                $value = isset($bindingValue[ 0 ]) ?
+                    $bindingValue[ 0 ] : (isset($bindingValue[ 'value' ]) ? $bindingValue[ 'value' ] : null);
+                $length = isset($bindingValue[ 1 ]) ?
+                    $bindingValue[ 1 ] : (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : $length);
+                $type = isset($bindingValue[ 2 ]) ?
+                    $bindingValue[ 2 ] : (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : $type);
             }
             $this->bindings[ $bindingName ] = $value;
             $bindResult = oci_bind_by_name(

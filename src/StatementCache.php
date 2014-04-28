@@ -18,17 +18,8 @@ namespace nightlinus\OracleDb;
  * Class StatementCache
  * @package OracleDb
  */
-class StatementCache implements \IteratorAggregate {
-
-    /**
-     * @var Statement[];
-     */
-    protected $hashCache = [];
-
-    /**
-     * @var Statement[]
-     */
-    protected $orderCache = [];
+class StatementCache implements \IteratorAggregate
+{
 
     /**
      * @var int
@@ -36,23 +27,14 @@ class StatementCache implements \IteratorAggregate {
     protected $cacheSize = 50;
 
     /**
-     * @return mixed
+     * @var Statement[];
      */
-    public function getCacheSize()
-    {
-        return $this->cacheSize;
-    }
+    protected $hashCache = [ ];
 
     /**
-     * @param mixed $cacheSize
-     *
-     * @return \Generator
+     * @var Statement[]
      */
-    public function setCacheSize($cacheSize)
-    {
-        $this->cacheSize = $cacheSize;
-        return $this->getCleanCount();
-    }
+    protected $orderCache = [ ];
 
     /**
      * @param $cacheSize
@@ -73,11 +55,12 @@ class StatementCache implements \IteratorAggregate {
         $toClean = 0;
         $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
         if (!$inCache) {
-            $this->hashCache[ $hash ]['value'] = $statement;
-            $this->orderCache[] = $statement;
-            $this->hashCache[ $hash ]['position'] = count($this->orderCache) - 1;
+            $this->hashCache[ $hash ][ 'value' ] = $statement;
+            $this->orderCache[ ] = $statement;
+            $this->hashCache[ $hash ][ 'position' ] = count($this->orderCache) - 1;
             $toClean = $this->getCleanCount();
         }
+
         return $toClean;
     }
 
@@ -89,11 +72,12 @@ class StatementCache implements \IteratorAggregate {
     public function get($sql)
     {
         $hash = $this->getHash($sql);
-        $inCache = isset($this->hashCache[ $hash ]['value']);
+        $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
         if ($inCache) {
             $statement = $this->hashCache[ $hash ][ 'value' ];
             array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
             $this->orderCache[ ] = $statement;
+
             return $statement;
         } else {
             return null;
@@ -101,13 +85,44 @@ class StatementCache implements \IteratorAggregate {
     }
 
     /**
-     * @return int
+     * @return mixed
      */
-    protected function getCleanCount()
+    public function getCacheSize()
     {
-        $count = count($this->orderCache) - $this->cacheSize;
+        return $this->cacheSize;
+    }
 
-        return $count > 0 ? $count : 0;
+    /**
+     * @param mixed $cacheSize
+     *
+     * @return \Generator
+     */
+    public function setCacheSize($cacheSize)
+    {
+        $this->cacheSize = $cacheSize;
+
+        return $this->getCleanCount();
+    }
+
+    /**
+     * Retrieve an external iterator
+     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
+     * @return \Iterator
+     */
+    public function getIterator()
+    {
+        $count = count($this->orderCache);
+        for ($i = 0; $i < $count; $i++) {
+            yield $this->orderCache[ $i ];
+        }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLast()
+    {
+        return end($this->orderCache);
     }
 
     /**
@@ -118,11 +133,21 @@ class StatementCache implements \IteratorAggregate {
     public function remove($statement)
     {
         $hash = $this->getHash($statement);
-        $position = $this->hashCache[$hash]['position'];
+        $position = $this->hashCache[ $hash ][ 'position' ];
         array_splice($this->orderCache, $position, 1);
         unset($this->hashCache[ $hash ]);
 
         return $statement;
+    }
+
+    /**
+     * @return int
+     */
+    protected function getCleanCount()
+    {
+        $count = count($this->orderCache) - $this->cacheSize;
+
+        return $count > 0 ? $count : 0;
     }
 
     /**
@@ -138,26 +163,5 @@ class StatementCache implements \IteratorAggregate {
         }
 
         return hash('md5', $sql);
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getLast()
-    {
-        return end($this->orderCache);
-    }
-
-    /**
-     * Retrieve an external iterator
-     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
-     * @return \Iterator
-     */
-    public function getIterator()
-    {
-        $count = count($this->orderCache);
-        for( $i = 0; $i < $count; $i++) {
-            yield $this->orderCache[ $i ];
-        }
     }
 }

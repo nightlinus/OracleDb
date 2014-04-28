@@ -22,4 +22,3 @@ class Exception extends \Exception
 {
 
 }
-

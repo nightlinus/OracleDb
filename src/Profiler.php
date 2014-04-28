@@ -101,15 +101,26 @@ class Profiler
         return $this->profiles;
     }
 
+    /**
+     * @param $profileId
+     *
+     * @return $this
+     */
     public function startFetch($profileId)
     {
         $this->profiles[ $profileId ][ 'lastFetchStart' ] = microtime(true);
         return $this;
     }
 
+    /**
+     * @param $profileId
+     *
+     * @return $this
+     */
     public function stopFetch($profileId)
     {
-        $this->profiles[ $profileId ][ 'fetchTime' ] += microtime(true) - $this->profiles[ $profileId ][ 'lastFetchStart' ];
+        $this->profiles[ $profileId ][ 'fetchTime' ] += microtime(true) -
+            $this->profiles[ $profileId ][ 'lastFetchStart' ];
         unset($this->profiles[ $profileId ][ 'lastFetchStart' ]);
         return $this;
     }
