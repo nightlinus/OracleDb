@@ -134,14 +134,10 @@ class Statement implements \IteratorAggregate
      *
      * @param Db     $db          ссылка на родительский объект базы данных
      * @param string $queryString sql выражение стейтмента в текстовом виде
-     *
-     * @throws Exception
      */
-    public function __construct(Db $db, $queryString)
+    public function __construct(Db $db, $queryString = null)
     {
-        if ('' === $queryString || null === $queryString) {
-            throw new Exception("SqlText is empty.");
-        }
+        $this->state = self::STATE_FREED;
         $this->queryString = $queryString;
         $this->db = $db;
         $this->returnType = self::RETURN_ARRAY;
@@ -188,11 +184,20 @@ class Statement implements \IteratorAggregate
                 $type = isset($bindingValue[ 2 ]) ?
                     $bindingValue[ 2 ] : (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : $type);
             }
+
             $this->bindings[ $bindingName ] = $value;
+
+            if ($value instanceof $this) {
+                $type = OCI_B_CURSOR;
+                $value->prepare();
+                $bindValue = & $this->bindings[ $bindingName ]->resource;
+            } else {
+                $bindValue = & $this->bindings[ $bindingName ];
+            }
             $bindResult = oci_bind_by_name(
                 $this->resource,
                 $bindingName,
-                $this->bindings[ $bindingName ],
+                $bindValue,
                 $length,
                 $type
             );
@@ -642,8 +647,13 @@ class Statement implements \IteratorAggregate
             return $this;
         }
 
-        // get oci8 statement resource
-        $this->resource = oci_parse($this->db->getConnection(), $this->queryString);
+        if ($this->queryString) {
+            // get oci8 statement resource
+            $this->resource = oci_parse($this->db->getConnection(), $this->queryString);
+        } else {
+            // get new cursor handler if no query provided
+            $this->resource = oci_new_cursor($this->db->getConnection());
+        }
 
         if (false === $this->resource) {
             $error = $this->getOCIError();
