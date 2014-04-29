@@ -88,28 +88,6 @@ class Statement implements \IteratorAggregate
     public $bindings;
 
     /**
-     * Internal state of Statement
-     *
-     * @var int
-     */
-    protected $state;
-
-    /**
-     * Rsource of db statement
-     *
-     * @var resource
-     */
-    protected $resource;
-
-    /**
-     * Raw sql text, that was used
-     * in oci_parse function
-     *
-     * @var  string
-     */
-    protected $queryString;
-
-    /**
      * Instance of parent database object
      *
      * @var Db
@@ -124,9 +102,31 @@ class Statement implements \IteratorAggregate
     protected $profileId;
 
     /**
+     * Raw sql text, that was used
+     * in oci_parse function
+     *
+     * @var  string
+     */
+    protected $queryString;
+
+    /**
+     * Rsource of db statement
+     *
+     * @var resource
+     */
+    protected $resource;
+
+    /**
      * @var int
      */
     protected $returnType;
+
+    /**
+     * Internal state of Statement
+     *
+     * @var int
+     */
+    protected $state;
 
     /**
      * В конструкторе, кроме инициализации ресурсов,
@@ -379,6 +379,7 @@ class Statement implements \IteratorAggregate
 
         $callback = function ($item, $index) use ($column) {
             $result[ $index ] = $item[ $column ];
+
             return $result;
         };
 
@@ -482,6 +483,7 @@ class Statement implements \IteratorAggregate
         $callback = function ($item) use ($firstCol, $secondCol) {
             $index = $item[ $firstCol ];
             $result[ $index ] = $item[ $secondCol ];
+
             return $result;
         };
 
@@ -836,7 +838,8 @@ class Statement implements \IteratorAggregate
 
         if (!is_callable($callback)) {
             $callback = function ($item, $index) {
-                $result[$index] = $item;
+                $result[ $index ] = $item;
+
                 return $result;
             };
         }
@@ -844,7 +847,7 @@ class Statement implements \IteratorAggregate
         while (false !== ($tuple = $fetchFunction())) {
             $result = $callback($tuple, $index++);
             $key = key($result);
-            yield $key => $result[$key];
+            yield $key => $result[ $key ];
         }
 
         $this->state = self::STATE_FETCHED;
