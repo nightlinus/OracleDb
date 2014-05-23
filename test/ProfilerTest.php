@@ -3,21 +3,29 @@
  * Date: 14.11.13
  * Time: 16:18
  *
- * @category 
+ * @category
  * @package  OracleDb
  * @author   nightlinus <user@localhost>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  
- * @link     
+ * @version
+ * @link
  */
 
-namespace OracleDb\test;
+namespace nightlinus\OracleDb\test;
 
 
-class ProfilerTest extends \PHPUnit_Framework_TestCase {
+use nightlinus\OracleDb\Exception;
+use nightlinus\OracleDb\Profiler;
+
+/**
+ * Class ProfilerTest
+ * @package nightlinus\OracleDb\test
+ */
+class ProfilerTest extends \PHPUnit_Framework_TestCase
+{
 
     /**
-     * @var \OracleDb\Profiler
+     * @var Profiler
      */
     protected $instance;
 
@@ -33,36 +41,12 @@ class ProfilerTest extends \PHPUnit_Framework_TestCase {
 
     }
 
-    protected function setUp()
+    /**
+     * @expectedException Exception
+     */
+    public function testEndException()
     {
-        parent::setUp();
-        $this->instance = new \OracleDb\Profiler();
-
-        $this->instance->start('test');
-        $this->assertAttributeCount(1, 'profiles', $this->instance, 'Profiles number shoud increase with start() call');
         $this->instance->end();
-
-        $this->instance->start('test2');
-        $this->assertAttributeCount(2, 'profiles', $this->instance, 'Profiles number shoud increase with start() call');
-        $this->instance->end();
-
-    }
-
-
-    public function testStart()
-    {
-
-        $result = $this->instance->getProfiles()[0];
-        $this->assertEquals('test', $result[ 'sql' ], 'SqlText shoud be saved in profile.');
-
-
-        $result = $this->instance->getProfiles()[1];
-        $this->assertEquals('test2', $result[ 'sql' ], 'SqlText shoud be saved in profile.');
-    }
-
-    public function testGetProfiles()
-    {
-        $this->assertAttributeEquals($this->instance->getProfiles(), 'profiles', $this->instance);
     }
 
     /**
@@ -74,11 +58,34 @@ class ProfilerTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(end($result), $this->instance->getLastProfile());
     }
 
-    /**
-     * @expectedException \OracleDb\Exception
-     */
-    public function testEndException()
+    public function testGetProfiles()
     {
+        $this->assertAttributeEquals($this->instance->getProfiles(), 'profiles', $this->instance);
+    }
+
+    public function testStart()
+    {
+
+        $result = $this->instance->getProfiles()[ 0 ];
+        $this->assertEquals('test', $result[ 'sql' ], 'SqlText shoud be saved in profile.');
+
+
+        $result = $this->instance->getProfiles()[ 1 ];
+        $this->assertEquals('test2', $result[ 'sql' ], 'SqlText shoud be saved in profile.');
+    }
+
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->instance = new Profiler();
+
+        $this->instance->start('test');
+        $this->assertAttributeCount(1, 'profiles', $this->instance, 'Profiles number shoud increase with start() call');
         $this->instance->end();
+
+        $this->instance->start('test2');
+        $this->assertAttributeCount(2, 'profiles', $this->instance, 'Profiles number shoud increase with start() call');
+        $this->instance->end();
+
     }
 }

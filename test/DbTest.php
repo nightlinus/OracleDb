@@ -5,8 +5,14 @@
  * Time: 14:56
  */
 
-namespace OracleDb\test;
+namespace nightlinus\OracleDb\test;
 
+use nightlinus\OracleDb\Db;
+
+/**
+ * Class DbTest
+ * @package nightlinus\OracleDb\test
+ */
 class DbTest extends \PHPUnit_Framework_TestCase
 {
 
@@ -22,10 +28,19 @@ class DbTest extends \PHPUnit_Framework_TestCase
         require "../autoload.php";
     }
 
+    public function testConnect()
+    {
+        $params = self::$dbParams;
+        $db = new Db($params->user, $params->password, $params->connection);
+        $this->assertFalse(is_resource($db->getConnection()), 'Connection shoud be null before connection.');
+        $db->connect();
+        $this->assertTrue(is_resource($db->getConnection()), 'Connection shoud be resource after connection.');
+    }
+
     public function testGetClientVersion()
     {
         $params = self::$dbParams;
-        $db = new \OracleDb\Db($params->user, $params->password, $params->connection);
+        $db = new Db($params->user, $params->password, $params->connection);
         /** @noinspection PhpUndefinedFunctionInspection */
         $this->assertEquals(oci_client_version(), $db->version(), 'Shoud be oracle client version.');
     }
@@ -33,16 +48,7 @@ class DbTest extends \PHPUnit_Framework_TestCase
     public function testGetServerVersion()
     {
         $params = self::$dbParams;
-        $db = new \OracleDb\Db($params->user, $params->password, $params->connection);
+        $db = new Db($params->user, $params->password, $params->connection);
         $this->assertNotNull($db->getServerVersion(), 'Shoud be oracle server version.');
-    }
-
-    public function testConnect()
-    {
-        $params = self::$dbParams;
-        $db = new \OracleDb\Db($params->user, $params->password, $params->connection);
-        $this->assertFalse(is_resource($db->getConnection()), 'Connection shoud be null before connection.');
-        $db->connect();
-        $this->assertTrue(is_resource($db->getConnection()), 'Connection shoud be resource after connection.');
     }
 }

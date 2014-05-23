@@ -11,18 +11,50 @@
  * @link
  */
 
-namespace OracleDb\test;
+namespace nightlinus\OracleDb\test;
 
+use nightlinus\OracleDb\Db;
 
-use ___PHPSTORM_HELPERS\object;
-use OracleDb\Exception;
-
+/**
+ * Class E2eTest
+ * @package OracleDb\test
+ */
 class E2eTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var \OracleDb\Db
+     * @var Db
      */
     protected $db;
+
+    public static function setUpBeforeClass()
+    {
+        parent::setUpBeforeClass();
+        $q = "DROP TABLE TEST_ORACLEDB;
+                CREATE TABLE TEST_ORACLEDB (
+                  TEST_NUMBER NUMBER,
+                  TEST_DATE DATE,
+                  TEST_NVARCHAR NVARCHAR2(2000),
+                  TEST_VARCHAR VARCHAR2(20 BYTE),
+                  TEST_BLOB BLOB,
+                  TEST_CLOB CLOB
+                );
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('1',to_date('20.11.13 08:20:23','DD.MM.RR HH24:MI:SS'),'Ололошеньки','Ololo', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('2',to_date('19.11.13 08:21:26','DD.MM.RR HH24:MI:SS'),'Тынц','Tync', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('3',to_date('18.11.13 08:22:21','DD.MM.RR HH24:MI:SS'),'Ура','Uhu', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('4',to_date('17.11.13 08:22:27','DD.MM.RR HH24:MI:SS'),'Товарищи','Buddies', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('5',to_date('16.11.13 08:22:33','DD.MM.RR HH24:MI:SS'),'Пришла','Spring', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('6',to_date('15.11.13 08:22:39','DD.MM.RR HH24:MI:SS'),'Весна','has', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('7',to_date('14.11.13 08:22:44','DD.MM.RR HH24:MI:SS'),'К','come', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('8',to_date('13.11.13 08:22:48','DD.MM.RR HH24:MI:SS'),'нам','to', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('9',to_date('12.11.13 08:22:52','DD.MM.RR HH24:MI:SS'),'в','our', null, null);
+                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('10',to_date('11.11.13 08:22:57','DD.MM.RR HH24:MI:SS'),'дома','homes', null, null);";
+        $db = new Db("MTK_MAIN_UNIT", "MTK_MAIN_UNIT", "ASRZ_TEST");
+        try {
+            $db->runScript($q)->commit();
+        } catch (\Exception $e) {
+            print $e->getMessage();
+        }
+    }
 
     public function testFetchArray()
     {
@@ -227,37 +259,7 @@ class E2eTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->db = new \OracleDb\Db("TEST", "TEST", "TEST");
-    }
-
-    public static function setUpBeforeClass()
-    {
-        parent::setUpBeforeClass();
-        $q =   "DROP TABLE TEST_ORACLEDB;
-                CREATE TABLE TEST_ORACLEDB (
-                  TEST_NUMBER NUMBER,
-                  TEST_DATE DATE,
-                  TEST_NVARCHAR NVARCHAR2(2000),
-                  TEST_VARCHAR VARCHAR2(20 BYTE),
-                  TEST_BLOB BLOB,
-                  TEST_CLOB CLOB
-                );
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('1',to_date('20.11.13 08:20:23','DD.MM.RR HH24:MI:SS'),'Ололошеньки','Ololo', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('2',to_date('19.11.13 08:21:26','DD.MM.RR HH24:MI:SS'),'Тынц','Tync', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('3',to_date('18.11.13 08:22:21','DD.MM.RR HH24:MI:SS'),'Ура','Uhu', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('4',to_date('17.11.13 08:22:27','DD.MM.RR HH24:MI:SS'),'Товарищи','Buddies', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('5',to_date('16.11.13 08:22:33','DD.MM.RR HH24:MI:SS'),'Пришла','Spring', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('6',to_date('15.11.13 08:22:39','DD.MM.RR HH24:MI:SS'),'Весна','has', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('7',to_date('14.11.13 08:22:44','DD.MM.RR HH24:MI:SS'),'К','come', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('8',to_date('13.11.13 08:22:48','DD.MM.RR HH24:MI:SS'),'нам','to', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('9',to_date('12.11.13 08:22:52','DD.MM.RR HH24:MI:SS'),'в','our', null, null);
-                Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('10',to_date('11.11.13 08:22:57','DD.MM.RR HH24:MI:SS'),'дома','homes', null, null);";
-        $db = new \OracleDb\Db("MTK_MAIN_UNIT", "MTK_MAIN_UNIT", "ASRZ_TEST");
-        try {
-            $db->runScript($q)->commit();
-        } catch (Exception $e) {
-            print $e->getMessage();
-        }
+        $this->db = new Db("TEST", "TEST", "TEST");
     }
 
 }
