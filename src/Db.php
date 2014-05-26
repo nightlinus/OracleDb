@@ -19,6 +19,7 @@ namespace nightlinus\OracleDb;
  */
 class Db
 {
+
     /**
      * Profiler for db instance
      *
@@ -26,11 +27,12 @@ class Db
      */
     public $profiler;
 
-
     /**
-     * @var StatementCache
+     * Array with settings key => value pair
+     *
+     * @var array
      */
-    protected $statementCache;
+    protected $config;
 
     /**
      * @var resource connection resource
@@ -43,30 +45,26 @@ class Db
     protected $connectionString;
 
     /**
-     * @var string password for db connection
-     */
-    protected $password;
-
-
-    /**
-     * @var string username for db connection
-     */
-    protected $userName;
-
-    /**
-     * Array with settings key => value pair
-     *
-     * @var array
-     */
-    protected $config;
-
-
-    /**
      * last executed statement
      *
      * @var Statement | null
      */
     protected $lastStatement;
+
+    /**
+     * @var string password for db connection
+     */
+    protected $password;
+
+    /**
+     * @var StatementCache
+     */
+    protected $statementCache;
+
+    /**
+     * @var string username for db connection
+     */
+    protected $userName;
 
     /**
      * Consttructor for Db class implements
@@ -291,6 +289,26 @@ class Db
     }
 
     /**
+     * Shortcut method to prepare and fetch
+     * statement.
+     *
+     * @param string     $sqlText
+     * @param array|null &$bindings
+     * @param null       $mode
+     *
+     * @return Statement
+     * @throws Exception
+     */
+    public function query($sqlText, $bindings = null, $mode = null)
+    {
+        $statement = $this->prepare($sqlText);
+        $statement->bind($bindings);
+        $statement->execute($mode);
+
+        return $statement;
+    }
+
+    /**
      * @param $variable
      *
      * @return string
@@ -309,26 +327,6 @@ class Db
         }
 
         return $variable;
-    }
-
-    /**
-     * Shortcut method to prepare and fetch
-     * statement.
-     *
-     * @param string     $sqlText
-     * @param array|null &$bindings
-     * @param null       $mode
-     *
-     * @return Statement
-     * @throws Exception
-     */
-    public function query($sqlText, $bindings = null, $mode = null)
-    {
-        $statement = $this->prepare($sqlText);
-        $statement->bind($bindings);
-        $statement->execute($mode);
-
-        return $statement;
     }
 
     /**
