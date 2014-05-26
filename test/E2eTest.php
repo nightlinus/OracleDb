@@ -163,17 +163,17 @@ class E2eTest extends \PHPUnit_Framework_TestCase
                     TEST_VARCHAR
              FROM TEST_ORACLEDB ORDER BY 1"
         );
-        $res = $q->fetchOne();
+        $res = $q->fetchValue();
         $this->assertEquals(1, $res, "fetchOne should return first column from first row without parameters");
 
-        $res = $q->execute()->fetchOne(3);
+        $res = $q->execute()->fetchValue(3);
         $this->assertEquals(
             'Ололошеньки',
             $res,
             "fetchOne should return numbered column from first row"
         );
 
-        $res = $q->execute()->fetchOne("TEST_DATE");
+        $res = $q->execute()->fetchValue("TEST_DATE");
         $this->assertEquals(
             '20.11.13 08:20:23',
             $res,

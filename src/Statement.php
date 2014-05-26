@@ -275,7 +275,7 @@ class Statement implements \IteratorAggregate
         if (self::TYPE_SELECT === $type && self::STATE_FETCHED !== $this->state) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
             $prevStatement = $this->db->getLastStatement();
-            $count = $this->db->query($sql, $this->bindings)->fetchOne();
+            $count = $this->db->query($sql, $this->bindings)->fetchValue();
             $this->db->setLastStatement($prevStatement);
         } else {
             $count = $this->getAffectedRowsNumber();
@@ -435,7 +435,7 @@ class Statement implements \IteratorAggregate
      * @throws Exception
      * @return string
      */
-    public function fetchOne($index = 1)
+    public function fetchValue($index = 1)
     {
         if (is_numeric($index)) {
             if ($index < 1) {
