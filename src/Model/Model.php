@@ -28,11 +28,17 @@ class Model
      */
     protected $db;
 
+    /**
+     * @param $db
+     */
     public function __construct($db)
     {
         $this->db = $db;
     }
 
+    /**
+     * @param Relation $relation
+     */
     public function getConstraints(Relation $relation)
     {
         $sql = "SELECT CONSTRAINT_NAME,
@@ -45,8 +51,15 @@ class Model
                   AND TABLE_NAME = 'ORDER_TEMPLATE'";
     }
 
-    public function getFields(Relation $relation)
+    /**
+     * @param Relation $relation
+     *
+     * @return $this
+     */
+    public function getColumns(Relation $relation)
     {
+        $owner = $relation->getOwner();
+        $name = $relation->getName();
         $sql = "SELECT COLUMN_NAME,
                        DATA_TYPE,
                        DATA_LENGTH,
@@ -57,6 +70,20 @@ class Model
                 FROM ALL_TAB_COLUMNS
                 WHERE OWNER = 'HERMES'
                   AND TABLE_NAME = 'ORDER_VALUE_SOURCE'";
+        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_ownew' => $owner ]);
+        foreach ($statement as $row) {
+            $column = new Column(
+                $row['COLUMN_ID'],
+                $row['DATA_LENGTH'],
+                $row['COLUMN_NAME'],
+                $row['NULLABLE'],
+                $row['DATA_PRECISION'],
+                $row['DATA_SCALE'],
+                $row['DATA_TYPE']
+            );
+            $relation->addColumn($column);
+        }
 
+        return $this;
     }
 }
