@@ -291,6 +291,27 @@ class Db
     }
 
     /**
+     * @param $variable
+     *
+     * @return string
+     */
+    public function quote($variable)
+    {
+        if (!is_array($variable)) {
+            str_replace("'", "''", $variable);
+            $variable = "'" . $variable . "'";
+        } else {
+            foreach ($variable as &$var) {
+                $var = $this->quote($var);
+            }
+
+            $variable = implode(',', $variable);
+        }
+
+        return $variable;
+    }
+
+    /**
      * Shortcut method to prepare and fetch
      * statement.
      *
