@@ -17,7 +17,7 @@ namespace nightlinus\OracleDb\Model;
  * Class Constraint
  * @package nightlinus\OracleDb\Model
  */
-class Constraint extends Model
+class Constraint
 {
     protected $name;
 
