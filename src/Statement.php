@@ -421,7 +421,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchObject()
     {
-        return $this->aggregateTupples(null, self::FETCH_OBJ);
+        return $this->getResultObject(null, self::FETCH_OBJ);
     }
 
     /**
@@ -761,6 +761,7 @@ class Statement implements \IteratorAggregate
         $ociMode = $ociMode ? : OCI_ASSOC + OCI_RETURN_NULLS;
         switch ($fetchMode) {
             case self::FETCH_ARRAY:
+            case self::FETCH_ASSOC:
                 $fetchFunction = function () use ($ociMode) {
                     return oci_fetch_array($this->resource, $ociMode);
                 };
@@ -778,7 +779,6 @@ class Statement implements \IteratorAggregate
                     return $result;
                 };
                 break;
-            case self::FETCH_ASSOC:
             default:
                 $fetchFunction = function () {
                     return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
@@ -820,7 +820,7 @@ class Statement implements \IteratorAggregate
      * @return \Generator|mixed
      * @throws Exception
      */
-    protected function getResultObject($callback, $fetchMode, $ociMode)
+    protected function getResultObject($callback, $fetchMode, $ociMode = null)
     {
         if (self::RETURN_ITERATOR === $this->returnType) {
             return $this->tupleGenerator($callback, $fetchMode, $ociMode);
