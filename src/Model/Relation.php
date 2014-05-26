@@ -20,9 +20,9 @@ namespace nightlinus\OracleDb\Model;
 class Relation
 {
 
-    protected $constraints;
+    protected $columns;
 
-    protected $fields;
+    protected $constraints;
 
     protected $indexes;
 
@@ -31,19 +31,40 @@ class Relation
     protected $owner;
 
     /**
-     * @param $name
-     * @param $owner
-     * @param $fields
-     * @param $constraints
-     * @param $indexes
+     * @param string $name
+     * @param string $owner
+     * @param array  $columns
+     * @param array  $constraints
+     * @param array  $indexes
      */
-    public function __construct($name, $owner, $fields = [], $constraints = [], $indexes = [])
+    public function __construct($name, $owner, $columns = [ ], $constraints = [ ], $indexes = [ ])
     {
         $this->constraints = $constraints;
-        $this->fields = $fields;
+        $this->columns = $columns;
         $this->indexes = $indexes;
         $this->name = $name;
         $this->owner = $owner;
+    }
+
+    /**
+     * @param Column $column
+     *
+     * @return $this
+     */
+    public function addColumn(Column $column)
+    {
+        $name = $column->getName();
+        $this->columns[ $name ] = $column;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getColumns()
+    {
+        return $this->columns;
     }
 
     /**
@@ -52,14 +73,6 @@ class Relation
     public function getConstraints()
     {
         return $this->constraints;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getFields()
-    {
-        return $this->fields;
     }
 
     /**
