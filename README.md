@@ -12,9 +12,9 @@
 
 ```php
 <?php
-use nightlinus\OracleDb\Db;
+use nightlinus\OracleDb\Database;
 
-$db = new Db("USER", "password", "DEV");
+$db = new Database("USER", "password", "DEV");
 ```
 
 При этом соединение с базой происходит только при первом обращении к ней.

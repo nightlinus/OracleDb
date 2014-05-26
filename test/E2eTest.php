@@ -13,7 +13,7 @@
 
 namespace nightlinus\OracleDb\test;
 
-use nightlinus\OracleDb\Db;
+use nightlinus\OracleDb\Database;
 
 /**
  * Class E2eTest
@@ -22,7 +22,7 @@ use nightlinus\OracleDb\Db;
 class E2eTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Db
+     * @var Database
      */
     protected $db;
 
@@ -48,7 +48,7 @@ class E2eTest extends \PHPUnit_Framework_TestCase
                 Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('8',to_date('13.11.13 08:22:48','DD.MM.RR HH24:MI:SS'),'нам','to', null, null);
                 Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('9',to_date('12.11.13 08:22:52','DD.MM.RR HH24:MI:SS'),'в','our', null, null);
                 Insert into TEST_ORACLEDB (TEST_NUMBER,TEST_DATE,TEST_NVARCHAR,TEST_VARCHAR,TEST_BLOB,TEST_CLOB) values ('10',to_date('11.11.13 08:22:57','DD.MM.RR HH24:MI:SS'),'дома','homes', null, null);";
-        $db = new Db("MTK_MAIN_UNIT", "MTK_MAIN_UNIT", "ASRZ_TEST");
+        $db = new Database("MTK_MAIN_UNIT", "MTK_MAIN_UNIT", "ASRZ_TEST");
         try {
             $db->runScript($q)->commit();
         } catch (\Exception $e) {
@@ -259,7 +259,7 @@ class E2eTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->db = new Db("TEST", "TEST", "TEST");
+        $this->db = new Database("TEST", "TEST", "TEST");
     }
 
 }

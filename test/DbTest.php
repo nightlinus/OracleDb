@@ -7,7 +7,7 @@
 
 namespace nightlinus\OracleDb\test;
 
-use nightlinus\OracleDb\Db;
+use nightlinus\OracleDb\Database;
 
 /**
  * Class DbTest
@@ -31,7 +31,7 @@ class DbTest extends \PHPUnit_Framework_TestCase
     public function testConnect()
     {
         $params = self::$dbParams;
-        $db = new Db($params->user, $params->password, $params->connection);
+        $db = new Database($params->user, $params->password, $params->connection);
         $this->assertFalse(is_resource($db->getConnection()), 'Connection shoud be null before connection.');
         $db->connect();
         $this->assertTrue(is_resource($db->getConnection()), 'Connection shoud be resource after connection.');
@@ -40,7 +40,7 @@ class DbTest extends \PHPUnit_Framework_TestCase
     public function testGetClientVersion()
     {
         $params = self::$dbParams;
-        $db = new Db($params->user, $params->password, $params->connection);
+        $db = new Database($params->user, $params->password, $params->connection);
         /** @noinspection PhpUndefinedFunctionInspection */
         $this->assertEquals(oci_client_version(), $db->version(), 'Shoud be oracle client version.');
     }
@@ -48,7 +48,7 @@ class DbTest extends \PHPUnit_Framework_TestCase
     public function testGetServerVersion()
     {
         $params = self::$dbParams;
-        $db = new Db($params->user, $params->password, $params->connection);
+        $db = new Database($params->user, $params->password, $params->connection);
         $this->assertNotNull($db->getServerVersion(), 'Shoud be oracle server version.');
     }
 }

@@ -90,7 +90,7 @@ class Statement implements \IteratorAggregate
     /**
      * Instance of parent database object
      *
-     * @var Db
+     * @var Database
      */
     protected $db;
 
@@ -132,10 +132,10 @@ class Statement implements \IteratorAggregate
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
-     * @param Db     $db          ссылка на родительский объект базы данных
+     * @param Database     $db          ссылка на родительский объект базы данных
      * @param string $queryString sql выражение стейтмента в текстовом виде
      */
-    public function __construct(Db $db, $queryString = null)
+    public function __construct(Database $db, $queryString = null)
     {
         $this->state = self::STATE_FREED;
         $this->queryString = $queryString;
@@ -256,7 +256,7 @@ class Statement implements \IteratorAggregate
      * Proxy to db commit method
      * Needed here for convinient method chaining.
      *
-     * @return Db
+     * @return Database
      */
     public function commit()
     {
@@ -689,7 +689,7 @@ class Statement implements \IteratorAggregate
      * Proxy to db rollback method.
      * Needed here for convinient method chaining.
      *
-     * @return Db
+     * @return Database
      */
     public function rollback()
     {

@@ -17,7 +17,7 @@ namespace nightlinus\OracleDb;
  * Class OracleDb
  * @package Oracle
  */
-class Db
+class Database
 {
 
     /**
@@ -67,7 +67,7 @@ class Db
     protected $userName;
 
     /**
-     * Consttructor for Db class implements
+     * Consttructor for Database class implements
      * base parametrs checking
      *
      * @param string $userName
@@ -271,7 +271,7 @@ class Db
     }
 
     /**
-     * Methods to prepare Db statement
+     * Methods to prepare Database statement
      * object from raw queryString
      *
      * @param string $sqlText
@@ -474,7 +474,7 @@ class Db
 
     /**
      * Method returns default settings
-     * for Db class
+     * for Database class
      *
      * @return array
      */
