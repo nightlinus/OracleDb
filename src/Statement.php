@@ -330,7 +330,7 @@ class Statement implements \IteratorAggregate
      *
      * @return array[] | \Generator
      */
-    public function fetchArray($mode = OCI_NUM)
+    public function fetchArray($mode = OCI_RETURN_NULLS)
     {
         if (($mode & OCI_NUM) === 0) {
             $mode = OCI_NUM + $mode;
