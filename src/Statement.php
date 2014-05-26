@@ -455,6 +455,24 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param int $mode
+     *
+     * @return \array[]
+     * @throws Exception
+     */
+    public function fetchOne($mode = OCI_RETURN_NULLS)
+    {
+        if (($mode & OCI_ASSOC) === 0 && ($mode & OCI_NUM) === 0) {
+            $mode = OCI_ASSOC + $mode;
+        }
+
+        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current();
+        $this->state = self::STATE_FETCHED;
+
+        return $this->result;
+    }
+
+    /**
      * Fetches data into key-values pair.
      * implemented as associative array
      * where keys are $firstCol values and
