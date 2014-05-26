@@ -14,7 +14,7 @@
 namespace nightlinus\OracleDb\Model;
 
 
-use nightlinus\OracleDb\Db;
+use nightlinus\OracleDb\Database;
 
 /**
  * Class Model
@@ -24,7 +24,7 @@ class Model
 {
 
     /**
-     * @var Db
+     * @var Database
      */
     protected $db;
 
