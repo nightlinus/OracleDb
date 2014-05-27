@@ -41,39 +41,6 @@ class Model
      *
      * @return $this
      */
-    public function getConstraints(Relation $relation)
-    {
-        $owner = $relation->getOwner();
-        $name = $relation->getName();
-        $sql = "SELECT CONSTRAINT_NAME,
-                       CONSTRAINT_TYPE,
-                       R_OWNER,
-                       R_CONSTRAINT_NAME,
-                       STATUS
-                FROM ALL_CONSTRAINTS
-                WHERE OWNER = :b_owner
-                  AND TABLE_NAME = :b_name";
-        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
-        foreach ($statement as $row) {
-            $constraint = new Constraint(
-                $row[ 'CONSTRAINT_NAME' ],
-                $row[ 'R_CONSTRAINT_NAME' ],
-                $row[ 'R_OWNER' ],
-                $row[ 'STATUS' ],
-                $row[ 'CONSTRAINT_TYPE' ]
-            );
-            $relation->addConstraint($constraint);
-            $this->getConstraintColumns($constraint);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param Relation $relation
-     *
-     * @return $this
-     */
     public function getColumns(Relation $relation)
     {
         $owner = $relation->getOwner();
@@ -89,20 +56,22 @@ class Model
                 WHERE OWNER = :b_owner
                   AND TABLE_NAME = :b_name";
         $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
+        $columns = [ ];
         foreach ($statement as $row) {
             $column = new Column(
-                $row['COLUMN_ID'],
-                $row['DATA_LENGTH'],
-                $row['COLUMN_NAME'],
-                $row['NULLABLE'],
-                $row['DATA_PRECISION'],
-                $row['DATA_SCALE'],
-                $row['DATA_TYPE']
+                $row[ 'COLUMN_ID' ],
+                $row[ 'DATA_LENGTH' ],
+                $row[ 'COLUMN_NAME' ],
+                $row[ 'NULLABLE' ],
+                $row[ 'DATA_PRECISION' ],
+                $row[ 'DATA_SCALE' ],
+                $row[ 'DATA_TYPE' ]
             );
             $relation->addColumn($column);
+            $columns[ $column->getName() ] = $column;
         }
 
-        return $this;
+        return $columns;
     }
 
     /**
@@ -119,18 +88,55 @@ class Model
                        COLUMN_NAME
                 FROM ALL_CONS_COLUMNS
                 WHERE CONSTRAINT_NAME = :b_name";
-        $statement = $this->db->query($sql, [ 'b_name' => $name]);
+        $statement = $this->db->query($sql, [ 'b_name' => $name ]);
+        $columns = [ ];
         foreach ($statement as $row) {
             $constraintColumn = new ConstraintColumn(
-                $row['COLUMN_NAME'],
-                $row['OWNER'],
-                $row['TABLE_NAME'],
-                $row['CONSTRAINT_NAME']
+                $row[ 'COLUMN_NAME' ],
+                $row[ 'OWNER' ],
+                $row[ 'TABLE_NAME' ],
+                $row[ 'CONSTRAINT_NAME' ]
             );
             $constraint->addColumn($constraintColumn);
+            $columns[ $constraintColumn->getName() ] = $constraintColumn;
         }
 
-        return $this;
+        return $columns;
+    }
+
+    /**
+     * @param Relation $relation
+     *
+     * @return $this
+     */
+    public function getConstraints(Relation $relation)
+    {
+        $owner = $relation->getOwner();
+        $name = $relation->getName();
+        $sql = "SELECT CONSTRAINT_NAME,
+                       CONSTRAINT_TYPE,
+                       R_OWNER,
+                       R_CONSTRAINT_NAME,
+                       STATUS
+                FROM ALL_CONSTRAINTS
+                WHERE OWNER = :b_owner
+                  AND TABLE_NAME = :b_name";
+        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
+        $constraints = [ ];
+        foreach ($statement as $row) {
+            $constraint = new Constraint(
+                $row[ 'CONSTRAINT_NAME' ],
+                $row[ 'R_CONSTRAINT_NAME' ],
+                $row[ 'R_OWNER' ],
+                $row[ 'STATUS' ],
+                $row[ 'CONSTRAINT_TYPE' ]
+            );
+            $relation->addConstraint($constraint);
+            $this->getConstraintColumns($constraint);
+            $constraints[ $constraint->getName() ] = $constraint;
+        }
+
+        return $constraints;
     }
 
     /**
@@ -145,6 +151,6 @@ class Model
         $this->getColumns($relation);
         $this->getConstraints($relation);
 
-        return $this;
+        return $relation;
     }
 }
