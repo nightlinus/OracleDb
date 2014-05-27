@@ -153,7 +153,28 @@ class Model
      */
     public function getRelation($name, $owner)
     {
-        $relation = new Relation($name, $owner);
+        $sql = "SELECT t_at.OWNER,
+                       t_at.TABLE_NAME,
+                       t_at.TABLESPACE_NAME,
+                       t_at.STATUS,
+                       t_at.NUM_ROWS,
+                       t_atc.COMMENTS
+                FROM ALL_TABLES t_at
+                     JOIN ALL_TAB_COMMENTS t_atc
+                     ON t_atc.OWNER = t_at.OWNER
+                      AND t_atc.TABLE_NAME = t_at.TABLE_NAME
+                WHERE t_at.OWNER = :b_owner
+                AND t_at.TABLE_NAME = :b_name";
+        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
+        $row = $statement->fetchOne();
+        $relation = new Relation(
+            $row['TABLE_NAME'],
+            $row['OWNER'],
+            $row['TABLESPACE_NAME'],
+            $row['STATUS'],
+            $row['NUM_ROWS'],
+            $row['COMMENTS']
+        );
         $this->getColumns($relation);
         $this->getConstraints($relation);
 
