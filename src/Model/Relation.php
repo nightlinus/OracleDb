@@ -20,8 +20,16 @@ namespace nightlinus\OracleDb\Model;
 class Relation
 {
 
+    /**
+     * @var Column[]
+     */
     protected $columns;
 
+    protected $comment;
+
+    /**
+     * @var Constraint[]
+     */
     protected $constraints;
 
     protected $indexes;
@@ -30,21 +38,45 @@ class Relation
 
     protected $owner;
 
+    protected $rowCount;
+
+    protected $status;
+
+    protected $tableSpace;
+
     /**
-     * @param string $name
-     * @param string $owner
-     * @param array  $columns
-     * @param array  $constraints
-     * @param array  $indexes
+     * @param       $name
+     * @param       $owner
+     * @param       $tableSpace
+     * @param       $status
+     * @param       $rowCount
+     * @param       $comment
+     * @param array $columns
+     * @param array $constraints
+     * @param array $indexes
      */
-    public function __construct($name, $owner, $columns = [ ], $constraints = [ ], $indexes = [ ])
-    {
-        $this->constraints = $constraints;
+    public function __construct(
+        $name,
+        $owner,
+        $tableSpace,
+        $status,
+        $rowCount,
+        $comment,
+        $columns = [ ],
+        $constraints = [ ],
+        $indexes = [ ]
+    ) {
         $this->columns = $columns;
+        $this->comment = $comment;
+        $this->constraints = $constraints;
         $this->indexes = $indexes;
         $this->name = $name;
         $this->owner = $owner;
+        $this->rowCount = $rowCount;
+        $this->status = $status;
+        $this->tableSpace = $tableSpace;
     }
+
 
     /**
      * @param Column $column
