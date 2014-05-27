@@ -20,6 +20,8 @@ namespace nightlinus\OracleDb\Model;
 class Column
 {
 
+    protected $comment;
+
     protected $id;
 
     protected $length;
@@ -43,7 +45,7 @@ class Column
      * @param $scale
      * @param $type
      */
-    public function __construct($id, $length, $name, $nullable, $precision, $scale, $type)
+    public function __construct($id, $length, $name, $nullable, $precision, $scale, $type, $comment)
     {
         $this->id = $id;
         $this->length = $length;
@@ -52,6 +54,15 @@ class Column
         $this->precision = $precision;
         $this->scale = $scale;
         $this->type = $type;
+        $this->comment = $comment;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getComment()
+    {
+        return $this->comment;
     }
 
     /**
