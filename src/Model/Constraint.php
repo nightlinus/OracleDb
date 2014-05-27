@@ -31,6 +31,8 @@ class Constraint
 
     const TYPE_WITH_READ_ONLY = 'O';
 
+    protected $columns = [ ];
+
     protected $name;
 
     protected $referenceConstraint;
@@ -40,8 +42,6 @@ class Constraint
     protected $status;
 
     protected $type;
-
-    protected $columns = [];
 
     /**
      * @param $name
@@ -70,6 +70,27 @@ class Constraint
         $this->columns[ $name ] = $constraintColumn;
 
         return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getColumnNames()
+    {
+        $names = [ ];
+        foreach ($this->getColumns() as $column) {
+            $names[ ] = $column->getName();
+        }
+
+        return $names;
+    }
+
+    /**
+     * @return ConstraintColumn[]
+     */
+    public function getColumns()
+    {
+        return $this->columns;
     }
 
     /**
@@ -115,9 +136,9 @@ class Constraint
     /**
      * @return bool
      */
-    public function isPrimaryKey()
+    public function isCheck()
     {
-        return $this->getType() === self::TYPE_PRIMARY_KEY ? true : false;
+        return $this->getType() === self::TYPE_CHECK ? true : false;
     }
 
     /**
@@ -131,16 +152,16 @@ class Constraint
     /**
      * @return bool
      */
-    public function isUnique()
+    public function isPrimaryKey()
     {
-        return $this->getType() === self::TYPE_UNIQUE ? true : false;
+        return $this->getType() === self::TYPE_PRIMARY_KEY ? true : false;
     }
 
     /**
      * @return bool
      */
-    public function isCheck()
+    public function isUnique()
     {
-        return $this->getType() === self::TYPE_CHECK ? true : false;
+        return $this->getType() === self::TYPE_UNIQUE ? true : false;
     }
 }
