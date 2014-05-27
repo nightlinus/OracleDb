@@ -15,6 +15,7 @@ namespace nightlinus\OracleDb\Model;
 
 
 use nightlinus\OracleDb\Database;
+use nightlinus\OracleDb\Exception;
 
 /**
  * Class Model
@@ -146,9 +147,10 @@ class Model
     }
 
     /**
-     * @param $name
-     * @param $owner
+     * @param string $name
+     * @param string $owner
      *
+     * @throws \nightlinus\OracleDb\Exception
      * @return Relation
      */
     public function getRelation($name, $owner)
@@ -167,6 +169,9 @@ class Model
                 AND t_at.TABLE_NAME = :b_name";
         $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
         $row = $statement->fetchOne();
+        if (!$row) {
+            throw new Exception("No table $owner.$name or you dont have enough permissions");
+        }
         $relation = new Relation(
             $row['TABLE_NAME'],
             $row['OWNER'],
