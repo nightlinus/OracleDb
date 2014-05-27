@@ -113,7 +113,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return Constraint[]
      */
     public function getConstraints()
     {
@@ -129,7 +129,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getName()
     {
@@ -137,7 +137,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getOwner()
     {
@@ -145,7 +145,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getComment()
     {
@@ -153,7 +153,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return int
      */
     public function getRowCount()
     {
@@ -161,7 +161,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getStatus()
     {
@@ -169,10 +169,24 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getTableSpace()
     {
         return $this->tableSpace;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPrimaryKey()
+    {
+        foreach ($this->getConstraints() as $constraint) {
+            if ($constraint->isPrimaryKey()) {
+                return $constraint;
+            }
+        }
+
+        return null;
     }
 }
