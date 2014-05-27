@@ -60,6 +60,19 @@ class Relation
     }
 
     /**
+     * @param Constraint $constraint
+     *
+     * @return $this
+     */
+    public function addConstraint(Constraint $constraint)
+    {
+        $name = $constraint->getName();
+        $this->constraints[ $name ] = $constraint;
+
+        return $this;
+    }
+
+    /**
      * @return mixed
      */
     public function getColumns()
