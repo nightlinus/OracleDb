@@ -73,7 +73,7 @@ class Constraint
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getName()
     {
@@ -81,7 +81,7 @@ class Constraint
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getReferenceConstraint()
     {
@@ -89,7 +89,7 @@ class Constraint
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getReferenceOwner()
     {
@@ -97,7 +97,7 @@ class Constraint
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getStatus()
     {
@@ -105,10 +105,42 @@ class Constraint
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getType()
     {
         return $this->type;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPrimaryKey()
+    {
+        return $this->getType() === self::TYPE_PRIMARY_KEY ? true : false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isForeignKey()
+    {
+        return $this->getType() === self::TYPE_FOREIGN_KEY ? true : false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUnique()
+    {
+        return $this->getType() === self::TYPE_UNIQUE ? true : false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCheck()
+    {
+        return $this->getType() === self::TYPE_CHECK ? true : false;
     }
 }
