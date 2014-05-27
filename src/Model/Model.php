@@ -38,17 +38,35 @@ class Model
 
     /**
      * @param Relation $relation
+     *
+     * @return $this
      */
     public function getConstraints(Relation $relation)
     {
+        $owner = $relation->getOwner();
+        $name = $relation->getName();
         $sql = "SELECT CONSTRAINT_NAME,
                        CONSTRAINT_TYPE,
                        R_OWNER,
                        R_CONSTRAINT_NAME,
                        STATUS
                 FROM ALL_CONSTRAINTS
-                WHERE OWNER = 'HERMES'
-                  AND TABLE_NAME = 'ORDER_TEMPLATE'";
+                WHERE OWNER = :b_owner
+                  AND TABLE_NAME = :b_name";
+        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
+        foreach ($statement as $row) {
+            $constraint = new Constraint(
+                $row[ 'CONSTRAINT_NAME' ],
+                $row[ 'R_CONSTRAINT_NAME' ],
+                $row[ 'R_OWNER' ],
+                $row[ 'STATUS' ],
+                $row[ 'CONSTRAINT_TYPE' ]
+            );
+            $relation->addConstraint($constraint);
+            $this->getConstraintColumns($constraint);
+        }
+
+        return $this;
     }
 
     /**
@@ -68,9 +86,9 @@ class Model
                        NULLABLE,
                        COLUMN_ID
                 FROM ALL_TAB_COLUMNS
-                WHERE OWNER = 'HERMES'
-                  AND TABLE_NAME = 'ORDER_VALUE_SOURCE'";
-        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_ownew' => $owner ]);
+                WHERE OWNER = :b_owner
+                  AND TABLE_NAME = :b_name";
+        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
         foreach ($statement as $row) {
             $column = new Column(
                 $row['COLUMN_ID'],
@@ -83,6 +101,49 @@ class Model
             );
             $relation->addColumn($column);
         }
+
+        return $this;
+    }
+
+    /**
+     * @param Constraint $constraint
+     *
+     * @return $this
+     */
+    public function getConstraintColumns(Constraint $constraint)
+    {
+        $name = $constraint->getName();
+        $sql = "SELECT OWNER,
+                       CONSTRAINT_NAME,
+                       TABLE_NAME,
+                       COLUMN_NAME
+                FROM ALL_CONS_COLUMNS
+                WHERE CONSTRAINT_NAME = :b_name";
+        $statement = $this->db->query($sql, [ 'b_name' => $name]);
+        foreach ($statement as $row) {
+            $constraintColumn = new ConstraintColumn(
+                $row['COLUMN_NAME'],
+                $row['OWNER'],
+                $row['TABLE_NAME'],
+                $row['CONSTRAINT_NAME']
+            );
+            $constraint->addColumn($constraintColumn);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param $name
+     * @param $owner
+     *
+     * @return $this
+     */
+    public function getRelation($name, $owner)
+    {
+        $relation = new Relation($name, $owner);
+        $this->getColumns($relation);
+        $this->getConstraints($relation);
 
         return $this;
     }
