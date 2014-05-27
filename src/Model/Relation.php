@@ -177,7 +177,7 @@ class Relation
     }
 
     /**
-     * @return array
+     * @return Constraint
      */
     public function getPrimaryKey()
     {
