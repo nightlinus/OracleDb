@@ -144,5 +144,35 @@ class Relation
         return $this->owner;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getComment()
+    {
+        return $this->comment;
+    }
 
+    /**
+     * @return mixed
+     */
+    public function getRowCount()
+    {
+        return $this->rowCount;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTableSpace()
+    {
+        return $this->tableSpace;
+    }
 }
