@@ -19,6 +19,18 @@ namespace nightlinus\OracleDb\Model;
  */
 class Constraint
 {
+    const TYPE_CHECK = 'C';
+
+    const TYPE_FOREIGN_KEY = 'R';
+
+    const TYPE_PRIMARY_KEY = 'P';
+
+    const TYPE_UNIQUE = 'U';
+
+    const TYPE_WITH_CHECK = 'V';
+
+    const TYPE_WITH_READ_ONLY = 'O';
+
     protected $name;
 
     protected $referenceConstraint;
@@ -28,6 +40,8 @@ class Constraint
     protected $status;
 
     protected $type;
+
+    protected $columns = [];
 
     /**
      * @param $name
@@ -43,6 +57,19 @@ class Constraint
         $this->referenceOwner = $referenceOwner;
         $this->status = $status;
         $this->type = $type;
+    }
+
+    /**
+     * @param ConstraintColumn $constraintColumn
+     *
+     * @return $this
+     */
+    public function addColumn(ConstraintColumn $constraintColumn)
+    {
+        $name = $constraintColumn->getName();
+        $this->columns[ $name ] = $constraintColumn;
+
+        return $this;
     }
 
     /**
