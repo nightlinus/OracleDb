@@ -39,7 +39,7 @@ class Model
     /**
      * @param Relation $relation
      *
-     * @return $this
+     * @return Column[]
      */
     public function getColumns(Relation $relation)
     {
@@ -77,7 +77,7 @@ class Model
     /**
      * @param Constraint $constraint
      *
-     * @return $this
+     * @return ConstraintColumn[]
      */
     public function getConstraintColumns(Constraint $constraint)
     {
@@ -107,7 +107,7 @@ class Model
     /**
      * @param Relation $relation
      *
-     * @return $this
+     * @return Constraint[]
      */
     public function getConstraints(Relation $relation)
     {
@@ -143,7 +143,7 @@ class Model
      * @param $name
      * @param $owner
      *
-     * @return $this
+     * @return Relation
      */
     public function getRelation($name, $owner)
     {
