@@ -67,6 +67,11 @@ class Database
     protected $userName;
 
     /**
+     * @var Model\Model
+     */
+    protected $model;
+
+    /**
      * Consttructor for Database class implements
      * base parametrs checking
      *
@@ -619,5 +624,17 @@ class Database
         }
 
         return $this;
+    }
+
+    /**
+     * @return Model\Model
+     */
+    public function getModel()
+    {
+        if (!isset($this->model)) {
+            $this->model = new Model\Model($this);
+        }
+
+        return $this->model;
     }
 }
