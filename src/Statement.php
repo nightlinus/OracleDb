@@ -365,6 +365,7 @@ class Statement implements \IteratorAggregate
      * $column, index is numeric
      *
      * @param int|string $column set column to fetch from
+     * @param int        $ociMode
      *
      * @return array | \Generator
      */
@@ -392,6 +393,7 @@ class Statement implements \IteratorAggregate
 
     /**
      * @param int|string $mapIndex
+     * @param int        $ociMode
      *
      * @throws Exception
      * @return \Generator|array[]
