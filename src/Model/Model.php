@@ -45,16 +45,21 @@ class Model
     {
         $owner = $relation->getOwner();
         $name = $relation->getName();
-        $sql = "SELECT COLUMN_NAME,
-                       DATA_TYPE,
-                       DATA_LENGTH,
-                       DATA_PRECISION,
-                       DATA_SCALE,
-                       NULLABLE,
-                       COLUMN_ID
-                FROM ALL_TAB_COLUMNS
-                WHERE OWNER = :b_owner
-                  AND TABLE_NAME = :b_name";
+        $sql = "SELECT t_atc.COLUMN_NAME,
+                       t_atc.DATA_TYPE,
+                       t_atc.DATA_LENGTH,
+                       t_atc.DATA_PRECISION,
+                       t_atc.DATA_SCALE,
+                       t_atc.NULLABLE,
+                       t_atc.COLUMN_ID,
+                       t_acc.COMMENTS
+                FROM ALL_TAB_COLUMNS t_atc
+                     JOIN ALL_COL_COMMENTS t_acc
+                     ON t_acc.COLUMN_NAME = t_atc.COLUMN_NAME
+                      AND t_acc.OWNER = t_atc.OWNER
+                      AND t_acc.TABLE_NAME = t_atc.TABLE_NAME
+                WHERE t_atc.OWNER = :b_owner
+                AND t_atc.TABLE_NAME = :b_name";
         $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
         $columns = [ ];
         foreach ($statement as $row) {
@@ -65,7 +70,8 @@ class Model
                 $row[ 'NULLABLE' ],
                 $row[ 'DATA_PRECISION' ],
                 $row[ 'DATA_SCALE' ],
-                $row[ 'DATA_TYPE' ]
+                $row[ 'DATA_TYPE' ],
+                $row[ 'COMMENTS']
             );
             $relation->addColumn($column);
             $columns[ $column->getName() ] = $column;
