@@ -152,6 +152,7 @@ class Model
      * @param string $name
      * @param string $owner
      *
+     * @throws \Exception
      * @return Constraint
      */
     public function getConstraint($name, $owner)
@@ -167,6 +168,9 @@ class Model
                   AND CONSTRAINT_NAME = :b_name";
         $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
         $row = $statement->fetchOne();
+        if ($row === null) {
+            throw new \Exception("No such constraint or you dont have enough permissions: $owner.$name");
+        }
         $constraint = new Constraint(
             $row[ 'CONSTRAINT_NAME' ],
             $row[ 'R_CONSTRAINT_NAME' ],
@@ -203,7 +207,7 @@ class Model
                 AND t_at.TABLE_NAME = :b_name";
         $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
         $row = $statement->fetchOne();
-        if (!$row) {
+        if ($row === null) {
             throw new Exception("No table $owner.$name or you dont have enough permissions");
         }
         $relation = new Relation(
