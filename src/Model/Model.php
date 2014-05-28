@@ -219,26 +219,4 @@ class Model
 
         return $relation;
     }
-
-    /**
-     * @param Constraint $constraint
-     *
-     * @throws \nightlinus\OracleDb\Exception
-     * @return array
-     */
-    public function getForeignKeyValues($constraint)
-    {
-        if (!$constraint->isForeignKey()) {
-            throw new Exception("{$constraint->getName()} is not foreign key");
-        }
-        $owner = $constraint->getReferenceOwner();
-        $name = $constraint->getReferenceConstraint();
-        $reference = $this->getConstraint($name, $owner);
-        $table = $reference->getTable();
-        $fields = implode(',', $reference->getColumnNames());
-        $sql = "SELECT DISTINCT $fields
-                FROM $owner.$table
-                ORDER BY $fields";
-        return $this->db->query($sql)->fetchColumn();
-    }
 }
