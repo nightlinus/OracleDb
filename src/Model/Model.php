@@ -124,7 +124,8 @@ class Model
                        CONSTRAINT_TYPE,
                        R_OWNER,
                        R_CONSTRAINT_NAME,
-                       STATUS
+                       STATUS,
+                       TABLE_NAME
                 FROM ALL_CONSTRAINTS
                 WHERE OWNER = :b_owner
                   AND TABLE_NAME = :b_name";
@@ -136,7 +137,8 @@ class Model
                 $row[ 'R_CONSTRAINT_NAME' ],
                 $row[ 'R_OWNER' ],
                 $row[ 'STATUS' ],
-                $row[ 'CONSTRAINT_TYPE' ]
+                $row[ 'CONSTRAINT_TYPE' ],
+                $row[ 'TABLE_NAME' ]
             );
             $relation->addConstraint($constraint);
             $this->getConstraintColumns($constraint);
@@ -144,6 +146,38 @@ class Model
         }
 
         return $constraints;
+    }
+
+    /**
+     * @param string $name
+     * @param string $owner
+     *
+     * @return Constraint
+     */
+    public function getConstraint($name, $owner)
+    {
+        $sql = "SELECT CONSTRAINT_NAME,
+                       CONSTRAINT_TYPE,
+                       R_OWNER,
+                       R_CONSTRAINT_NAME,
+                       STATUS,
+                       TABLE_NAME
+                FROM ALL_CONSTRAINTS
+                WHERE OWNER = :b_owner
+                  AND CONSTRAINT_NAME = :b_name";
+        $statement = $this->db->query($sql, [ 'b_name' => $name, 'b_owner' => $owner ]);
+        $row = $statement->fetchOne();
+        $constraint = new Constraint(
+            $row[ 'CONSTRAINT_NAME' ],
+            $row[ 'R_CONSTRAINT_NAME' ],
+            $row[ 'R_OWNER' ],
+            $row[ 'STATUS' ],
+            $row[ 'CONSTRAINT_TYPE' ],
+            $row[ 'TABLE_NAME' ]
+        );
+        $this->getConstraintColumns($constraint);
+
+        return $constraint;
     }
 
     /**
@@ -184,5 +218,27 @@ class Model
         $this->getConstraints($relation);
 
         return $relation;
+    }
+
+    /**
+     * @param Constraint $constraint
+     *
+     * @throws \nightlinus\OracleDb\Exception
+     * @return array
+     */
+    public function getForeignKeyValues($constraint)
+    {
+        if (!$constraint->isForeignKey()) {
+            throw new Exception("{$constraint->getName()} is not foreign key");
+        }
+        $owner = $constraint->getReferenceOwner();
+        $name = $constraint->getReferenceConstraint();
+        $reference = $this->getConstraint($name, $owner);
+        $table = $reference->getTable();
+        $fields = implode(',', $reference->getColumnNames());
+        $sql = "SELECT DISTINCT $fields
+                FROM $owner.$table
+                ORDER BY $fields";
+        return $this->db->query($sql)->fetchColumn();
     }
 }
