@@ -41,6 +41,8 @@ class Constraint
 
     protected $status;
 
+    protected $table;
+
     protected $type;
 
     /**
@@ -49,14 +51,16 @@ class Constraint
      * @param $referenceOwner
      * @param $status
      * @param $type
+     * @param $table
      */
-    public function __construct($name, $referenceConstraint, $referenceOwner, $status, $type)
+    public function __construct($name, $referenceConstraint, $referenceOwner, $status, $type, $table)
     {
         $this->name = $name;
         $this->referenceConstraint = $referenceConstraint;
         $this->referenceOwner = $referenceOwner;
         $this->status = $status;
         $this->type = $type;
+        $this->table = $table;
     }
 
     /**
@@ -123,6 +127,14 @@ class Constraint
     public function getStatus()
     {
         return $this->status;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTable()
+    {
+        return $this->table;
     }
 
     /**
