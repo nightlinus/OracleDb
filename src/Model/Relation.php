@@ -105,7 +105,7 @@ class Relation
     }
 
     /**
-     * @return mixed
+     * @return Column[]
      */
     public function getColumns()
     {
