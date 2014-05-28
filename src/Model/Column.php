@@ -114,6 +114,15 @@ class Column
     }
 
     /**
+     * @return string
+     */
+    public function getShortComment()
+    {
+        $comment = explode("\n", $this->getComment());
+        return $comment[ 0 ];
+    }
+
+    /**
      * @return mixed
      */
     public function getType()
