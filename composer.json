@@ -1,5 +1,5 @@
 {
-    "name": "nightlinus/OracleDb",
+    "name": "nightlinus/oracle-db",
     "description": "Wrapper around oci8 php extension to access Oracle Database",
     "minimum-stability": "dev",
     "license": "MIT",
