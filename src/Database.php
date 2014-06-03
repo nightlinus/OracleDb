@@ -14,7 +14,7 @@
 namespace nightlinus\OracleDb;
 
 /**
- * Class OracleDb
+ * Class Database
  * @package Oracle
  */
 class Database

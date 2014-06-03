@@ -365,16 +365,21 @@ class Statement implements \IteratorAggregate
      * $column, index is numeric
      *
      * @param int|string $column set column to fetch from
+     * @param int        $ociMode
      *
      * @return array | \Generator
      */
-    public function fetchColumn($column = 1)
+    public function fetchColumn($column = 1, $ociMode = OCI_RETURN_NULLS)
     {
         if (is_numeric($column)) {
-            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            if (($ociMode & OCI_NUM) === 0) {
+                $ociMode = OCI_NUM + $ociMode;
+            }
             $column--;
         } else {
-            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+            if (($ociMode & OCI_ASSOC) === 0) {
+                $ociMode = OCI_ASSOC + $ociMode;
+            }
         }
 
         $callback = function ($item, $index) use ($column) {
@@ -383,25 +388,30 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
+        return $this->getResultObject($callback, self::FETCH_ARRAY, $ociMode);
     }
 
     /**
      * @param int|string $mapIndex
+     * @param int        $ociMode
      *
      * @throws Exception
      * @return \Generator|array[]
      */
-    public function fetchMap($mapIndex = 1)
+    public function fetchMap($mapIndex = 1, $ociMode = OCI_RETURN_NULLS)
     {
         if (is_numeric($mapIndex)) {
             if ($mapIndex < 1) {
                 throw new Exception("Column index start from 1, but <$mapIndex> was passed");
             }
-            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            if (($ociMode & OCI_NUM) === 0) {
+                $ociMode = OCI_NUM + $ociMode;
+            }
             $mapIndex--;
         } else {
-            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+            if (($ociMode & OCI_ASSOC) === 0) {
+                $ociMode = OCI_ASSOC + $ociMode;
+            }
         }
 
         $callback = function ($item) use ($mapIndex) {
@@ -411,7 +421,7 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
+        return $this->getResultObject($callback, self::FETCH_ARRAY, $ociMode);
     }
 
     /**
