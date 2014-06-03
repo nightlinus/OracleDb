@@ -14,7 +14,7 @@
 namespace nightlinus\OracleDb;
 
 /**
- * Class OracleDb
+ * Class Database
  * @package Oracle
  */
 class Database
@@ -65,11 +65,6 @@ class Database
      * @var string username for db connection
      */
     protected $userName;
-
-    /**
-     * @var Model\Model
-     */
-    protected $model;
 
     /**
      * Consttructor for Database class implements
@@ -624,17 +619,5 @@ class Database
         }
 
         return $this;
-    }
-
-    /**
-     * @return Model\Model
-     */
-    public function getModel()
-    {
-        if (!isset($this->model)) {
-            $this->model = new Model\Model($this);
-        }
-
-        return $this->model;
     }
 }
