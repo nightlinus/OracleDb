@@ -34,9 +34,9 @@ class Config implements \ArrayAccess
     const PROFILER_CLASS   = 'profiler.class';
     const PROFILER_ENABLED = 'profiler.enabled';
 
-    const SESSION_CURRENTSCHEMA = 'session.currentSchema';
-    const SESSION_DATEFORMAT    = 'session.dateFormat';
-    const SESSION_DATELANGUAGE  = 'session.dateLanguage';
+    const SESSION_DATE_FORMAT   = 'session.dateFormat';
+    const SESSION_DATE_LANGUAGE = 'session.dateLanguage';
+    const SESSION_SCHEMA        = 'session.currentSchema';
 
     const STATEMENT_AUTOCOMMIT    = 'statement.autocommit';
     const STATEMENT_CACHE_CLASS   = 'statement.cache.class';
@@ -46,9 +46,9 @@ class Config implements \ArrayAccess
     protected $config   = [ ];
 
     protected $defaults = [
-        self::SESSION_DATEFORMAT      => 'DD.MM.YYYY HH24:MI:SS',
-        self::SESSION_DATELANGUAGE    => false,
-        self::SESSION_CURRENTSCHEMA   => false,
+        self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
+        self::SESSION_DATE_LANGUAGE   => false,
+        self::SESSION_SCHEMA          => false,
         self::CONNECTION_CHARSET      => 'AL32UTF8',
         self::CONNECTION_PERSISTENT   => false,
         self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,

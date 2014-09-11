@@ -541,14 +541,14 @@ class Database
         oci_set_client_info($this->connection, $this->config(Config::CLIENT_INFO));
         oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULENAME));
         $setUp = [ ];
-        if ($this->config(Config::SESSION_DATEFORMAT)) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATEFORMAT);
+        if ($this->config(Config::SESSION_DATE_FORMAT)) {
+            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
         }
-        if ($this->config(Config::SESSION_DATELANGUAGE)) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATELANGUAGE);
+        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
+            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
         }
-        if ($this->config(Config::SESSION_CURRENTSCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENTSCHEMA);
+        if ($this->config(Config::SESSION_SCHEMA)) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_SCHEMA);
         }
         $this->alterSession($setUp);
 
