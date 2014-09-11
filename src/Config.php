@@ -25,6 +25,7 @@ class Config implements \ArrayAccess
     const CLIENT_MODULENAME = 'client.moduleName';
 
     const CONNECTION_CACHE      = 'connection.cache';
+    const CONNECTION_CHARSET    = 'connection.charset';
     const CONNECTION_CLASS      = 'connection.class';
     const CONNECTION_EDITION    = 'connection.edition';
     const CONNECTION_PERSISTENT = 'connection.persistent';
@@ -33,7 +34,6 @@ class Config implements \ArrayAccess
     const PROFILER_CLASS   = 'profiler.class';
     const PROFILER_ENABLED = 'profiler.enabled';
 
-    const SESSION_CHARSET       = 'session.charset';
     const SESSION_CURRENTSCHEMA = 'session.currentSchema';
     const SESSION_DATEFORMAT    = 'session.dateFormat';
     const SESSION_DATELANGUAGE  = 'session.dateLanguage';
@@ -46,10 +46,10 @@ class Config implements \ArrayAccess
     protected $config   = [ ];
 
     protected $defaults = [
-        self::SESSION_CHARSET         => 'AL32UTF8',
         self::SESSION_DATEFORMAT      => 'DD.MM.YYYY HH24:MI:SS',
         self::SESSION_DATELANGUAGE    => false,
         self::SESSION_CURRENTSCHEMA   => false,
+        self::CONNECTION_CHARSET      => 'AL32UTF8',
         self::CONNECTION_PERSISTENT   => false,
         self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,
         self::CONNECTION_CACHE        => false,
@@ -65,6 +65,17 @@ class Config implements \ArrayAccess
         self::STATEMENT_CACHE_SIZE    => 50,
         self::STATEMENT_CACHE_CLASS   => StatementCache::class
     ];
+
+    /**
+     * @param array $configuration
+     */
+    public function __construct(array $configuration)
+    {
+        foreach ($configuration as $key => $value) {
+            $this->set($key, $value);
+        }
+    }
+
 
     /**
      * @param string $key
@@ -151,12 +162,20 @@ class Config implements \ArrayAccess
      * @param mixed $value
      * @throws Exception
      */
-    public function set($key, $value)
+    public function set($key, $value = null)
     {
+        if (func_num_args() === 1 && is_array($key)) {
+            foreach ($key as $name => $value) {
+                $this->set($name, $value);
+            }
+
+            return;
+        }
+
         if (isset($this->defaults[ $key ])) {
             $this->config[ $key ] = $value;
         } else {
-            throw new Exception();
+            throw new Exception("Can't find config entry: $key.");
         }
     }
 }

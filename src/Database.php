@@ -28,9 +28,9 @@ class Database
     public $profiler;
 
     /**
-     * Array with settings key => value pair
+     * Configuration storage
      *
-     * @var array
+     * @type Config
      */
     protected $config;
 
@@ -74,21 +74,23 @@ class Database
      * @param string $password
      * @param string $connectionString
      *
+     * @param $config
      * @throws Exception
-     *
      */
     public function __construct(
         $userName,
         $password,
-        $connectionString
+        $connectionString,
+        $config = null
     ) {
         if (!isset($userName) || !isset($password) || !isset($connectionString)) {
             throw new Exception("One of connection parameters is null or not set");
         }
-        $this->config = $this->getDefaultSettings();
+        $this->config = new Config($config);
         $this->userName = $userName;
         $this->password = $password;
         $this->connectionString = $connectionString;
+        $this->config = $config;
     }
 
     /**
@@ -148,22 +150,12 @@ class Database
     {
         if (func_num_args() === 1) {
             if (is_array($name)) {
-                $intersect = array_intersect_key($this->config, $name);
-                if (count($intersect) !== count($name)) {
-                    $diff = array_diff_key($name, $intersect);
-                    $diff = implode(',', $diff);
-                    throw new Exception("Not all config entries are valid: $diff");
-                }
-                $this->config = array_merge($this->config, $name);
+                $this->config->set($name);
             } else {
-                if (isset($this->config[ $name ])) {
-                    return $this->config[ $name ];
-                } else {
-                    throw new Exception("No such config entry: $name");
-                }
+                return $this->config->get($name);
             }
         } else {
-            $this->config[ $name ] = $value;
+            $this->config->set($name, $value);
         }
 
         return $value;
@@ -183,17 +175,17 @@ class Database
             return $this;
         }
         $this->setUpSessionBefore();
-        if ($this->config('connection.persistent')) {
+        if ($this->config(Config::CONNECTION_PERSISTENT)) {
             $connectFunction = 'oci_pconnect';
         } else {
-            $connectFunction = $this->config('connection.cache') ? 'oci_connect' : 'oci_new_connect';
+            $connectFunction = $this->config(Config::CONNECTION_CACHE) ? 'oci_connect' : 'oci_new_connect';
         }
         $this->connection = $connectFunction(
             $this->userName,
             $this->password,
             $this->connectionString,
-            $this->config('session.charset'),
-            $this->config('connection.privileged')
+            $this->config(Config::CONNECTION_CHARSET),
+            $this->config(Config::CONNECTION_PRIVILEGED)
         );
         if ($this->connection === false) {
             $error = $this->getOCIError();
@@ -211,7 +203,7 @@ class Database
      */
     public function endProfile()
     {
-        if ($this->config('profiler.enabled')) {
+        if ($this->config(Config::PROFILER_ENABLED)) {
             $this->profiler->end();
         }
 
@@ -385,7 +377,7 @@ class Database
      */
     public function startFetchProfile($profileId)
     {
-        if ($this->config('profiler.enabled')) {
+        if ($this->config(Config::PROFILER_ENABLED)) {
             return $this->profiler->startFetch($profileId);
         }
 
@@ -400,7 +392,7 @@ class Database
      */
     public function startProfile($sql, $bindings = null)
     {
-        if ($this->config('profiler.enabled')) {
+        if ($this->config(Config::PROFILER_ENABLED)) {
             return $this->profiler->start($sql, $bindings);
         }
 
@@ -414,7 +406,7 @@ class Database
      */
     public function stopFetchProfile($profileId)
     {
-        if ($this->config('profiler.enabled')) {
+        if ($this->config(Config::PROFILER_ENABLED)) {
             return $this->profiler->stopFetch($profileId);
         }
 
@@ -473,36 +465,6 @@ class Database
     }
 
     /**
-     * Method returns default settings
-     * for Database class
-     *
-     * @return array
-     */
-    protected function getDefaultSettings()
-    {
-        return [
-            'session.charset'         => 'AL32UTF8',
-            'session.autocommit'      => false,
-            'session.dateFormat'      => 'DD.MM.YYYY HH24:MI:SS',
-            'session.dateLanguage'    => false,
-            'session.currentSchema'   => false,
-            'connection.persistent'   => false,
-            'connection.privileged'   => OCI_DEFAULT,
-            'connection.cache'        => false,
-            'connection.class'        => false,
-            'connection.edition'      => false,
-            'client.identifier'       => '',
-            'client.info'             => '',
-            'client.moduleName'       => '',
-            'profiler.enabled'        => false,
-            'profiler.class'          => __NAMESPACE__ . '\\Profiler',
-            'statement.cache.enabled' => true,
-            'statement.cache.size'    => 50,
-            'statement.cache.class'   => __NAMESPACE__ . '\\StatementCache'
-        ];
-    }
-
-    /**
      * Method to fetch OCI8 error
      * Returns associative array with
      * "code" and "message" keys.
@@ -526,7 +488,7 @@ class Database
      */
     protected function getStatement($sql)
     {
-        $statementCacheEnabled = $this->config('statement.cache.enabled');
+        $statementCacheEnabled = $this->config(Config::STATEMENT_CACHE_ENABLED);
         $statementCache = null;
 
         if ($statementCacheEnabled) {
@@ -564,33 +526,33 @@ class Database
     protected function setUpSessionAfter()
     {
         //Set up profiler
-        if ($this->config('profiler.enabled')) {
-            $class = $this->config('profiler.class');
+        if ($this->config(Config::PROFILER_ENABLED)) {
+            $class = $this->config(Config::PROFILER_CLASS);
             $this->profiler = is_string($class) ? new $class() : $class;
         }
 
         //Set up cache
-        if ($this->config('statement.cache.enabled')) {
-            $class = $this->config('statement.cache.class');
-            $cacheSize = $this->config('statement.cache.size');
+        if ($this->config(Config::STATEMENT_CACHE_ENABLED)) {
+            $class = $this->config(Config::STATEMENT_CACHE_CLASS);
+            $cacheSize = $this->config(Config::STATEMENT_CACHE_SIZE);
             $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
         }
 
         /** @noinspection PhpUndefinedFunctionInspection */
-        oci_set_client_identifier($this->connection, $this->config('client.identifier'));
+        oci_set_client_identifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
         /** @noinspection PhpUndefinedFunctionInspection */
-        oci_set_client_info($this->connection, $this->config('client.info'));
+        oci_set_client_info($this->connection, $this->config(Config::CLIENT_INFO));
         /** @noinspection PhpUndefinedFunctionInspection */
-        oci_set_module_name($this->connection, $this->config('client.moduleName'));
+        oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULENAME));
         $setUp = [ ];
-        if ($this->config('session.dateFormat')) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config('session.dateFormat');
+        if ($this->config(Config::SESSION_DATEFORMAT)) {
+            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATEFORMAT);
         }
-        if ($this->config('session.dateLanguage')) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config('session.dateLanguage');
+        if ($this->config(Config::SESSION_DATELANGUAGE)) {
+            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATELANGUAGE);
         }
-        if ($this->config('session.currentSchema')) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config('session.currentSchema');
+        if ($this->config(Config::SESSION_CURRENTSCHEMA)) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENTSCHEMA);
         }
         $this->alterSession($setUp);
 
@@ -605,11 +567,11 @@ class Database
      */
     private function setUpSessionBefore()
     {
-        $connectionClass = $this->config('connection.class');
+        $connectionClass = $this->config(Config::CONNECTION_CLASS);
         if ($connectionClass) {
             ini_set('oci8.connection_class', $connectionClass);
         }
-        $edition = $this->config('connection.edition');
+        $edition = $this->config(Config::CONNECTION_EDITION);
         if ($edition) {
             /** @noinspection PhpUndefinedFunctionInspection */
             $result = oci_set_edition($edition);
