@@ -420,7 +420,6 @@ class Database
      */
     public function version()
     {
-        /** @noinspection PhpUndefinedFunctionInspection */
         return oci_client_version();
     }
 
@@ -538,11 +537,8 @@ class Database
             $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
         }
 
-        /** @noinspection PhpUndefinedFunctionInspection */
         oci_set_client_identifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
-        /** @noinspection PhpUndefinedFunctionInspection */
         oci_set_client_info($this->connection, $this->config(Config::CLIENT_INFO));
-        /** @noinspection PhpUndefinedFunctionInspection */
         oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULENAME));
         $setUp = [ ];
         if ($this->config(Config::SESSION_DATEFORMAT)) {
@@ -573,7 +569,6 @@ class Database
         }
         $edition = $this->config(Config::CONNECTION_EDITION);
         if ($edition) {
-            /** @noinspection PhpUndefinedFunctionInspection */
             $result = oci_set_edition($edition);
             if ($result === false) {
                 throw new Exception("Edition setup failed: $edition");
