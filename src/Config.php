@@ -33,12 +33,12 @@ class Config implements \ArrayAccess
     const PROFILER_CLASS   = 'profiler.class';
     const PROFILER_ENABLED = 'profiler.enabled';
 
-    const SESSION_AUTOCOMMIT    = 'session.autocommit';
     const SESSION_CHARSET       = 'session.charset';
     const SESSION_CURRENTSCHEMA = 'session.currentSchema';
     const SESSION_DATEFORMAT    = 'session.dateFormat';
     const SESSION_DATELANGUAGE  = 'session.dateLanguage';
 
+    const STATEMENT_AUTOCOMMIT    = 'statement.autocommit';
     const STATEMENT_CACHE_CLASS   = 'statement.cache.class';
     const STATEMENT_CACHE_ENABLED = 'statement.cache.enabled';
     const STATEMENT_CACHE_SIZE    = 'statement.cache.size';
@@ -47,7 +47,6 @@ class Config implements \ArrayAccess
 
     protected $defaults = [
         self::SESSION_CHARSET         => 'AL32UTF8',
-        self::SESSION_AUTOCOMMIT      => false,
         self::SESSION_DATEFORMAT      => 'DD.MM.YYYY HH24:MI:SS',
         self::SESSION_DATELANGUAGE    => false,
         self::SESSION_CURRENTSCHEMA   => false,
@@ -61,6 +60,7 @@ class Config implements \ArrayAccess
         self::CLIENT_MODULENAME       => '',
         self::PROFILER_ENABLED        => false,
         self::PROFILER_CLASS          => Profiler::class,
+        self::STATEMENT_AUTOCOMMIT    => false,
         self::STATEMENT_CACHE_ENABLED => true,
         self::STATEMENT_CACHE_SIZE    => 50,
         self::STATEMENT_CACHE_CLASS   => StatementCache::class
