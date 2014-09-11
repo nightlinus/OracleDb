@@ -103,15 +103,15 @@ class Database
 
     /**
      * @param string $sqlText
-     * @param int    $returnSize
-     * @param null   $bindings
-     * @param null   $mode
+     * @param int $returnSize
+     * @param null $bindings
+     * @param null $mode
      *
      * @return mixed
      */
     public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
     {
-        $returnName = "r___" . sha1(microtime(true));
+        $returnName = $this->getUniqueAlias('z__');
         $bindings[ $returnName ] = [ null, $returnSize ];
         $sqlText = "BEGIN :$returnName := $sqlText; END;";
         $statement = $this->query($sqlText, $bindings, $mode);
@@ -130,7 +130,7 @@ class Database
         $commitResult = oci_commit($this->connection);
         if ($commitResult === false) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         return $this;
@@ -140,7 +140,7 @@ class Database
      * General function to get and set
      * configuration values
      *
-     * @param string     $name
+     * @param string $name
      * @param null|mixed $value
      *
      * @throws Exception
@@ -189,7 +189,7 @@ class Database
         );
         if ($this->connection === false) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
         $this->setUpSessionAfter();
 
@@ -256,7 +256,7 @@ class Database
         $version = oci_server_version($this->connection);
         if ($version === false) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         return $version;
@@ -284,9 +284,9 @@ class Database
      * Shortcut method to prepare and fetch
      * statement.
      *
-     * @param string     $sqlText
+     * @param string $sqlText
      * @param array|null &$bindings
-     * @param null       $mode
+     * @param null $mode
      *
      * @return Statement
      * @throws Exception
@@ -331,7 +331,7 @@ class Database
     {
         $rollbackResult = oci_rollback($this->connection);
         if ($rollbackResult === false) {
-            throw new Exception('Can not rollback');
+            throw new Exception("Can't rollback");
         }
 
         return $this;
@@ -494,7 +494,7 @@ class Database
             $statementCache = $this->statementCache->get($sql);
         }
 
-        $statement = $statementCache ? : new Statement($this, $sql);
+        $statement = $statementCache ?: new Statement($this, $sql);
 
         if ($statementCacheEnabled && $statementCache === null) {
             $trashStatements = $this->statementCache->add($statement);
@@ -515,6 +515,17 @@ class Database
         }
 
         return $statement;
+    }
+
+    /**
+     * @return mixed|string
+     */
+    protected function getUniqueAlias($prefix)
+    {
+        $hash = uniqid($prefix, true);
+        $hash = str_replace('.', '', $hash);
+
+        return $hash;
     }
 
     /**
@@ -561,7 +572,7 @@ class Database
      * @return $this
      * @throws Exception
      */
-    private function setUpSessionBefore()
+    protected function setUpSessionBefore()
     {
         $connectionClass = $this->config(Config::CONNECTION_CLASS);
         if ($connectionClass) {
@@ -571,7 +582,7 @@ class Database
         if ($edition) {
             $result = oci_set_edition($edition);
             if ($result === false) {
-                throw new Exception("Edition setup failed: $edition");
+                throw new Exception("Edition setup failed «{$edition}».");
             }
         }
 

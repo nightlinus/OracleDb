@@ -20,5 +20,24 @@ namespace nightlinus\OracleDb;
  */
 class Exception extends \Exception
 {
-
+    /**
+     * @param string $message
+     * @param int $code
+     * @param \Exception $previous
+     */
+    public function __construct($message = "", $code = 0, \Exception $previous = null)
+    {
+        if (func_num_args() === 1 && is_array($message)) {
+            $code = $message[ 'code' ];
+            $text = $message[ 'message' ];
+            $offset = $message[ 'offset' ];
+            $sql = $message[ 'sqltext' ];
+            $message = $text;
+            if ($offset && $sql) {
+                $message .= "\nOffset: $offset" .
+                            "\n$sql";
+            }
+        }
+        \Exception::__construct($message, $code, $previous);
+    }
 }

@@ -26,51 +26,32 @@ namespace nightlinus\OracleDb;
 class Statement implements \IteratorAggregate
 {
 
-    const FETCH_ALL = 8;
-
+    const FETCH_ALL   = 8;
     const FETCH_ARRAY = 1;
-
     const FETCH_ASSOC = 2;
+    const FETCH_OBJ   = 4;
 
-    const FETCH_OBJ = 4;
-
-    const RETURN_ARRAY = 1;
-
+    const RETURN_ARRAY    = 1;
     const RETURN_ITERATOR = 0;
 
-    const STATE_EXECUTED = 8;
-
+    const STATE_EXECUTED          = 8;
     const STATE_EXECUTED_DESCRIBE = 4;
+    const STATE_FETCHED           = 2;
+    const STATE_FETCHING          = 16;
+    const STATE_FREED             = 0;
+    const STATE_PREPARED          = 1;
 
-    const STATE_FETCHED = 2;
-
-    const STATE_FETCHING = 16;
-
-    const STATE_FREED = 0;
-
-    const STATE_PREPARED = 1;
-
-    const TYPE_ALTER = 'ALTER';
-
-    const TYPE_BEGIN = 'BEGIN';
-
-    const TYPE_CALL = 'CALL';
-
-    const TYPE_CREATE = 'CREATE';
-
+    const TYPE_ALTER   = 'ALTER';
+    const TYPE_BEGIN   = 'BEGIN';
+    const TYPE_CALL    = 'CALL';
+    const TYPE_CREATE  = 'CREATE';
     const TYPE_DECLARE = 'DECLARE';
-
-    const TYPE_DELETE = 'DELETE';
-
-    const TYPE_DROP = 'DROP';
-
-    const TYPE_INSERT = 'INSERT';
-
-    const TYPE_SELECT = 'SELECT';
-
+    const TYPE_DELETE  = 'DELETE';
+    const TYPE_DROP    = 'DROP';
+    const TYPE_INSERT  = 'INSERT';
+    const TYPE_SELECT  = 'SELECT';
     const TYPE_UNKNOWN = 'UNKNOWN';
-
-    const TYPE_UPDATE = 'UPDATE';
+    const TYPE_UPDATE  = 'UPDATE';
 
     /**
      * result of last fetch fucntion
@@ -132,7 +113,7 @@ class Statement implements \IteratorAggregate
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
-     * @param Database     $db          ссылка на родительский объект базы данных
+     * @param Database $db ссылка на родительский объект базы данных
      * @param string $queryString sql выражение стейтмента в текстовом виде
      */
     public function __construct(Database $db, $queryString = null)
@@ -190,9 +171,9 @@ class Statement implements \IteratorAggregate
             if ($value instanceof $this) {
                 $type = OCI_B_CURSOR;
                 $value->prepare();
-                $bindValue = & $this->bindings[ $bindingName ]->resource;
+                $bindValue = &$this->bindings[ $bindingName ]->resource;
             } else {
-                $bindValue = & $this->bindings[ $bindingName ];
+                $bindValue = &$this->bindings[ $bindingName ];
             }
             $bindResult = oci_bind_by_name(
                 $this->resource,
@@ -203,7 +184,7 @@ class Statement implements \IteratorAggregate
             );
             if (false === $bindResult) {
                 $error = $this->getOCIError();
-                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+                throw new Exception($error);
             }
         }
 
@@ -213,12 +194,12 @@ class Statement implements \IteratorAggregate
     /**
      * Method to bind array host-variables
      *
-     * @param string $name      name of host variable
-     * @param array  $binding   array to bind
-     * @param int    $maxLength maximum length of array
+     * @param string $name name of host variable
+     * @param array $binding array to bind
+     * @param int $maxLength maximum length of array
      *
      * @param        $maxItemLength
-     * @param int    $type
+     * @param int $type
      *
      * @throws Exception
      * @return $this
@@ -236,7 +217,7 @@ class Statement implements \IteratorAggregate
         );
         if (false === $bindResult) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         $this->bindings[ $name ] = $binding;
@@ -309,7 +290,7 @@ class Statement implements \IteratorAggregate
 
         if ($executeResult === false) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
         if ($mode & OCI_DESCRIBE_ONLY) {
             $this->state = self::STATE_EXECUTED_DESCRIBE;
@@ -365,7 +346,7 @@ class Statement implements \IteratorAggregate
      * $column, index is numeric
      *
      * @param int|string $column set column to fetch from
-     * @param int        $ociMode
+     * @param int $ociMode
      *
      * @return array | \Generator
      */
@@ -393,7 +374,7 @@ class Statement implements \IteratorAggregate
 
     /**
      * @param int|string $mapIndex
-     * @param int        $ociMode
+     * @param int $ociMode
      *
      * @throws Exception
      * @return \Generator|array[]
@@ -402,7 +383,7 @@ class Statement implements \IteratorAggregate
     {
         if (is_numeric($mapIndex)) {
             if ($mapIndex < 1) {
-                throw new Exception("Column index start from 1, but <$mapIndex> was passed");
+                throw new Exception("Column index start from 1, but «{$mapIndex}» was passed.");
             }
             if (($ociMode & OCI_NUM) === 0) {
                 $ociMode = OCI_NUM + $ociMode;
@@ -435,36 +416,6 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Fetches single value from first row
-     * and column specified by $index
-     *
-     * @param int|string $index number or string
-     *                          that indicates column
-     *                          to fetch value from
-     *
-     * @throws Exception
-     * @return string
-     */
-    public function fetchValue($index = 1)
-    {
-        if (is_numeric($index)) {
-            if ($index < 1) {
-                throw new Exception("Column index start from 1, but <$index> was passed");
-            }
-            $mode = OCI_NUM + OCI_RETURN_NULLS;
-            //make proper index to indicate that first column has index of 0
-            $index--;
-        } else {
-            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
-        }
-
-        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current()[ $index ];
-        $this->state = self::STATE_FETCHED;
-
-        return $this->result;
-    }
-
-    /**
      * @param int $mode
      *
      * @return \array[]
@@ -488,7 +439,7 @@ class Statement implements \IteratorAggregate
      * where keys are $firstCol values and
      * values are $secondCol values
      *
-     * @param int|string $firstCol  колонка с ключом
+     * @param int|string $firstCol колонка с ключом
      * @param int|string $secondCol колонка со значением
      *
      * @throws Exception
@@ -498,7 +449,7 @@ class Statement implements \IteratorAggregate
     {
         if (is_numeric($firstCol) && is_numeric($secondCol)) {
             if ($firstCol < 1 || $secondCol < 1) {
-                throw new Exception("Column index start from 1, but <$firstCol>, <$secondCol> were passed");
+                throw new Exception("Column index start from 1, but «{$firstCol}», «{$secondCol}» were passed.");
             }
             $mode = OCI_NUM + OCI_RETURN_NULLS;
             //make proper index to indicate that first column has index of 0
@@ -516,6 +467,36 @@ class Statement implements \IteratorAggregate
         };
 
         return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
+    }
+
+    /**
+     * Fetches single value from first row
+     * and column specified by $index
+     *
+     * @param int|string $index number or string
+     *                          that indicates column
+     *                          to fetch value from
+     *
+     * @throws Exception
+     * @return string
+     */
+    public function fetchValue($index = 1)
+    {
+        if (is_numeric($index)) {
+            if ($index < 1) {
+                throw new Exception("Column index start from 1, but «{$index}» was passed.");
+            }
+            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            //make proper index to indicate that first column has index of 0
+            $index--;
+        } else {
+            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+        }
+
+        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current()[ $index ];
+        $this->state = self::STATE_FETCHED;
+
+        return $this->result;
     }
 
     /**
@@ -542,7 +523,7 @@ class Statement implements \IteratorAggregate
         $rows = oci_num_rows($this->resource);
         if (false === $rows) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         return $rows;
@@ -560,7 +541,7 @@ class Statement implements \IteratorAggregate
             $this->execute(OCI_DESCRIBE_ONLY);
         }
         if (is_numeric($index) && $index < 1) {
-            throw new Exception("Index must be larger then 1, index: $index");
+            throw new Exception("Index must be larger then 1, index «{$index}».");
         }
         $result = [
             'name'       => oci_field_name($this->resource, $index),
@@ -574,7 +555,7 @@ class Statement implements \IteratorAggregate
         foreach ($result as $field) {
             if (false === $field) {
                 $error = $this->getOCIError();
-                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+                throw new Exception($error);
             }
         }
 
@@ -594,7 +575,7 @@ class Statement implements \IteratorAggregate
         $result = oci_num_fields($this->resource);
         if (false === $result) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         return $result;
@@ -651,7 +632,7 @@ class Statement implements \IteratorAggregate
         $type = oci_statement_type($this->resource);
         if (false === $type) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         return $type;
@@ -687,7 +668,7 @@ class Statement implements \IteratorAggregate
 
         if (false === $this->resource) {
             $error = $this->getOCIError();
-            throw new Exception($error[ 'message' ], $error[ 'code' ]);
+            throw new Exception($error);
         }
 
         $this->state = self::STATE_PREPARED;
@@ -718,7 +699,7 @@ class Statement implements \IteratorAggregate
             $setResult = oci_set_prefetch($this->resource, $rowCount);
             if (false === $setResult) {
                 $error = $this->getOCIError();
-                throw new Exception($error[ 'message' ], $error[ 'code' ]);
+                throw new Exception($error);
             }
         }
 
@@ -743,7 +724,7 @@ class Statement implements \IteratorAggregate
      * @param callable $callback Функция для обработки элементов выборки
      *                           Передаются параметры $item, $index, &result
      *
-     * @param int      $fetchMode
+     * @param int $fetchMode
      *
      * @param int|null $ociMode
      *
@@ -768,7 +749,7 @@ class Statement implements \IteratorAggregate
      */
     protected function getFetchFunction($fetchMode, $ociMode = null)
     {
-        $ociMode = $ociMode ? : OCI_ASSOC + OCI_RETURN_NULLS;
+        $ociMode = $ociMode ?: OCI_ASSOC + OCI_RETURN_NULLS;
         switch ($fetchMode) {
             case self::FETCH_ARRAY:
             case self::FETCH_ASSOC:
@@ -844,7 +825,7 @@ class Statement implements \IteratorAggregate
      *
      * @param      $callback
      *
-     * @param int  $fetchMode
+     * @param int $fetchMode
      * @param null $ociMode
      *
      * @throws Exception

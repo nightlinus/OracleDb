@@ -89,7 +89,7 @@ class Config implements \ArrayAccess
         } elseif (isset($this->defaults[ $key ])) {
             $value = $this->defaults[ $key ];
         } else {
-            throw new Exception();
+            throw new Exception("Config entry «{$key}» doesn't exists. ");
         }
 
         return $value;
@@ -172,10 +172,10 @@ class Config implements \ArrayAccess
             return;
         }
 
-        if (isset($this->defaults[ $key ])) {
+        if ($this->offsetExists($key)) {
             $this->config[ $key ] = $value;
         } else {
-            throw new Exception("Can't find config entry: $key.");
+            throw new Exception("Config entry «{$key}» doesn't exists. ");
         }
     }
 }
