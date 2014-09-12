@@ -565,8 +565,8 @@ class Database
         if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
             $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
         }
-        if ($this->config(Config::SESSION_SCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_SCHEMA);
+        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
         }
         $this->alterSession($setUp);
 

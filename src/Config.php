@@ -4,7 +4,7 @@
  * Time: 12:32
  *
  * @category
- * @package nightlinus\OracleDb
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
  * @version  0.1.0
@@ -16,14 +16,21 @@ namespace nightlinus\OracleDb;
 /**
  * Class Config
  * It stores and manipilate client configuration
+ *
  * @package nightlinus\OracleDb
  */
 class Config implements \ArrayAccess
 {
+    /**
+     * Client variables
+     */
     const CLIENT_IDENTIFIER = 'client.identifier';
     const CLIENT_INFO       = 'client.info';
     const CLIENT_MODULENAME = 'client.moduleName';
 
+    /**
+     * Connection variables
+     */
     const CONNECTION_CACHE      = 'connection.cache';
     const CONNECTION_CHARSET    = 'connection.charset';
     const CONNECTION_CLASS      = 'connection.class';
@@ -31,13 +38,22 @@ class Config implements \ArrayAccess
     const CONNECTION_PERSISTENT = 'connection.persistent';
     const CONNECTION_PRIVILEGED = 'connection.privileged';
 
+    /**
+     * Profiler variables
+     */
     const PROFILER_CLASS   = 'profiler.class';
     const PROFILER_ENABLED = 'profiler.enabled';
 
-    const SESSION_DATE_FORMAT   = 'session.dateFormat';
-    const SESSION_DATE_LANGUAGE = 'session.dateLanguage';
-    const SESSION_SCHEMA        = 'session.currentSchema';
+    /**
+     * Session variables
+     */
+    const SESSION_CURRENT_SCHEMA = 'session.currentSchema';
+    const SESSION_DATE_FORMAT    = 'session.dateFormat';
+    const SESSION_DATE_LANGUAGE  = 'session.dateLanguage';
 
+    /**
+     *  Statement variables
+     */
     const STATEMENT_AUTOCOMMIT    = 'statement.autocommit';
     const STATEMENT_CACHE_CLASS   = 'statement.cache.class';
     const STATEMENT_CACHE_ENABLED = 'statement.cache.enabled';
@@ -58,7 +74,7 @@ class Config implements \ArrayAccess
     protected $defaults = [
         self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
         self::SESSION_DATE_LANGUAGE   => false,
-        self::SESSION_SCHEMA          => false,
+        self::SESSION_CURRENT_SCHEMA  => false,
         self::CONNECTION_CHARSET      => 'AL32UTF8',
         self::CONNECTION_PERSISTENT   => false,
         self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,
@@ -91,6 +107,7 @@ class Config implements \ArrayAccess
      * Get value from config entry
      *
      * @param string $key
+     *
      * @return mixed
      * @throws Exception
      */
@@ -109,9 +126,12 @@ class Config implements \ArrayAccess
 
     /**
      * Whether a offset exists
+     *
      * @link http://php.net/manual/en/arrayaccess.offsetexists.php
+     *
      * @param mixed $offset
      * An offset to check for.
+     *
      * @return boolean true on success or false on failure.
      * The return value will be casted to boolean if non-boolean was returned.
      */
@@ -122,9 +142,12 @@ class Config implements \ArrayAccess
 
     /**
      * Offset to retrieve
+     *
      * @link http://php.net/manual/en/arrayaccess.offsetget.php
+     *
      * @param mixed $offset
      * The offset to retrieve.
+     *
      * @return mixed Can return all value types.
      */
     public function offsetGet($offset)
@@ -134,11 +157,14 @@ class Config implements \ArrayAccess
 
     /**
      * Offset to set
+     *
      * @link http://php.net/manual/en/arrayaccess.offsetset.php
+     *
      * @param mixed $offset
      * The offset to assign the value to.
      * @param mixed $value
      * The value to set.
+     *
      * @return void
      */
     public function offsetSet($offset, $value)
@@ -148,9 +174,12 @@ class Config implements \ArrayAccess
 
     /**
      * Offset to unset
+     *
      * @link http://php.net/manual/en/arrayaccess.offsetunset.php
+     *
      * @param mixed $offset
      * The offset to unset.
+     *
      * @return void
      */
     public function offsetUnset($offset)
@@ -163,7 +192,8 @@ class Config implements \ArrayAccess
      * apply self to each key value pair of array
      *
      * @param string $key
-     * @param mixed $value
+     * @param mixed  $value
+     *
      * @throws Exception
      */
     public function set($key, $value = null)
