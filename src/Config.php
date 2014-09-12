@@ -4,11 +4,11 @@
  * Time: 12:32
  *
  * @category
- * @package  OracleDb
- * @author   nightlinus <user@localhost>
+ * @package nightlinus\OracleDb
+ * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @version  0.1.0
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb;
@@ -43,8 +43,18 @@ class Config implements \ArrayAccess
     const STATEMENT_CACHE_ENABLED = 'statement.cache.enabled';
     const STATEMENT_CACHE_SIZE    = 'statement.cache.size';
 
-    protected $config   = [ ];
+    /**
+     * Array to store current values of configuration entrys
+     *
+     * @type array
+     */
+    protected $config = [ ];
 
+    /**
+     * Array to store default configuretion values
+     *
+     * @type array
+     */
     protected $defaults = [
         self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
         self::SESSION_DATE_LANGUAGE   => false,
@@ -78,6 +88,8 @@ class Config implements \ArrayAccess
 
 
     /**
+     * Get value from config entry
+     *
      * @param string $key
      * @return mixed
      * @throws Exception
@@ -96,15 +108,11 @@ class Config implements \ArrayAccess
     }
 
     /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
      * Whether a offset exists
      * @link http://php.net/manual/en/arrayaccess.offsetexists.php
-     * @param mixed $offset <p>
+     * @param mixed $offset
      * An offset to check for.
-     * </p>
      * @return boolean true on success or false on failure.
-     * </p>
-     * <p>
      * The return value will be casted to boolean if non-boolean was returned.
      */
     public function offsetExists($offset)
@@ -113,12 +121,10 @@ class Config implements \ArrayAccess
     }
 
     /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
      * Offset to retrieve
      * @link http://php.net/manual/en/arrayaccess.offsetget.php
-     * @param mixed $offset <p>
+     * @param mixed $offset
      * The offset to retrieve.
-     * </p>
      * @return mixed Can return all value types.
      */
     public function offsetGet($offset)
@@ -127,15 +133,12 @@ class Config implements \ArrayAccess
     }
 
     /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
      * Offset to set
      * @link http://php.net/manual/en/arrayaccess.offsetset.php
-     * @param mixed $offset <p>
+     * @param mixed $offset
      * The offset to assign the value to.
-     * </p>
-     * @param mixed $value <p>
+     * @param mixed $value
      * The value to set.
-     * </p>
      * @return void
      */
     public function offsetSet($offset, $value)
@@ -144,12 +147,10 @@ class Config implements \ArrayAccess
     }
 
     /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
      * Offset to unset
      * @link http://php.net/manual/en/arrayaccess.offsetunset.php
-     * @param mixed $offset <p>
+     * @param mixed $offset
      * The offset to unset.
-     * </p>
      * @return void
      */
     public function offsetUnset($offset)
@@ -158,6 +159,9 @@ class Config implements \ArrayAccess
     }
 
     /**
+     * Sets config entry, if array is given,
+     * apply self to each key value pair of array
+     *
      * @param string $key
      * @param mixed $value
      * @throws Exception

@@ -5,10 +5,10 @@
  * PHP version 5
  *
  * @category Database
- * @package  OracleDb
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  GIT: 1
+ * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 
@@ -16,14 +16,15 @@ namespace nightlinus\OracleDb;
 
 /**
  * Class Exception
+ *
  * @package Oracle
  */
 class Exception extends \Exception
 {
     /**
-     * @param string $message
-     * @param int $code
-     * @param \Exception $previous
+     * @param string|array $message
+     * @param int          $code
+     * @param \Exception   $previous
      */
     public function __construct($message = "", $code = 0, \Exception $previous = null)
     {
@@ -35,7 +36,7 @@ class Exception extends \Exception
             $message = $text;
             if ($offset && $sql) {
                 $message .= "\nOffset: $offset" .
-                            "\n$sql";
+                    "\n$sql";
             }
         }
         \Exception::__construct($message, $code, $previous);

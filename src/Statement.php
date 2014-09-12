@@ -6,10 +6,10 @@
  * PHP version 5.5
  *
  * @category Database
- * @package  OracleDb
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  GIT: 1
+ * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 
@@ -26,6 +26,9 @@ namespace nightlinus\OracleDb;
 class Statement implements \IteratorAggregate
 {
 
+    /**
+     * Describe what fetch function shoud be used
+     */
     const FETCH_ALL   = 8;
     const FETCH_ARRAY = 1;
     const FETCH_ASSOC = 2;
@@ -34,6 +37,9 @@ class Statement implements \IteratorAggregate
     const RETURN_ARRAY    = 1;
     const RETURN_ITERATOR = 0;
 
+    /**
+     * List of statement states
+     */
     const STATE_EXECUTED          = 8;
     const STATE_EXECUTED_DESCRIBE = 4;
     const STATE_FETCHED           = 2;
@@ -41,6 +47,9 @@ class Statement implements \IteratorAggregate
     const STATE_FREED             = 0;
     const STATE_PREPARED          = 1;
 
+    /**
+     * List of statement types
+     */
     const TYPE_ALTER   = 'ALTER';
     const TYPE_BEGIN   = 'BEGIN';
     const TYPE_CALL    = 'CALL';
@@ -56,7 +65,7 @@ class Statement implements \IteratorAggregate
     /**
      * result of last fetch fucntion
      *
-     * @var array[]
+     * @type array[]
      */
     public $result;
 
@@ -64,21 +73,21 @@ class Statement implements \IteratorAggregate
      * array that contains all
      * host-variable bindings
      *
-     * @var array|null
+     * @type array|null
      */
     public $bindings;
 
     /**
      * Instance of parent database object
      *
-     * @var Database
+     * @type Database
      */
     protected $db;
 
     /**
      * Index of profile associated with statement
      *
-     * @var int
+     * @type int
      */
     protected $profileId;
 
@@ -86,26 +95,28 @@ class Statement implements \IteratorAggregate
      * Raw sql text, that was used
      * in oci_parse function
      *
-     * @var  string
+     * @type  string
      */
     protected $queryString;
 
     /**
      * Rsource of db statement
      *
-     * @var resource
+     * @type resource
      */
     protected $resource;
 
     /**
-     * @var int
+     * Flag to determine return type: array or iterator
+     *
+     * @type int
      */
     protected $returnType;
 
     /**
      * Internal state of Statement
      *
-     * @var int
+     * @type int
      */
     protected $state;
 
@@ -113,8 +124,8 @@ class Statement implements \IteratorAggregate
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
-     * @param Database $db ссылка на родительский объект базы данных
-     * @param string $queryString sql выражение стейтмента в текстовом виде
+     * @param Database $db          ссылка на родительский объект базы данных
+     * @param string   $queryString sql выражение стейтмента в текстовом виде
      */
     public function __construct(Database $db, $queryString = null)
     {
@@ -194,12 +205,12 @@ class Statement implements \IteratorAggregate
     /**
      * Method to bind array host-variables
      *
-     * @param string $name name of host variable
-     * @param array $binding array to bind
-     * @param int $maxLength maximum length of array
+     * @param string $name      name of host variable
+     * @param array  $binding   array to bind
+     * @param int    $maxLength maximum length of array
      *
-     * @param        $maxItemLength
-     * @param int $type
+     * @param int    $maxItemLength
+     * @param int    $type
      *
      * @throws Exception
      * @return $this
@@ -226,7 +237,9 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * @return bool
+     * Whether statement can be realesed or not
+     *
+     * @return bool true if in any state besides fetching
      */
     public function canBeFreed()
     {
@@ -346,7 +359,7 @@ class Statement implements \IteratorAggregate
      * $column, index is numeric
      *
      * @param int|string $column set column to fetch from
-     * @param int $ociMode
+     * @param int        $ociMode
      *
      * @return array | \Generator
      */
@@ -374,7 +387,7 @@ class Statement implements \IteratorAggregate
 
     /**
      * @param int|string $mapIndex
-     * @param int $ociMode
+     * @param int        $ociMode
      *
      * @throws Exception
      * @return \Generator|array[]
@@ -416,6 +429,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Fetch only first row
+     *
      * @param int $mode
      *
      * @return \array[]
@@ -439,7 +454,7 @@ class Statement implements \IteratorAggregate
      * where keys are $firstCol values and
      * values are $secondCol values
      *
-     * @param int|string $firstCol колонка с ключом
+     * @param int|string $firstCol  колонка с ключом
      * @param int|string $secondCol колонка со значением
      *
      * @throws Exception
@@ -530,6 +545,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Get description of data columns
+     *
      * @param $index
      *
      * @return array
@@ -563,6 +580,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Get number of columns in data
+     *
      * @return int
      * @throws Exception
      */
@@ -639,6 +658,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * True if statement can be fetched, false otherwise
+     *
      * @return bool
      */
     public function isFetchable()
@@ -688,6 +709,9 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Sets number of rows preloaded from database,
+     * bigger rowCount leads to smallaer amount of network requests
+     *
      * @param $rowCount
      *
      * @return $this
@@ -707,6 +731,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Sets return type: array or iteartor
+     *
      * @param int $returnType
      *
      * @return $this
@@ -724,7 +750,7 @@ class Statement implements \IteratorAggregate
      * @param callable $callback Функция для обработки элементов выборки
      *                           Передаются параметры $item, $index, &result
      *
-     * @param int $fetchMode
+     * @param int      $fetchMode
      *
      * @param int|null $ociMode
      *
@@ -741,6 +767,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Return fetch function to retrieve data form database
+     *
      * @param      $fetchMode
      *
      * @param null $ociMode
@@ -804,6 +832,8 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Returns array or iterator depending on return type
+     *
      * @param $callback
      * @param $fetchMode
      * @param $ociMode
@@ -825,7 +855,7 @@ class Statement implements \IteratorAggregate
      *
      * @param      $callback
      *
-     * @param int $fetchMode
+     * @param int  $fetchMode
      * @param null $ociMode
      *
      * @throws Exception

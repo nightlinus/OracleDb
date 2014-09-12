@@ -5,10 +5,10 @@
  * PHP version 5.5
  *
  * @category Database
- * @package  OracleDb
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  GIT: 1
+ * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 
@@ -16,23 +16,24 @@ namespace nightlinus\OracleDb;
 
 /**
  * Class StatementCache
- * @package OracleDb
+ *
+ * @package nightlinus\OracleDb
  */
 class StatementCache implements \IteratorAggregate
 {
 
     /**
-     * @var int
+     * @type int
      */
     protected $cacheSize = 50;
 
     /**
-     * @var Statement[];
+     * @type Statement[];
      */
     protected $hashCache = [ ];
 
     /**
-     * @var Statement[]
+     * @type Statement[]
      */
     protected $orderCache = [ ];
 
@@ -106,6 +107,7 @@ class StatementCache implements \IteratorAggregate
 
     /**
      * Retrieve an external iterator
+     *
      * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
      * @return \Iterator
      */

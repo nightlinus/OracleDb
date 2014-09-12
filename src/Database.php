@@ -5,17 +5,18 @@
  * PHP version 5.5
  *
  * @category Database
- * @package  OracleDb
+ * @package  nightlinus\OracleDb
  * @author   Ogarkov Mikhail <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  GIT: 1
+ * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb;
 
 /**
  * Class Database
- * @package Oracle
+ *
+ * @package nightlinus\OracleDb
  */
 class Database
 {
@@ -23,7 +24,7 @@ class Database
     /**
      * Profiler for db instance
      *
-     * @var Profiler
+     * @type Profiler
      */
     public $profiler;
 
@@ -35,34 +36,34 @@ class Database
     protected $config;
 
     /**
-     * @var resource connection resource
+     * @type resource connection resource
      */
     protected $connection;
 
     /**
-     * @var string
+     * @type string
      */
     protected $connectionString;
 
     /**
      * last executed statement
      *
-     * @var Statement | null
+     * @type Statement | null
      */
     protected $lastStatement;
 
     /**
-     * @var string password for db connection
+     * @type string password for db connection
      */
     protected $password;
 
     /**
-     * @var StatementCache
+     * @type StatementCache
      */
     protected $statementCache;
 
     /**
-     * @var string username for db connection
+     * @type string username for db connection
      */
     protected $userName;
 
@@ -74,7 +75,8 @@ class Database
      * @param string $password
      * @param string $connectionString
      *
-     * @param $config
+     * @param        $config
+     *
      * @throws Exception
      */
     public function __construct(
@@ -103,9 +105,9 @@ class Database
 
     /**
      * @param string $sqlText
-     * @param int $returnSize
-     * @param null $bindings
-     * @param null $mode
+     * @param int    $returnSize
+     * @param null   $bindings
+     * @param null   $mode
      *
      * @return mixed
      */
@@ -140,7 +142,7 @@ class Database
      * General function to get and set
      * configuration values
      *
-     * @param string $name
+     * @param string     $name
      * @param null|mixed $value
      *
      * @throws Exception
@@ -284,9 +286,9 @@ class Database
      * Shortcut method to prepare and fetch
      * statement.
      *
-     * @param string $sqlText
+     * @param string     $sqlText
      * @param array|null &$bindings
-     * @param null $mode
+     * @param null       $mode
      *
      * @return Statement
      * @throws Exception
@@ -501,7 +503,7 @@ class Database
             $iter = $this->statementCache->getIterator();
             while ($trashStatements) {
                 /**
-                 * @var Statement $trashStatement
+                 * @type Statement $trashStatement
                  */
                 $trashStatement = $iter->current();
                 if ($trashStatement->canBeFreed()) {
@@ -518,7 +520,12 @@ class Database
     }
 
     /**
-     * @return mixed|string
+     * Generate unique alias for naming
+     * host variables or aliases
+     *
+     * @param string $prefix
+     *
+     * @return string
      */
     protected function getUniqueAlias($prefix)
     {
