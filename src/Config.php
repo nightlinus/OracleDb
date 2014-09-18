@@ -3,7 +3,7 @@
  * Date: 11.09.14
  * Time: 12:32
  *
- * @category
+ * @category Database
  * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
@@ -35,8 +35,11 @@ class Config implements \ArrayAccess
     const CONNECTION_CHARSET    = 'connection.charset';
     const CONNECTION_CLASS      = 'connection.class';
     const CONNECTION_EDITION    = 'connection.edition';
+    const CONNECTION_PASSWORD   = 'connection.privileged';
     const CONNECTION_PERSISTENT = 'connection.persistent';
     const CONNECTION_PRIVILEGED = 'connection.privileged';
+    const CONNECTION_STRING     = 'connection.privileged';
+    const CONNECTION_USER       = 'connection.privileged';
 
     /**
      * Profiler variables
@@ -81,6 +84,9 @@ class Config implements \ArrayAccess
         self::CONNECTION_CACHE        => false,
         self::CONNECTION_CLASS        => false,
         self::CONNECTION_EDITION      => false,
+        self::CONNECTION_USER         => false,
+        self::CONNECTION_PASSWORD     => false,
+        self::CONNECTION_STRING       => false,
         self::CLIENT_IDENTIFIER       => '',
         self::CLIENT_INFO             => '',
         self::CLIENT_MODULENAME       => '',

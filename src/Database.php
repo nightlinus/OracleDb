@@ -41,11 +41,6 @@ class Database
     protected $connection;
 
     /**
-     * @type string
-     */
-    protected $connectionString;
-
-    /**
      * last executed statement
      *
      * @type Statement | null
@@ -53,19 +48,9 @@ class Database
     protected $lastStatement;
 
     /**
-     * @type string password for db connection
-     */
-    protected $password;
-
-    /**
      * @type StatementCache
      */
     protected $statementCache;
-
-    /**
-     * @type string username for db connection
-     */
-    protected $userName;
 
     /**
      * Consttructor for Database class implements
@@ -89,10 +74,9 @@ class Database
             throw new Exception("One of connection parameters is null or not set");
         }
         $this->config = new Config($config);
-        $this->userName = $userName;
-        $this->password = $password;
-        $this->connectionString = $connectionString;
-        $this->config = $config;
+        $this->config(Config::CONNECTION_USER, $userName);
+        $this->config(Config::CONNECTION_PASSWORD, $password);
+        $this->config(Config::CONNECTION_STRING, $connectionString);
     }
 
     /**
@@ -183,9 +167,9 @@ class Database
             $connectFunction = $this->config(Config::CONNECTION_CACHE) ? 'oci_connect' : 'oci_new_connect';
         }
         $this->connection = $connectFunction(
-            $this->userName,
-            $this->password,
-            $this->connectionString,
+            $this->config(Config::CONNECTION_USER),
+            $this->config(Config::CONNECTION_PASSWORD),
+            $this->config(Config::CONNECTION_STRING),
             $this->config(Config::CONNECTION_CHARSET),
             $this->config(Config::CONNECTION_PRIVILEGED)
         );
