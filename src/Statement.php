@@ -552,7 +552,7 @@ class Statement implements \IteratorAggregate
      * @return array
      * @throws Exception
      */
-    public function getFieldMetadata($index)
+    public function getFieldDescription($index)
     {
         if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
             $this->execute(OCI_DESCRIBE_ONLY);
@@ -566,7 +566,7 @@ class Statement implements \IteratorAggregate
             'precision'  => oci_field_precision($this->resource, $index),
             'scale'      => oci_field_scale($this->resource, $index),
             'type'       => oci_field_type($this->resource, $index),
-            'typeDriver' => oci_field_type_raw($this->resource, $index)
+            'typeRaw'    => oci_field_type_raw($this->resource, $index)
         ];
 
         foreach ($result as $field) {
@@ -612,16 +612,16 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Method to get full statement metadata for each field
+     * Method to get full statement description for each field
      *
      * @return array[]
      */
-    public function getMetadata()
+    public function describe()
     {
         $fieldNmber = $this->getFieldNumber() + 1;
         $result = [ ];
         for ($i = 1; $i < $fieldNmber; $i++) {
-            $result[ ] = $this->getFieldMetadata($i);
+            $result[ ] = $this->getFieldDescription($i);
         }
 
         return $result;
