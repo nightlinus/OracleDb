@@ -124,9 +124,9 @@ class Config implements \ArrayAccess
      */
     public function get($key)
     {
-        if (isset($this->config[ $key ])) {
+        if (array_key_exists($key, $this->config)) {
             $value = $this->config[ $key ];
-        } elseif (isset($this->defaults[ $key ])) {
+        } elseif ($this->offsetExists($key)) {
             $value = $this->defaults[ $key ];
         } else {
             throw new Exception("Config entry «{$key}» doesn't exists. ");
@@ -148,7 +148,7 @@ class Config implements \ArrayAccess
      */
     public function offsetExists($offset)
     {
-        return isset($this->defaults[ $offset ]);
+        return array_key_exists($offset, $this->defaults);
     }
 
     /**
