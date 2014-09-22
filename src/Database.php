@@ -60,7 +60,7 @@ class Database
      * @param string $password
      * @param string $connectionString
      *
-     * @param        $config
+     * @param array  $config
      *
      * @throws Exception
      */
@@ -68,7 +68,7 @@ class Database
         $userName,
         $password,
         $connectionString,
-        $config = null
+        $config = []
     ) {
         if (!isset($userName) || !isset($password) || !isset($connectionString)) {
             throw new Exception("One of connection parameters is null or not set");

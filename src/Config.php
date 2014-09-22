@@ -106,7 +106,7 @@ class Config implements \ArrayAccess
     /**
      * @param array $configuration
      */
-    public function __construct(array $configuration)
+    public function __construct(array $configuration = [ ])
     {
         foreach ($configuration as $key => $value) {
             $this->set($key, $value);
