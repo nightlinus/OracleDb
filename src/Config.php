@@ -24,9 +24,9 @@ class Config implements \ArrayAccess
     /**
      * Client variables
      */
-    const CLIENT_IDENTIFIER = 'client.identifier';
-    const CLIENT_INFO       = 'client.info';
-    const CLIENT_MODULENAME = 'client.moduleName';
+    const CLIENT_IDENTIFIER  = 'client.identifier';
+    const CLIENT_INFO        = 'client.info';
+    const CLIENT_MODULE_NAME = 'client.moduleName';
 
     /**
      * Connection variables
@@ -35,11 +35,16 @@ class Config implements \ArrayAccess
     const CONNECTION_CHARSET    = 'connection.charset';
     const CONNECTION_CLASS      = 'connection.class';
     const CONNECTION_EDITION    = 'connection.edition';
-    const CONNECTION_PASSWORD   = 'connection.privileged';
+    const CONNECTION_PASSWORD   = 'connection.password';
     const CONNECTION_PERSISTENT = 'connection.persistent';
     const CONNECTION_PRIVILEGED = 'connection.privileged';
-    const CONNECTION_STRING     = 'connection.privileged';
-    const CONNECTION_USER       = 'connection.privileged';
+    const CONNECTION_STRING     = 'connection.string';
+    const CONNECTION_USER       = 'connection.user';
+
+    const GROUP_CLIENT     = 'client';
+    const GROUP_CONNECTION = 'connection';
+    const GROUP_PROFILER   = 'profiler';
+    const GROUP_SESSION    = 'session';
 
     /**
      * Profiler variables
@@ -50,17 +55,17 @@ class Config implements \ArrayAccess
     /**
      * Session variables
      */
-    const SESSION_CURRENT_SCHEMA = 'session.currentSchema';
-    const SESSION_DATE_FORMAT    = 'session.dateFormat';
-    const SESSION_DATE_LANGUAGE  = 'session.dateLanguage';
+    const SESSION_CURRENT_SCHEMA = 'session.CURRENT_SCHEMA';
+    const SESSION_DATE_FORMAT    = 'session.NLS_DATE_FORMAT';
+    const SESSION_DATE_LANGUAGE  = 'session.NLS_DATE_LANUAGE';
 
     /**
      *  Statement variables
      */
     const STATEMENT_AUTOCOMMIT    = 'statement.autocommit';
-    const STATEMENT_CACHE_CLASS   = 'statement.cache.class';
-    const STATEMENT_CACHE_ENABLED = 'statement.cache.enabled';
-    const STATEMENT_CACHE_SIZE    = 'statement.cache.size';
+    const STATEMENT_CACHE_CLASS   = 'statement_cache.class';
+    const STATEMENT_CACHE_ENABLED = 'statement_cache.enabled';
+    const STATEMENT_CACHE_SIZE    = 'statement_cache.size';
 
     /**
      * Array to store current values of configuration entrys
@@ -76,20 +81,20 @@ class Config implements \ArrayAccess
      */
     protected $defaults = [
         self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
-        self::SESSION_DATE_LANGUAGE   => false,
-        self::SESSION_CURRENT_SCHEMA  => false,
+        self::SESSION_DATE_LANGUAGE   => null,
+        self::SESSION_CURRENT_SCHEMA  => null,
         self::CONNECTION_CHARSET      => 'AL32UTF8',
         self::CONNECTION_PERSISTENT   => false,
         self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,
         self::CONNECTION_CACHE        => false,
-        self::CONNECTION_CLASS        => false,
-        self::CONNECTION_EDITION      => false,
-        self::CONNECTION_USER         => false,
-        self::CONNECTION_PASSWORD     => false,
-        self::CONNECTION_STRING       => false,
-        self::CLIENT_IDENTIFIER       => '',
-        self::CLIENT_INFO             => '',
-        self::CLIENT_MODULENAME       => '',
+        self::CONNECTION_CLASS        => null,
+        self::CONNECTION_EDITION      => null,
+        self::CONNECTION_USER         => null,
+        self::CONNECTION_PASSWORD     => null,
+        self::CONNECTION_STRING       => null,
+        self::CLIENT_IDENTIFIER       => null,
+        self::CLIENT_INFO             => null,
+        self::CLIENT_MODULE_NAME      => null,
         self::PROFILER_ENABLED        => false,
         self::PROFILER_CLASS          => Profiler::class,
         self::STATEMENT_AUTOCOMMIT    => false,

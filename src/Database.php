@@ -541,7 +541,7 @@ class Database
 
         oci_set_client_identifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
         oci_set_client_info($this->connection, $this->config(Config::CLIENT_INFO));
-        oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULENAME));
+        oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULE_NAME));
         $setUp = [ ];
         if ($this->config(Config::SESSION_DATE_FORMAT)) {
             $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
