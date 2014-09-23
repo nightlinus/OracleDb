@@ -350,7 +350,7 @@ class Statement implements \IteratorAggregate
             $mode = OCI_ASSOC + $mode;
         }
 
-        return $this->fetchArray($mode);
+        return $this->getResultObject(null, self::FETCH_ASSOC, $mode);
     }
 
     /**
