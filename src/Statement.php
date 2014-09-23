@@ -144,6 +144,24 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * if $mode is in $resultMode return $resultMode
+     * else return $resultMode + $mode
+     *
+     * @param int $resultMode sum of modes
+     * @param int $mode       mode to check
+     *
+     * @return int
+     */
+    protected function addMode($resultMode, $mode)
+    {
+        if (($resultMode & $mode) === 0) {
+            $resultMode = $mode + $resultMode;
+        }
+
+        return $resultMode;
+    }
+
+    /**
      * Method to bind host-variables
      * Example:
      * $stmt->bind([
@@ -193,10 +211,7 @@ class Statement implements \IteratorAggregate
                 $length,
                 $type
             );
-            if (false === $bindResult) {
-                $error = $this->getOCIError();
-                throw new Exception($error);
-            }
+            $this->throwIfFalse($bindResult);
         }
 
         return $this;
@@ -281,31 +296,22 @@ class Statement implements \IteratorAggregate
     /**
      * Method to execute sql inside statement
      *
-     * @param int|null $mode this parameter is
+     * @param int|null $ociMode this parameter is
      *                       powered by autocommit setting
      *
      * @return $this
      * @throws Exception
      */
-    public function execute($mode = null)
+    public function execute($ociMode = null)
     {
         $this->prepare();
-
-        //If $mode not in oci constants list, then use db config value
-        if (array_search($mode, [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ], true) === false) {
-            $mode = $this->db->config(Config::STATEMENT_AUTOCOMMIT) ? OCI_COMMIT_ON_SUCCESS : OCI_NO_AUTO_COMMIT;
-        }
-
+        $ociMode = $this->getExecuteMode($ociMode);
         $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
-        $executeResult = oci_execute($this->resource, $mode);
+        $executeResult = oci_execute($this->resource, $ociMode);
         $this->db->endProfile();
         $this->db->setLastStatement($this);
-
-        if ($executeResult === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
-        if ($mode & OCI_DESCRIBE_ONLY) {
+        $this->throwIfFalse($executeResult);
+        if ($ociMode & OCI_DESCRIBE_ONLY) {
             $this->state = self::STATE_EXECUTED_DESCRIBE;
         } else {
             $this->state = self::STATE_EXECUTED;
@@ -317,61 +323,55 @@ class Statement implements \IteratorAggregate
     /**
      * Fetch data as simple numeric keys array
      *
-     * @param int $mode constant that describe
+     * @param int $ociMode constant that describe
      *                  type of fetched array:
      *                  with numeric keys or strings
      *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
      * @return array[] | \Generator
      */
-    public function fetchArray($mode = OCI_RETURN_NULLS)
+    public function fetchArray($ociMode = OCI_RETURN_NULLS)
     {
-        if (($mode & OCI_NUM) === 0) {
-            $mode = OCI_NUM + $mode;
-        }
+        $ociMode = $this->addMode($ociMode, OCI_NUM);
 
-        return $this->getResultObject(null, self::FETCH_ARRAY, $mode);
+        return $this->getResultObject(null, self::FETCH_ARRAY, $ociMode);
     }
 
     /**
      * Fetch data as asscociative
      * array
      *
-     * @param int $mode constant that describe
+     * @param int $ociMode constant that describe
      *                  type of fetched array:
      *                  with numeric keys or strings
      *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
      * @return array[] | \Generator
      */
-    public function fetchAssoc($mode = OCI_RETURN_NULLS)
+    public function fetchAssoc($ociMode = OCI_RETURN_NULLS)
     {
-        if (($mode & OCI_ASSOC) === 0) {
-            $mode = OCI_ASSOC + $mode;
-        }
+        $ociMode = $this->addMode($ociMode, OCI_ASSOC);
 
-        return $this->getResultObject(null, self::FETCH_ASSOC, $mode);
+        return $this->getResultObject(null, self::FETCH_ASSOC, $ociMode);
     }
 
     /**
      * Fetch using custom callback
      *
      * @param callable $callback($item, $index)
-     * @param int      $mode
+     * @param int      $ociMode
      *
      * @return \Generator|mixed
      */
-    public function fetchCallback(callable $callback, $mode = OCI_RETURN_NULLS)
+    public function fetchCallback(callable $callback, $ociMode = OCI_RETURN_NULLS)
     {
-        if (($mode & OCI_ASSOC) === 0) {
-            $mode = OCI_ASSOC + $mode;
-        }
+        $ociMode = $this->addMode($ociMode, OCI_ASSOC);
 
         $ociCallback = function ($item, $index) use ($callback) {
             return $callback($item, $index);
         };
 
-        return $this->getResultObject($ociCallback, self::FETCH_ARRAY, $mode);
+        return $this->getResultObject($ociCallback, self::FETCH_ARRAY, $ociMode);
     }
 
     /**
@@ -387,14 +387,10 @@ class Statement implements \IteratorAggregate
     public function fetchColumn($column = 1, $ociMode = OCI_RETURN_NULLS)
     {
         if (is_numeric($column)) {
-            if (($ociMode & OCI_NUM) === 0) {
-                $ociMode = OCI_NUM + $ociMode;
-            }
+            $ociMode = $this->addMode($ociMode, OCI_NUM);
             $column--;
         } else {
-            if (($ociMode & OCI_ASSOC) === 0) {
-                $ociMode = OCI_ASSOC + $ociMode;
-            }
+            $ociMode = $this->addMode($ociMode, OCI_ASSOC);
         }
 
         $callback = function ($item, $index) use ($column) {
@@ -419,14 +415,10 @@ class Statement implements \IteratorAggregate
             if ($mapIndex < 1) {
                 throw new Exception("Column index start from 1, but «{$mapIndex}» was passed.");
             }
-            if (($ociMode & OCI_NUM) === 0) {
-                $ociMode = OCI_NUM + $ociMode;
-            }
+            $ociMode = $this->addMode($ociMode, OCI_NUM);
             $mapIndex--;
         } else {
-            if (($ociMode & OCI_ASSOC) === 0) {
-                $ociMode = OCI_ASSOC + $ociMode;
-            }
+            $ociMode = $this->addMode($ociMode, OCI_ASSOC);
         }
 
         $callback = function ($item) use ($mapIndex) {
@@ -452,18 +444,19 @@ class Statement implements \IteratorAggregate
     /**
      * Fetch only first row
      *
-     * @param int $mode
+     * @param int $ociMode
      *
      * @return \array[]
      * @throws Exception
      */
-    public function fetchOne($mode = OCI_RETURN_NULLS)
+    public function fetchOne($ociMode = OCI_RETURN_NULLS)
     {
-        if (($mode & OCI_ASSOC) === 0 && ($mode & OCI_NUM) === 0) {
-            $mode = OCI_ASSOC + $mode;
+        //TODO think about modes
+        if (($ociMode & OCI_ASSOC) === 0 && ($ociMode & OCI_NUM) === 0) {
+            $ociMode = OCI_ASSOC + $ociMode;
         }
 
-        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current();
+        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $ociMode)->current();
         $this->state = self::STATE_FETCHED;
 
         return $this->result;
@@ -487,12 +480,12 @@ class Statement implements \IteratorAggregate
             if ($firstCol < 1 || $secondCol < 1) {
                 throw new Exception("Column index start from 1, but «{$firstCol}», «{$secondCol}» were passed.");
             }
-            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            $ociMode = OCI_NUM + OCI_RETURN_NULLS;
             //make proper index to indicate that first column has index of 0
             $firstCol--;
             $secondCol--;
         } else {
-            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+            $ociMode = OCI_ASSOC + OCI_RETURN_NULLS;
         }
 
         $callback = function ($item) use ($firstCol, $secondCol) {
@@ -502,7 +495,7 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($callback, self::FETCH_ARRAY, $mode);
+        return $this->getResultObject($callback, self::FETCH_ARRAY, $ociMode);
     }
 
     /**
@@ -518,15 +511,16 @@ class Statement implements \IteratorAggregate
      */
     public function fetchValue($index = 1)
     {
+        $mode = OCI_RETURN_NULLS;
         if (is_numeric($index)) {
             if ($index < 1) {
                 throw new Exception("Column index start from 1, but «{$index}» was passed.");
             }
-            $mode = OCI_NUM + OCI_RETURN_NULLS;
+            $mode += OCI_NUM;
             //make proper index to indicate that first column has index of 0
             $index--;
         } else {
-            $mode = OCI_ASSOC + OCI_RETURN_NULLS;
+            $mode += OCI_ASSOC;
         }
 
         $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current()[ $index ];
@@ -557,10 +551,7 @@ class Statement implements \IteratorAggregate
     public function getAffectedRowsNumber()
     {
         $rows = oci_num_rows($this->resource);
-        if (false === $rows) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $this->throwIfFalse($rows);
 
         return $rows;
     }
@@ -591,10 +582,7 @@ class Statement implements \IteratorAggregate
         ];
 
         foreach ($result as $field) {
-            if (false === $field) {
-                $error = $this->getOCIError();
-                throw new Exception($error);
-            }
+            $this->throwIfFalse($field);
         }
 
         return $result;
@@ -613,10 +601,7 @@ class Statement implements \IteratorAggregate
         }
 
         $result = oci_num_fields($this->resource);
-        if (false === $result) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $this->throwIfFalse($result);
 
         return $result;
     }
@@ -670,10 +655,7 @@ class Statement implements \IteratorAggregate
     {
         $this->prepare();
         $type = oci_statement_type($this->resource);
-        if (false === $type) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $this->throwIfFalse($type);
 
         return $type;
     }
@@ -708,11 +690,7 @@ class Statement implements \IteratorAggregate
             $this->resource = oci_new_cursor($this->db->getConnection());
         }
 
-        if (false === $this->resource) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
-
+        $this->throwIfFalse($this->resource);
         $this->state = self::STATE_PREPARED;
 
         return $this;
@@ -742,10 +720,7 @@ class Statement implements \IteratorAggregate
     {
         if ($this->resource) {
             $setResult = oci_set_prefetch($this->resource, $rowCount);
-            if (false === $setResult) {
-                $error = $this->getOCIError();
-                throw new Exception($error);
-            }
+            $this->throwIfFalse($setResult);
         }
 
         return $this;
@@ -785,6 +760,22 @@ class Statement implements \IteratorAggregate
         }
 
         return $this->result;
+    }
+
+    /**
+     * If $mode not in oci constants list, then use db config value
+     *
+     * @param int $ociMode
+     *
+     * @return int
+     */
+    protected function getExecuteMode($ociMode)
+    {
+        if (array_search($ociMode, [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ], true) === false) {
+            $ociMode = $this->db->config(Config::STATEMENT_AUTOCOMMIT) ? OCI_COMMIT_ON_SUCCESS : OCI_NO_AUTO_COMMIT;
+        }
+
+        return $ociMode;
     }
 
     /**
@@ -868,6 +859,19 @@ class Statement implements \IteratorAggregate
             return $this->tupleGenerator($callback, $fetchMode, $ociMode);
         } else {
             return $this->aggregateTupples($callback, $fetchMode, $ociMode);
+        }
+    }
+
+    /**
+     * @param $result
+     *
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    protected function throwIfFalse($result)
+    {
+        if (false === $result) {
+            $error = $this->getOCIError();
+            throw new Exception($error);
         }
     }
 
