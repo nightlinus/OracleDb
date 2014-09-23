@@ -354,6 +354,27 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Fetch using custom callback
+     *
+     * @param callable $callback($item, $index)
+     * @param int      $mode
+     *
+     * @return \Generator|mixed
+     */
+    public function fetchCallback(callable $callback, $mode = OCI_RETURN_NULLS)
+    {
+        if (($mode & OCI_ASSOC) === 0) {
+            $mode = OCI_ASSOC + $mode;
+        }
+
+        $ociCallback = function ($item, $index) use ($callback) {
+            return $callback($item, $index);
+        };
+
+        return $this->getResultObject($ociCallback, self::FETCH_ARRAY, $mode);
+    }
+
+    /**
      * Method for fetching data into 1
      * dimension array with values from
      * $column, index is numeric
