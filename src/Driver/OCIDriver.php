@@ -13,24 +13,30 @@
 
 namespace nightlinus\OracleDb\Driver;
 
+
 /**
  * Class OCIDriver
  *
  * @package nightlinus\OracleDb\Driver
  */
-class OCIDriver
+class OCIDriver implements DriverInterface
 {
+    /**
+     *  CACHE = Use existing connection if was started with oci_conect
+     *  NEW = Always open new connection
+     *  PERSISTENT = Open persistent connection
+     */
     const CONNECTION_TYPE_CACHE      = 0x02;
     const CONNECTION_TYPE_NEW        = 0x03;
     const CONNECTION_TYPE_PERSISTENT = 0x01;
 
     /**
-     * @param     $handle
-     * @param     $name
-     * @param     $variable
-     * @param     $tableLength
-     * @param int $itemLength
-     * @param int $type
+     * @param resource $handle
+     * @param string   $name
+     * @param mixed    $variable
+     * @param int      $tableLength
+     * @param int      $itemLength
+     * @param int      $type
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -43,11 +49,12 @@ class OCIDriver
         return $this;
     }
 
+
     /**
-     * @param $handle
-     * @param $column
-     * @param $variable
-     * @param $type
+     * @param resource   $handle
+     * @param int|string $column
+     * @param mixed      $variable
+     * @param int        $type
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -60,12 +67,13 @@ class OCIDriver
         return $this;
     }
 
+
     /**
-     * @param     $handle
-     * @param     $name
-     * @param     $variable
-     * @param int $length
-     * @param int $type
+     * @param resource $handle
+     * @param string   $name
+     * @param mixed    $variable
+     * @param int      $length
+     * @param int      $type
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -78,8 +86,9 @@ class OCIDriver
         return $this;
     }
 
+
     /**
-     * @param $handle
+     * @param resource $handle
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -92,6 +101,7 @@ class OCIDriver
         return $this;
     }
 
+
     /**
      * @param int    $connectionType
      * @param string $user
@@ -100,7 +110,7 @@ class OCIDriver
      * @param string $charSet
      * @param int    $sessionMode
      *
-     * @return resource
+     * @return mixed
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
     public function connect($connectionType, $user, $password, $connectionString, $charSet, $sessionMode)
@@ -130,8 +140,9 @@ class OCIDriver
         return $connection;
     }
 
+
     /**
-     * @param $handle
+     * @param resource $handle
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -144,9 +155,10 @@ class OCIDriver
         return $this;
     }
 
+
     /**
-     * @param $handle
-     * @param $mode
+     * @param resource $handle
+     * @param int      $mode
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -159,19 +171,77 @@ class OCIDriver
         return $this;
     }
 
+
     /**
-     * @param $handle
+     * @param resource $handle
+     * @param int      $skip
+     * @param int      $maxrows
+     * @param int      $mode
+     *
+     * @return array
+     */
+    public function fetchAll($handle, $skip, $maxrows, $mode)
+    {
+        $result = [ ];
+        oci_fetch_all($handle, $result, $skip, $maxrows, $mode);
+
+        return $result;
+    }
+
+
+    /**
+     * @param resource $handle
+     * @param int      $mode
+     *
+     * @return array
+     */
+    public function fetchArray($handle, $mode)
+    {
+        return oci_fetch_array($handle, $mode);
+    }
+
+
+    /**
+     * @param resource $handle
+     *
+     * @return object
+     */
+    public function fetchObject($handle)
+    {
+        return oci_fetch_object($handle);
+    }
+
+
+    /**
+     * @param resource $handle
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function free($handle)
+    public function free(&$handle)
     {
         $result = oci_free_statement($handle);
         $this->throwExceptionIfFalse($result, $handle);
+        $handle = null;
 
         return $this;
     }
+
+
+    /**
+     * @param resource $handle
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getAffectedRowsNumber($handle)
+    {
+        $rows = oci_num_rows($handle);
+        $this->throwExceptionIfFalse($rows, $handle);
+
+        return $rows;
+    }
+
 
     /**
      * @return string
@@ -180,6 +250,7 @@ class OCIDriver
     {
         return oci_client_version();
     }
+
 
     /**
      * @param null $handle
@@ -192,7 +263,114 @@ class OCIDriver
     }
 
     /**
-     * @param $handle
+     * @param resource   $handle
+     * @param int|string $index
+     *
+     * @return string
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldName($handle, $index)
+    {
+        $result = oci_field_name($handle, $index);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+
+    /**
+     * @param resource $handle
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldNumber($handle)
+    {
+        $result = oci_num_fields($handle);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+    /**
+     * @param resource   $handle
+     * @param int|string $index
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldPrecision($handle, $index)
+    {
+        $result = oci_field_precision($handle, $index);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+
+    /**
+     * @param resource   $handle
+     * @param int|string $index
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldScale($handle, $index)
+    {
+        $result = oci_field_scale($handle, $index);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+    /**
+     * @param resource   $handle
+     * @param int|string $index
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldSize($handle, $index)
+    {
+        $result = oci_field_size($handle, $index);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+    /**
+     * @param resource   $handle
+     * @param int|string $index
+     *
+     * @return mixed
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldType($handle, $index)
+    {
+        $result = oci_field_type($handle, $index);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+    /**
+     * @param resource   $handle
+     * @param int|string $index
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function getFieldTypeRaw($handle, $index)
+    {
+        $result = oci_field_type_raw($handle, $index);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $result;
+    }
+
+
+    /**
+     * @param resource $handle
      *
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -205,8 +383,9 @@ class OCIDriver
         return $version;
     }
 
+
     /**
-     * @param $handle
+     * @param resource $handle
      *
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -219,8 +398,9 @@ class OCIDriver
         return $type;
     }
 
+
     /**
-     * @param $handle
+     * @param resource $handle
      *
      * @return resource
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -233,9 +413,10 @@ class OCIDriver
         return $cursor;
     }
 
+
     /**
-     * @param $handle
-     * @param $query
+     * @param resource $handle
+     * @param string   $query
      *
      * @return resource
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -248,6 +429,7 @@ class OCIDriver
 
         return $result;
     }
+
 
     /**
      * @param $variable
@@ -270,13 +452,12 @@ class OCIDriver
         return $variable;
     }
 
+
     /**
-     * Rollback changes within session
-     *
      * @param resource $handle
      *
-     * @throws \nightlinus\OracleDb\Driver\Exception
      * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
      */
     public function rollback($handle)
     {
@@ -288,13 +469,29 @@ class OCIDriver
         return $this;
     }
 
+
     /**
-     * @param $result
+     * @param resource $handle
+     * @param int      $size
      *
-     * @param $handle
-     *
-     * @throws \nightlinus\OracleDb\Driver\Exception
      * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setPrefcth($handle, $size)
+    {
+        $setResult = oci_set_prefetch($handle, $size);
+        $this->throwExceptionIfFalse($setResult, $handle);
+
+        return $this;
+    }
+
+
+    /**
+     * @param      $result
+     * @param null $handle
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
      */
     protected function throwExceptionIfFalse($result, $handle = null)
     {
