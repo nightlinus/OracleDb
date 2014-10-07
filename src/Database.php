@@ -41,6 +41,11 @@ class Database
     protected $connection;
 
     /**
+     * @type Driver\DriverInterface
+     */
+    protected $driver;
+
+    /**
      * last executed statement
      *
      * @type Statement | null
@@ -68,7 +73,7 @@ class Database
         $userName,
         $password,
         $connectionString,
-        $config = []
+        $config = [ ]
     ) {
         if (!isset($userName) || !isset($password) || !isset($connectionString)) {
             throw new Exception("One of connection parameters is null or not set");
@@ -204,6 +209,14 @@ class Database
     public function getConnection()
     {
         return $this->connection;
+    }
+
+    /**
+     * @return Driver\DriverInterface
+     */
+    public function getDriver()
+    {
+        return $this->driver;
     }
 
     /**
