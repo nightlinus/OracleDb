@@ -26,7 +26,7 @@ class Config implements \ArrayAccess
      */
     const CLIENT_IDENTIFIER  = 'client.identifier';
     const CLIENT_INFO        = 'client.info';
-    const CLIENT_MODULE_NAME = 'client.moduleName';
+    const CLIENT_MODULE_NAME = 'client.module_name';
 
     /**
      * Connection variables
@@ -66,6 +66,7 @@ class Config implements \ArrayAccess
     const STATEMENT_CACHE_CLASS   = 'statement_cache.class';
     const STATEMENT_CACHE_ENABLED = 'statement_cache.enabled';
     const STATEMENT_CACHE_SIZE    = 'statement_cache.size';
+    const STATEMENT_RETURN_TYPE   = 'statement.return_type';
 
     /**
      * Array to store current values of configuration entrys
@@ -98,6 +99,7 @@ class Config implements \ArrayAccess
         self::PROFILER_ENABLED        => false,
         self::PROFILER_CLASS          => Profiler::class,
         self::STATEMENT_AUTOCOMMIT    => false,
+        self::STATEMENT_RETURN_TYPE   => Statement::RETURN_ARRAY,
         self::STATEMENT_CACHE_ENABLED => true,
         self::STATEMENT_CACHE_SIZE    => 50,
         self::STATEMENT_CACHE_CLASS   => StatementCache::class

@@ -132,7 +132,7 @@ class Statement implements \IteratorAggregate
         $this->state = self::STATE_FREED;
         $this->queryString = $queryString;
         $this->db = $db;
-        $this->returnType = self::RETURN_ARRAY;
+        $this->returnType = $this->db->config(Config::STATEMENT_RETURN_TYPE);
     }
 
     /**
