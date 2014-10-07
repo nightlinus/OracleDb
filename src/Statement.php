@@ -121,6 +121,11 @@ class Statement implements \IteratorAggregate
     protected $state;
 
     /**
+     * @type Driver\DriverInterface
+     */
+    protected $driver;
+
+    /**
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
@@ -132,6 +137,7 @@ class Statement implements \IteratorAggregate
         $this->state = self::STATE_FREED;
         $this->queryString = $queryString;
         $this->db = $db;
+        $this->driver = $db->getDriver();
         $this->returnType = $this->db->config(Config::STATEMENT_RETURN_TYPE);
     }
 
@@ -536,8 +542,7 @@ class Statement implements \IteratorAggregate
     {
         $this->state = self::STATE_FREED;
         if ($this->resource) {
-            oci_free_statement($this->resource);
-            $this->resource = null;
+            $this->driver->free($this->resource);
         }
     }
 
@@ -550,10 +555,7 @@ class Statement implements \IteratorAggregate
      */
     public function getAffectedRowsNumber()
     {
-        $rows = oci_num_rows($this->resource);
-        $this->throwIfFalse($rows);
-
-        return $rows;
+        return $this->driver->getAffectedRowsNumber($this->resource);
     }
 
     /**
