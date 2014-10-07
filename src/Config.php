@@ -41,6 +41,8 @@ class Config implements \ArrayAccess
     const CONNECTION_STRING     = 'connection.string';
     const CONNECTION_USER       = 'connection.user';
 
+    const DRIVER_CLASS = 'driver.class';
+
     const GROUP_CLIENT     = 'client';
     const GROUP_CONNECTION = 'connection';
     const GROUP_PROFILER   = 'profiler';
@@ -102,7 +104,8 @@ class Config implements \ArrayAccess
         self::STATEMENT_RETURN_TYPE   => Statement::RETURN_ARRAY,
         self::STATEMENT_CACHE_ENABLED => true,
         self::STATEMENT_CACHE_SIZE    => 50,
-        self::STATEMENT_CACHE_CLASS   => StatementCache::class
+        self::STATEMENT_CACHE_CLASS   => StatementCache::class,
+        self::DRIVER_CLASS            => Driver\OCIDriver::class
     ];
 
     /**
