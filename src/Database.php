@@ -430,6 +430,27 @@ class Database
     }
 
     /**
+     * Gather session information from config
+     *
+     * @return array
+     */
+    protected function collectSessionSettings()
+    {
+        $setUp = [ ];
+        if ($this->config(Config::SESSION_DATE_FORMAT)) {
+            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
+        }
+        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
+            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
+        }
+        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
+        }
+
+        return $setUp;
+    }
+
+    /**
      * Cleaning memory by dissposing connection
      * handlers
      *
@@ -547,26 +568,5 @@ class Database
         }
 
         return $this;
-    }
-
-    /**
-     * Gather session information from config
-     *
-     * @return array
-     */
-    protected function collectSessionSettings()
-    {
-        $setUp = [ ];
-        if ($this->config(Config::SESSION_DATE_FORMAT)) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
-        }
-        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
-        }
-        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
-        }
-
-        return $setUp;
     }
 }
