@@ -204,6 +204,134 @@ class Database
     }
 
     /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $skip
+     * @param int    $maxRows
+     * @param int    $mode
+     *
+     * @return array
+     */
+    public function fetchAll($sql, $bindings = [ ], $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchAll($skip, $maxRows, $mode);
+    }
+
+    /**
+     * @param  string $sql
+     * @param array   $bindings
+     * @param int     $mode
+     *
+     * @return \array[]|\Generator
+     */
+    public function fetchArray($sql, $bindings = [ ], $mode = OCI_RETURN_NULLS)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchArray($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
+     *
+     * @return \array[]|\Generator
+     */
+    public function fetchAssoc($sql, $bindings = [ ], $mode = OCI_RETURN_NULLS)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchAssoc($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param null   $callback
+     * @param int    $mode
+     *
+     * @return \Generator|mixed
+     */
+    public function fetchCallback($sql, $bindings = [ ], $callback = null, $mode = OCI_RETURN_NULLS)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchCallback($callback, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $index
+     * @param int    $mode
+     *
+     * @return array|\Generator
+     */
+    public function fetchColumn($sql, $bindings = [ ], $index = 1, $mode = OCI_RETURN_NULLS)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchColumn($index, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mapIndex
+     * @param int    $mode
+     *
+     * @return \array[]|\Generator
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function fetchMap($sql, $bindings = [ ], $mapIndex = 1, $mode = OCI_RETURN_NULLS)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchMap($mapIndex, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     *
+     * @return \array[]|\Generator
+     */
+    public function fetchObject($sql, $bindings = [ ])
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchObject();
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
+     *
+     * @return \array[]
+     */
+    public function fetchOne($sql, $bindings = [ ], $mode = OCI_RETURN_NULLS)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchOne($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $firstCol
+     * @param int    $secondCol
+     *
+     * @return array|\Generator
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function fetchPairs($sql, $bindings = [ ], $firstCol = 1, $secondCol = 2)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchPairs($firstCol, $secondCol);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $index
+     *
+     * @return string
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function fetchValue($sql, $bindings = [ ], $index = 1)
+    {
+        return (new Statement($this, $sql))->bind($bindings)->fetchValue($index);
+    }
+
+    /**
      * Function to access current connection
      *
      * @return resource

@@ -171,7 +171,7 @@ class OCIDriver implements DriverInterface
      *
      * @return array
      */
-    public function fetchAll($handle, $skip, $maxrows, $mode)
+    public function fetchAll($handle, $skip = 0, $maxrows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
     {
         $result = [ ];
         oci_fetch_all($handle, $result, $skip, $maxrows, $mode);
