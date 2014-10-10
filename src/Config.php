@@ -99,7 +99,7 @@ class Config implements \ArrayAccess
         self::CLIENT_INFO             => null,
         self::CLIENT_MODULE_NAME      => null,
         self::PROFILER_ENABLED        => false,
-        self::PROFILER_CLASS          => Profiler::class,
+        self::PROFILER_CLASS          => Profiler\Profiler::class,
         self::STATEMENT_AUTOCOMMIT    => false,
         self::STATEMENT_RETURN_TYPE   => Statement::RETURN_ARRAY,
         self::STATEMENT_CACHE_ENABLED => true,
