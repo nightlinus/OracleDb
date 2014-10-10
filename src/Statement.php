@@ -822,6 +822,18 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param int $state
+     *
+     * @return $this
+     */
+    protected function setState($state)
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    /**
      * Generator for iterating over fetched rows
      *
      * @param      $callback
@@ -859,17 +871,5 @@ class Statement implements \IteratorAggregate
         }
 
         $this->setState(self::STATE_FETCHED);
-    }
-
-    /**
-     * @param int $state
-     *
-     * @return $this
-     */
-    protected function setState($state)
-    {
-        $this->state = $state;
-
-        return $this;
     }
 }
