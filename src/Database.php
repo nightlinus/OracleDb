@@ -24,7 +24,7 @@ class Database
     /**
      * Profiler for db instance
      *
-     * @type Profiler
+     * @type Profiler\Profiler
      */
     public $profiler;
 
