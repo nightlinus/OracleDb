@@ -85,6 +85,11 @@ class Statement implements \IteratorAggregate
     protected $db;
 
     /**
+     * @type Driver\DriverInterface
+     */
+    protected $driver;
+
+    /**
      * Index of profile associated with statement
      *
      * @type int
@@ -121,11 +126,6 @@ class Statement implements \IteratorAggregate
     protected $state;
 
     /**
-     * @type Driver\DriverInterface
-     */
-    protected $driver;
-
-    /**
      * В конструкторе, кроме инициализации ресурсов,
      * определяем обработчик выборки по умолчанию.
      *
@@ -147,24 +147,6 @@ class Statement implements \IteratorAggregate
     public function __destruct()
     {
         $this->free();
-    }
-
-    /**
-     * if $mode is in $resultMode return $resultMode
-     * else return $resultMode + $mode
-     *
-     * @param int $resultMode sum of modes
-     * @param int $mode       mode to check
-     *
-     * @return int
-     */
-    protected function addMode($resultMode, $mode)
-    {
-        if (($resultMode & $mode) === 0) {
-            $resultMode = $mode + $resultMode;
-        }
-
-        return $resultMode;
     }
 
     /**
@@ -253,6 +235,20 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param string|int $column
+     * @param mixed      $variable
+     * @param int        $type
+     *
+     * @return $this
+     */
+    public function bindColumn($column, &$variable, $type = SQLT_CHR)
+    {
+        $this->driver->bindColumn($this->resource, $column, $variable, $type);
+
+        return $this;
+    }
+
+    /**
      * Whether statement can be realesed or not
      *
      * @return bool true if in any state besides fetching
@@ -295,10 +291,26 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * Method to get full statement description for each field
+     *
+     * @return array[]
+     */
+    public function describe()
+    {
+        $fieldNmber = $this->getFieldNumber() + 1;
+        $result = [ ];
+        for ($i = 1; $i < $fieldNmber; $i++) {
+            $result[ ] = $this->getFieldDescription($i);
+        }
+
+        return $result;
+    }
+
+    /**
      * Method to execute sql inside statement
      *
      * @param int|null $ociMode this parameter is
-     *                       powered by autocommit setting
+     *                          powered by autocommit setting
      *
      * @return $this
      * @throws Exception
@@ -324,9 +336,9 @@ class Statement implements \IteratorAggregate
      * Fetch data as simple numeric keys array
      *
      * @param int $ociMode constant that describe
-     *                  type of fetched array:
-     *                  with numeric keys or strings
-     *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
+     *                     type of fetched array:
+     *                     with numeric keys or strings
+     *                     or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
      * @return array[] | \Generator
      */
@@ -342,9 +354,9 @@ class Statement implements \IteratorAggregate
      * array
      *
      * @param int $ociMode constant that describe
-     *                  type of fetched array:
-     *                  with numeric keys or strings
-     *                  or both OCI_ASSOC or OCI_ALL, OCI_NUM
+     *                     type of fetched array:
+     *                     with numeric keys or strings
+     *                     or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
      * @return array[] | \Generator
      */
@@ -358,7 +370,7 @@ class Statement implements \IteratorAggregate
     /**
      * Fetch using custom callback
      *
-     * @param callable $callback($item, $index)
+     * @param callable $callback ($item, $index)
      * @param int      $ociMode
      *
      * @return \Generator|mixed
@@ -569,12 +581,12 @@ class Statement implements \IteratorAggregate
             throw new Exception("Index must be larger then 1, index «{$index}».");
         }
         $result = [
-            'name'       => $this->driver->getFieldName($this->resource, $index),
-            'size'       => $this->driver->getFieldSize($this->resource, $index),
-            'precision'  => $this->driver->getFieldPrecision($this->resource, $index),
-            'scale'      => $this->driver->getFieldScale($this->resource, $index),
-            'type'       => $this->driver->getFieldType($this->resource, $index),
-            'typeRaw'    => $this->driver->getFieldTypeRaw($this->resource, $index)
+            'name'      => $this->driver->getFieldName($this->resource, $index),
+            'size'      => $this->driver->getFieldSize($this->resource, $index),
+            'precision' => $this->driver->getFieldPrecision($this->resource, $index),
+            'scale'     => $this->driver->getFieldScale($this->resource, $index),
+            'type'      => $this->driver->getFieldType($this->resource, $index),
+            'typeRaw'   => $this->driver->getFieldTypeRaw($this->resource, $index)
         ];
 
         return $result;
@@ -605,22 +617,6 @@ class Statement implements \IteratorAggregate
     public function getIterator()
     {
         return $this->tupleGenerator();
-    }
-
-    /**
-     * Method to get full statement description for each field
-     *
-     * @return array[]
-     */
-    public function describe()
-    {
-        $fieldNmber = $this->getFieldNumber() + 1;
-        $result = [ ];
-        for ($i = 1; $i < $fieldNmber; $i++) {
-            $result[ ] = $this->getFieldDescription($i);
-        }
-
-        return $result;
     }
 
     /**
@@ -724,6 +720,24 @@ class Statement implements \IteratorAggregate
         $this->returnType = $returnType;
 
         return $this;
+    }
+
+    /**
+     * if $mode is in $resultMode return $resultMode
+     * else return $resultMode + $mode
+     *
+     * @param int $resultMode sum of modes
+     * @param int $mode       mode to check
+     *
+     * @return int
+     */
+    protected function addMode($resultMode, $mode)
+    {
+        if (($resultMode & $mode) === 0) {
+            $resultMode = $mode + $resultMode;
+        }
+
+        return $resultMode;
     }
 
     /**
@@ -832,7 +846,6 @@ class Statement implements \IteratorAggregate
         }
     }
 
-
     /**
      * Generator for iterating over fetched rows
      *
@@ -873,19 +886,5 @@ class Statement implements \IteratorAggregate
         }
 
         $this->state = self::STATE_FETCHED;
-    }
-
-    /**
-     * @param string|int    $column
-     * @param mixed    $variable
-     * @param int $type
-     *
-     * @return $this
-     */
-    public function bindColumn($column, &$variable, $type = SQLT_CHR)
-    {
-        $this->driver->bindColumn($this->resource, $column, $variable, $type);
-
-        return $this;
     }
 }
