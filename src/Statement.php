@@ -874,4 +874,18 @@ class Statement implements \IteratorAggregate
 
         $this->state = self::STATE_FETCHED;
     }
+
+    /**
+     * @param string|int    $column
+     * @param mixed    $variable
+     * @param int $type
+     *
+     * @return $this
+     */
+    public function bindColumn($column, &$variable, $type = SQLT_CHR)
+    {
+        $this->driver->bindColumn($this->resource, $column, $variable, $type);
+
+        return $this;
+    }
 }
