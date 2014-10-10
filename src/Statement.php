@@ -29,7 +29,6 @@ class Statement implements \IteratorAggregate
     /**
      * Describe what fetch function shoud be used
      */
-    const FETCH_ALL   = 8;
     const FETCH_ARRAY = 1;
     const FETCH_ASSOC = 2;
     const FETCH_OBJ   = 4;
@@ -61,13 +60,6 @@ class Statement implements \IteratorAggregate
     const TYPE_SELECT  = 'SELECT';
     const TYPE_UNKNOWN = 'UNKNOWN';
     const TYPE_UPDATE  = 'UPDATE';
-
-    /**
-     * result of last fetch fucntion
-     *
-     * @type array[]
-     */
-    public $result;
 
     /**
      * array that contains all
@@ -123,18 +115,14 @@ class Statement implements \IteratorAggregate
      *
      * @type int
      */
-    protected $state;
+    protected $state = self::STATE_FREED;
 
     /**
-     * В конструкторе, кроме инициализации ресурсов,
-     * определяем обработчик выборки по умолчанию.
-     *
      * @param Database $db          ссылка на родительский объект базы данных
      * @param string   $queryString sql выражение стейтмента в текстовом виде
      */
     public function __construct(Database $db, $queryString = null)
     {
-        $this->state = self::STATE_FREED;
         $this->queryString = $queryString;
         $this->db = $db;
         $this->driver = $db->getDriver();
@@ -324,12 +312,27 @@ class Statement implements \IteratorAggregate
         $this->driver->execute($this->resource, $ociMode);
         $this->db->endProfile();
         if ($ociMode & OCI_DESCRIBE_ONLY) {
-            $this->state = self::STATE_EXECUTED_DESCRIBE;
+            $this->setState(self::STATE_EXECUTED_DESCRIBE);
         } else {
-            $this->state = self::STATE_EXECUTED;
+            $this->setState(self::STATE_EXECUTED);
         }
 
         return $this;
+    }
+
+    /**
+     * @param $skip
+     * @param $maxRows
+     * @param $mode
+     *
+     * @return array
+     */
+    public function fetchAll($skip, $maxRows, $mode)
+    {
+        $result = $this->driver->fetchAll($this->resource, $skip, $maxRows, $mode);
+        $this->setState(self::STATE_FETCHED);
+
+        return $result;
     }
 
     /**
@@ -463,15 +466,14 @@ class Statement implements \IteratorAggregate
      */
     public function fetchOne($ociMode = OCI_RETURN_NULLS)
     {
-        //TODO think about modes
         if (($ociMode & OCI_ASSOC) === 0 && ($ociMode & OCI_NUM) === 0) {
             $ociMode = OCI_ASSOC + $ociMode;
         }
 
-        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $ociMode)->current();
-        $this->state = self::STATE_FETCHED;
+        $result = $this->tupleGenerator(null, self::FETCH_ARRAY, $ociMode)->current();
+        $this->setState(self::STATE_FETCHED);
 
-        return $this->result;
+        return $result;
     }
 
     /**
@@ -535,10 +537,10 @@ class Statement implements \IteratorAggregate
             $mode += OCI_ASSOC;
         }
 
-        $this->result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current()[ $index ];
-        $this->state = self::STATE_FETCHED;
+        $result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current()[ $index ];
+        $this->setState(self::STATE_FETCHED);
 
-        return $this->result;
+        return $result;
     }
 
     /**
@@ -546,7 +548,7 @@ class Statement implements \IteratorAggregate
      */
     public function free()
     {
-        $this->state = self::STATE_FREED;
+        $this->setState(self::STATE_FREED);
         if ($this->resource) {
             $this->driver->free($this->resource);
         }
@@ -674,7 +676,7 @@ class Statement implements \IteratorAggregate
             // get new cursor handler if no query provided
             $this->resource = $this->driver->newCursor($this->db->getConnection());
         }
-        $this->state = self::STATE_PREPARED;
+        $this->setState(self::STATE_PREPARED);
 
         return $this;
     }
@@ -741,28 +743,6 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Itereate over all rows in fetched data
-     *
-     * @param callable $callback Функция для обработки элементов выборки
-     *                           Передаются параметры $item, $index, &result
-     *
-     * @param int      $fetchMode
-     *
-     * @param int|null $ociMode
-     *
-     * @throws Exception
-     * @return mixed
-     */
-    protected function aggregateTupples($callback = null, $fetchMode = null, $ociMode = null)
-    {
-        foreach ($this->tupleGenerator($callback, $fetchMode, $ociMode) as $key => $tuple) {
-            $this->result[ $key ] = $tuple;
-        }
-
-        return $this->result;
-    }
-
-    /**
      * If $mode not in oci constants list, then use db config value
      *
      * @param int $ociMode
@@ -802,12 +782,6 @@ class Statement implements \IteratorAggregate
                     return $this->driver->fetchObject($this->resource);
                 };
                 break;
-            case self::FETCH_ALL:
-                $fetchFunction = function () use ($ociMode) {
-                    //TODO move from here as fetachAll is separate case
-                    return $this->driver->fetchAll($this->resource, null, null, $ociMode);
-                };
-                break;
             default:
                 $fetchFunction = function () {
                     return $this->driver->fetchArray($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
@@ -839,11 +813,12 @@ class Statement implements \IteratorAggregate
      */
     protected function getResultObject($callback, $fetchMode, $ociMode = null)
     {
-        if (self::RETURN_ITERATOR === $this->returnType) {
-            return $this->tupleGenerator($callback, $fetchMode, $ociMode);
-        } else {
-            return $this->aggregateTupples($callback, $fetchMode, $ociMode);
+        $result = $this->tupleGenerator($callback, $fetchMode, $ociMode);
+        if (self::RETURN_ITERATOR !== $this->returnType) {
+            $result = iterator_to_array($result, true);
         }
+
+        return $result;
     }
 
     /**
@@ -866,11 +841,9 @@ class Statement implements \IteratorAggregate
         if (!$this->isFetchable()) {
             $this->execute();
         }
-        $this->state = self::STATE_FETCHING;
 
+        $this->setState(self::STATE_FETCHING);
         $fetchFunction = $this->getFetchFunction($fetchMode, $ociMode);
-        $this->result = [ ];
-
         if (!is_callable($callback)) {
             $callback = function ($item, $index) {
                 $result[ $index ] = $item;
@@ -885,6 +858,18 @@ class Statement implements \IteratorAggregate
             yield $key => $result[ $key ];
         }
 
-        $this->state = self::STATE_FETCHED;
+        $this->setState(self::STATE_FETCHED);
+    }
+
+    /**
+     * @param int $state
+     *
+     * @return $this
+     */
+    protected function setState($state)
+    {
+        $this->state = $state;
+
+        return $this;
     }
 }
