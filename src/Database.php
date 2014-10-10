@@ -71,17 +71,23 @@ class Database
      */
     public function __construct(
         $userName,
-        $password,
-        $connectionString,
+        $password = null,
+        $connectionString = null,
         $config = [ ]
     ) {
-        if (!isset($userName) || !isset($password) || !isset($connectionString)) {
-            throw new Exception("One of connection parameters is null or not set");
+
+        if (func_num_args() === 1) {
+            $config = $userName;
+        } else {
+            $config[ Config::CONNECTION_USER ] = $userName;
+            $config[ Config::CONNECTION_PASSWORD ] = $password;
+            $config[ Config::CONNECTION_STRING ] = $connectionString;
         }
+
         $this->config = new Config($config);
-        $this->config(Config::CONNECTION_USER, $userName);
-        $this->config(Config::CONNECTION_PASSWORD, $password);
-        $this->config(Config::CONNECTION_STRING, $connectionString);
+        $this->config->validate();
+        $driver = $this->config(Config::DRIVER_CLASS);
+        $this->driver = is_string($driver) ? new $driver() : $driver;
     }
 
     /**
@@ -118,11 +124,7 @@ class Database
      */
     public function commit()
     {
-        $commitResult = oci_commit($this->connection);
-        if ($commitResult === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $this->driver->commit($this->connection);
 
         return $this;
     }
@@ -166,22 +168,22 @@ class Database
             return $this;
         }
         $this->setUpSessionBefore();
+        $driver = $this->driver;
         if ($this->config(Config::CONNECTION_PERSISTENT)) {
-            $connectFunction = 'oci_pconnect';
+            $connectMode = $driver::CONNECTION_TYPE_PERSISTENT;
+        } elseif ($this->config(Config::CONNECTION_CACHE)) {
+            $connectMode = $driver::CONNECTION_TYPE_CACHE;
         } else {
-            $connectFunction = $this->config(Config::CONNECTION_CACHE) ? 'oci_connect' : 'oci_new_connect';
+            $connectMode = $driver::CONNECTION_TYPE_NEW;
         }
-        $this->connection = $connectFunction(
+        $this->connection = $driver->connect(
+            $connectMode,
             $this->config(Config::CONNECTION_USER),
             $this->config(Config::CONNECTION_PASSWORD),
             $this->config(Config::CONNECTION_STRING),
             $this->config(Config::CONNECTION_CHARSET),
             $this->config(Config::CONNECTION_PRIVILEGED)
         );
-        if ($this->connection === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
         $this->setUpSessionAfter();
 
         return $this;
@@ -247,16 +249,12 @@ class Database
      * Get oracle RDBMS version
      *
      * @return string
-     * @throws Exception
+     * @throws Driver\Exception
      */
     public function getServerVersion()
     {
         $this->connect();
-        $version = oci_server_version($this->connection);
-        if ($version === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $version = $this->driver->getServerVersion($this->connection);
 
         return $version;
     }
@@ -268,7 +266,7 @@ class Database
      * @param string $sqlText
      *
      * @return Statement
-     * @throws Exception
+     * @throws Driver\Exception
      */
     public function prepare($sqlText)
     {
@@ -300,24 +298,15 @@ class Database
     }
 
     /**
+     * Properly quote identifiers
+     *
      * @param $variable
      *
      * @return string
      */
     public function quote($variable)
     {
-        if (!is_array($variable)) {
-            str_replace("'", "''", $variable);
-            $variable = "'" . $variable . "'";
-        } else {
-            foreach ($variable as &$var) {
-                $var = $this->quote($var);
-            }
-
-            $variable = implode(',', $variable);
-        }
-
-        return $variable;
+        return $this->driver->quote($variable);
     }
 
     /**
@@ -328,10 +317,7 @@ class Database
      */
     public function rollback()
     {
-        $rollbackResult = oci_rollback($this->connection);
-        if ($rollbackResult === false) {
-            throw new Exception("Can't rollback");
-        }
+        $this->driver->rollback($this->connection);
 
         return $this;
     }
@@ -356,7 +342,7 @@ class Database
                 if ($len > 0) {
                     $this->query($query);
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $exceptions[ ] = $e;
                 $exceptionMessage .= $e->getMessage() . PHP_EOL;
             }
@@ -419,7 +405,7 @@ class Database
      */
     public function version()
     {
-        return oci_client_version();
+        return $this->driver->getClientVersion();
     }
 
     /**
@@ -455,27 +441,9 @@ class Database
         if (!$this->connection) {
             return $this;
         }
-        if (!oci_close($this->connection)) {
-            throw new Exception("Can't close connection");
-        }
+        $this->driver->disconnect($this->connection);
 
         return $this;
-    }
-
-    /**
-     * Method to fetch OCI8 error
-     * Returns associative array with
-     * "code" and "message" keys.
-     *
-     * @return array
-     */
-    protected function getOCIError()
-    {
-        $ociConnection = $this->connection;
-
-        return is_resource($ociConnection) ?
-            oci_error($ociConnection) :
-            oci_error();
     }
 
     /**
@@ -552,20 +520,11 @@ class Database
             $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
         }
 
-        oci_set_client_identifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
-        oci_set_client_info($this->connection, $this->config(Config::CLIENT_INFO));
-        oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULE_NAME));
-        $setUp = [ ];
-        if ($this->config(Config::SESSION_DATE_FORMAT)) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
-        }
-        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
-        }
-        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
-        }
-        $this->alterSession($setUp);
+        $this->driver->setClientIdentifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
+        $this->driver->setClientInfo($this->connection, $this->config(Config::CLIENT_INFO));
+        $this->driver->setClientModuleName($this->connection, $this->config(Config::CLIENT_MODULE_NAME));
+
+        $this->alterSession($this->collectSessionSettings());
 
         return $this;
     }
@@ -584,12 +543,30 @@ class Database
         }
         $edition = $this->config(Config::CONNECTION_EDITION);
         if ($edition) {
-            $result = oci_set_edition($edition);
-            if ($result === false) {
-                throw new Exception("Edition setup failed «{$edition}».");
-            }
+            $this->driver->setEdition($edition);
         }
 
         return $this;
+    }
+
+    /**
+     * Gather session information from config
+     *
+     * @return array
+     */
+    protected function collectSessionSettings()
+    {
+        $setUp = [ ];
+        if ($this->config(Config::SESSION_DATE_FORMAT)) {
+            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
+        }
+        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
+            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
+        }
+        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
+        }
+
+        return $setUp;
     }
 }

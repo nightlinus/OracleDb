@@ -22,15 +22,6 @@ namespace nightlinus\OracleDb\Driver;
 class OCIDriver implements DriverInterface
 {
     /**
-     *  CACHE = Use existing connection if was started with oci_conect
-     *  NEW = Always open new connection
-     *  PERSISTENT = Open persistent connection
-     */
-    const CONNECTION_TYPE_CACHE      = 0x02;
-    const CONNECTION_TYPE_NEW        = 0x03;
-    const CONNECTION_TYPE_PERSISTENT = 0x01;
-
-    /**
      * @param resource $handle
      * @param string   $name
      * @param mixed    $variable
@@ -498,6 +489,67 @@ class OCIDriver implements DriverInterface
         if (false === $result) {
             $error = $this->getError($handle);
             throw new Exception($error);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param resource $handle
+     * @param string $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientIdentifier($handle, $identifier)
+    {
+        $result = oci_set_client_identifier($handle, $identifier);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $this;
+    }
+
+    /**
+     * @param resource $handle
+     * @param string   $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientModuleName($handle, $identifier)
+    {
+        $result = oci_set_module_name($handle, $identifier);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $this;
+    }
+
+    /**
+     * @param resource $handle
+     * @param string   $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientInfo($handle, $identifier)
+    {
+        $result = oci_set_client_info($handle, $identifier);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $this;
+    }
+
+    /**
+     * @param string $edition Oracle Database edition name previously created with the SQL "CREATE EDITION" command.
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setEdition($edition)
+    {
+        $result = oci_set_edition($edition);
+        if ($result === false) {
+            throw new Exception("Edition setup failed «{$edition}».");
         }
 
         return $this;

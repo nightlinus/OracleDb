@@ -210,14 +210,13 @@ class Statement implements \IteratorAggregate
             } else {
                 $bindValue = &$this->bindings[ $bindingName ];
             }
-            $bindResult = oci_bind_by_name(
+            $this->driver->bindValue(
                 $this->resource,
                 $bindingName,
                 $bindValue,
                 $length,
                 $type
             );
-            $this->throwIfFalse($bindResult);
         }
 
         return $this;
@@ -239,7 +238,7 @@ class Statement implements \IteratorAggregate
     public function bindArray($name, $binding, $maxLength, $maxItemLength = -1, $type = SQLT_AFC)
     {
         $this->prepare();
-        $bindResult = oci_bind_array_by_name(
+        $this->driver->bindArray(
             $this->resource,
             $name,
             $binding,
@@ -247,10 +246,6 @@ class Statement implements \IteratorAggregate
             $maxItemLength,
             $type
         );
-        if (false === $bindResult) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
 
         $this->bindings[ $name ] = $binding;
 
@@ -312,11 +307,10 @@ class Statement implements \IteratorAggregate
     {
         $this->prepare();
         $ociMode = $this->getExecuteMode($ociMode);
-        $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
-        $executeResult = oci_execute($this->resource, $ociMode);
-        $this->db->endProfile();
         $this->db->setLastStatement($this);
-        $this->throwIfFalse($executeResult);
+        $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
+        $this->driver->execute($this->resource, $ociMode);
+        $this->db->endProfile();
         if ($ociMode & OCI_DESCRIBE_ONLY) {
             $this->state = self::STATE_EXECUTED_DESCRIBE;
         } else {
@@ -575,17 +569,13 @@ class Statement implements \IteratorAggregate
             throw new Exception("Index must be larger then 1, index «{$index}».");
         }
         $result = [
-            'name'       => oci_field_name($this->resource, $index),
-            'size'       => oci_field_size($this->resource, $index),
-            'precision'  => oci_field_precision($this->resource, $index),
-            'scale'      => oci_field_scale($this->resource, $index),
-            'type'       => oci_field_type($this->resource, $index),
-            'typeRaw'    => oci_field_type_raw($this->resource, $index)
+            'name'       => $this->driver->getFieldName($this->resource, $index),
+            'size'       => $this->driver->getFieldSize($this->resource, $index),
+            'precision'  => $this->driver->getFieldPrecision($this->resource, $index),
+            'scale'      => $this->driver->getFieldScale($this->resource, $index),
+            'type'       => $this->driver->getFieldType($this->resource, $index),
+            'typeRaw'    => $this->driver->getFieldTypeRaw($this->resource, $index)
         ];
-
-        foreach ($result as $field) {
-            $this->throwIfFalse($field);
-        }
 
         return $result;
     }
@@ -601,9 +591,7 @@ class Statement implements \IteratorAggregate
         if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
             $this->execute(OCI_DESCRIBE_ONLY);
         }
-
-        $result = oci_num_fields($this->resource);
-        $this->throwIfFalse($result);
+        $result = $this->driver->getFieldNumber($this->resource);
 
         return $result;
     }
@@ -656,8 +644,7 @@ class Statement implements \IteratorAggregate
     public function getType()
     {
         $this->prepare();
-        $type = oci_statement_type($this->resource);
-        $this->throwIfFalse($type);
+        $type = $this->driver->getStatementType($this->resource);
 
         return $type;
     }
@@ -686,13 +673,11 @@ class Statement implements \IteratorAggregate
 
         if ($this->queryString) {
             // get oci8 statement resource
-            $this->resource = oci_parse($this->db->getConnection(), $this->queryString);
+            $this->resource = $this->driver->parse($this->db->getConnection(), $this->queryString);
         } else {
             // get new cursor handler if no query provided
-            $this->resource = oci_new_cursor($this->db->getConnection());
+            $this->resource = $this->driver->newCursor($this->db->getConnection());
         }
-
-        $this->throwIfFalse($this->resource);
         $this->state = self::STATE_PREPARED;
 
         return $this;
@@ -721,8 +706,7 @@ class Statement implements \IteratorAggregate
     public function setPrefetch($rowCount)
     {
         if ($this->resource) {
-            $setResult = oci_set_prefetch($this->resource, $rowCount);
-            $this->throwIfFalse($setResult);
+            $this->driver->setPrefcth($this->resource, $rowCount);
         }
 
         return $this;
@@ -796,25 +780,23 @@ class Statement implements \IteratorAggregate
             case self::FETCH_ARRAY:
             case self::FETCH_ASSOC:
                 $fetchFunction = function () use ($ociMode) {
-                    return oci_fetch_array($this->resource, $ociMode);
+                    return $this->driver->fetchArray($this->resource, $ociMode);
                 };
                 break;
             case self::FETCH_OBJ:
                 $fetchFunction = function () {
-                    return oci_fetch_object($this->resource);
+                    return $this->driver->fetchObject($this->resource);
                 };
                 break;
             case self::FETCH_ALL:
                 $fetchFunction = function () use ($ociMode) {
-                    $result = [ ];
-                    oci_fetch_all($this->resource, $result, null, $ociMode);
-
-                    return $result;
+                    //TODO move from here as fetachAll is separate case
+                    return $this->driver->fetchAll($this->resource, null, null, $ociMode);
                 };
                 break;
             default:
                 $fetchFunction = function () {
-                    return oci_fetch_array($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
+                    return $this->driver->fetchArray($this->resource, OCI_ASSOC + OCI_RETURN_NULLS);
                 };
         }
 
@@ -829,20 +811,6 @@ class Statement implements \IteratorAggregate
         }
 
         return $fetchFunction;
-    }
-
-    /**
-     * Fetches oci error for statement
-     *
-     * @return array
-     */
-    protected function getOCIError()
-    {
-        $ociResource = $this->resource;
-
-        return is_resource($ociResource) ?
-            oci_error($ociResource) :
-            oci_error();
     }
 
     /**
@@ -864,18 +832,6 @@ class Statement implements \IteratorAggregate
         }
     }
 
-    /**
-     * @param $result
-     *
-     * @throws \nightlinus\OracleDb\Exception
-     */
-    protected function throwIfFalse($result)
-    {
-        if (false === $result) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
-    }
 
     /**
      * Generator for iterating over fetched rows

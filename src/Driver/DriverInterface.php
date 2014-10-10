@@ -21,6 +21,15 @@ namespace nightlinus\OracleDb\Driver;
 interface DriverInterface
 {
     /**
+     *  CACHE = Use existing connection if was started with oci_conect
+     *  NEW = Always open new connection
+     *  PERSISTENT = Open persistent connection
+     */
+    const CONNECTION_TYPE_CACHE      = 0x02;
+    const CONNECTION_TYPE_NEW        = 0x03;
+    const CONNECTION_TYPE_PERSISTENT = 0x01;
+
+    /**
      * @param resource $handle
      * @param string   $name
      * @param mixed    $variable
@@ -258,6 +267,42 @@ interface DriverInterface
      * @return $this
      */
     public function rollback($handle);
+
+    /**
+     * @param resource $handle
+     * @param string   $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientIdentifier($handle, $identifier);
+
+    /**
+     * @param resource $handle
+     * @param string   $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientInfo($handle, $identifier);
+
+    /**
+     * @param resource $handle
+     * @param string   $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientModuleName($handle, $identifier);
+
+    /**
+     * @param string $edition
+     *              ]
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setEdition($edition);
 
     /**
      * @param resource $handle
