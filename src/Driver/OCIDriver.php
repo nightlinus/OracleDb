@@ -13,7 +13,6 @@
 
 namespace nightlinus\OracleDb\Driver;
 
-
 /**
  * Class OCIDriver
  *
@@ -21,6 +20,22 @@ namespace nightlinus\OracleDb\Driver;
  */
 class OCIDriver implements DriverInterface
 {
+
+    const DEFAULT_FETCH_MODE = OCI_RETURN_NULLS;
+
+    const EXECUTE_DESCRIBE = OCI_DESCRIBE_ONLY;
+
+    const RETURN_LOBS_AS_STRING = OCI_RETURN_LOBS;
+
+    const RETURN_NULLS = OCI_RETURN_NULLS;
+
+    const TYPE_CURSOR = OCI_B_CURSOR;
+
+    /**
+     * @type array
+     */
+    protected $executeModes = [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ];
+
     /**
      * @param resource $handle
      * @param string   $name
@@ -34,6 +49,12 @@ class OCIDriver implements DriverInterface
      */
     public function bindArray($handle, $name, $variable, $tableLength, $itemLength = -1, $type = SQLT_AFC)
     {
+        if (null === $itemLength) {
+            $itemLength = -1;
+        }
+        if (null === $type) {
+            $type = SQLT_AFC;
+        }
         $result = oci_bind_array_by_name($handle, $name, $variable, $tableLength, $itemLength, $type);
         $this->throwExceptionIfFalse($result, $handle);
 
@@ -52,6 +73,9 @@ class OCIDriver implements DriverInterface
      */
     public function bindColumn($handle, $column, $variable, $type = SQLT_CHR)
     {
+        if (null === $type) {
+            $type = SQLT_CHR;
+        }
         $result = oci_define_by_name($handle, $column, $variable, $type);
         $this->throwExceptionIfFalse($result, $handle);
 
@@ -71,6 +95,12 @@ class OCIDriver implements DriverInterface
      */
     public function bindValue($handle, $name, $variable, $length = -1, $type = SQLT_CHR)
     {
+        if (null === $length) {
+            $length = -1;
+        }
+        if (null === $type) {
+            $type = SQLT_CHR;
+        }
         $result = oci_bind_by_name($handle, $name, $variable, $length, $type);
         $this->throwExceptionIfFalse($result, $handle);
 
@@ -162,6 +192,21 @@ class OCIDriver implements DriverInterface
         return $this;
     }
 
+    /**
+     * @param resource $handle
+     * @param int      $mode
+     *
+     * @return array
+     */
+    public function fetch($handle, $mode)
+    {
+        if (($mode & OCI_ASSOC) === 0 && ($mode & OCI_NUM) === 0) {
+            $mode = OCI_ASSOC + $mode;
+        }
+
+        return oci_fetch_array($handle, $mode);
+    }
+
 
     /**
      * @param resource $handle
@@ -188,9 +233,23 @@ class OCIDriver implements DriverInterface
      */
     public function fetchArray($handle, $mode)
     {
+        $mode = $this->addMode($mode, OCI_NUM);
+
         return oci_fetch_array($handle, $mode);
     }
 
+    /**
+     * @param resource $handle
+     * @param int      $mode
+     *
+     * @return array
+     */
+    public function fetchAssoc($handle, $mode)
+    {
+        $mode = $this->addMode($mode, OCI_ASSOC);
+
+        return oci_fetch_array($handle, $mode);
+    }
 
     /**
      * @param resource $handle
@@ -201,7 +260,6 @@ class OCIDriver implements DriverInterface
     {
         return oci_fetch_object($handle);
     }
-
 
     /**
      * @param resource $handle
@@ -218,7 +276,6 @@ class OCIDriver implements DriverInterface
         return $this;
     }
 
-
     /**
      * @param resource $handle
      *
@@ -233,7 +290,6 @@ class OCIDriver implements DriverInterface
         return $rows;
     }
 
-
     /**
      * @return string
      */
@@ -241,7 +297,6 @@ class OCIDriver implements DriverInterface
     {
         return oci_client_version();
     }
-
 
     /**
      * @param null $handle
@@ -267,7 +322,6 @@ class OCIDriver implements DriverInterface
 
         return $result;
     }
-
 
     /**
      * @param resource $handle
@@ -297,7 +351,6 @@ class OCIDriver implements DriverInterface
 
         return $result;
     }
-
 
     /**
      * @param resource   $handle
@@ -359,7 +412,6 @@ class OCIDriver implements DriverInterface
         return $result;
     }
 
-
     /**
      * @param resource $handle
      *
@@ -373,7 +425,6 @@ class OCIDriver implements DriverInterface
 
         return $version;
     }
-
 
     /**
      * @param resource $handle
@@ -389,6 +440,15 @@ class OCIDriver implements DriverInterface
         return $type;
     }
 
+    /**
+     * @param int $mode
+     *
+     * @return bool
+     */
+    public function isExecuteMode($mode)
+    {
+        return array_search($mode, $this->executeModes, true) !== false;
+    }
 
     /**
      * @param resource $handle
@@ -403,7 +463,6 @@ class OCIDriver implements DriverInterface
 
         return $cursor;
     }
-
 
     /**
      * @param resource $handle
@@ -420,7 +479,6 @@ class OCIDriver implements DriverInterface
 
         return $result;
     }
-
 
     /**
      * @param $variable
@@ -443,7 +501,6 @@ class OCIDriver implements DriverInterface
         return $variable;
     }
 
-
     /**
      * @param resource $handle
      *
@@ -460,55 +517,6 @@ class OCIDriver implements DriverInterface
         return $this;
     }
 
-
-    /**
-     * @param resource $handle
-     * @param int      $size
-     *
-     * @return $this
-     * @throws \nightlinus\OracleDb\Driver\Exception
-     */
-    public function setPrefcth($handle, $size)
-    {
-        $setResult = oci_set_prefetch($handle, $size);
-        $this->throwExceptionIfFalse($setResult, $handle);
-
-        return $this;
-    }
-
-
-    /**
-     * @param      $result
-     * @param null $handle
-     *
-     * @return $this
-     * @throws \nightlinus\OracleDb\Driver\Exception
-     */
-    protected function throwExceptionIfFalse($result, $handle = null)
-    {
-        if (false === $result) {
-            $error = $this->getError($handle);
-            throw new Exception($error);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param resource $handle
-     * @param string $identifier
-     *
-     * @return $this
-     * @throws \nightlinus\OracleDb\Driver\Exception
-     */
-    public function setClientIdentifier($handle, $identifier)
-    {
-        $result = oci_set_client_identifier($handle, $identifier);
-        $this->throwExceptionIfFalse($result, $handle);
-
-        return $this;
-    }
-
     /**
      * @param resource $handle
      * @param string   $identifier
@@ -516,9 +524,9 @@ class OCIDriver implements DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setClientModuleName($handle, $identifier)
+    public function setClientIdentifier($handle, $identifier)
     {
-        $result = oci_set_module_name($handle, $identifier);
+        $result = oci_set_client_identifier($handle, $identifier);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -540,6 +548,21 @@ class OCIDriver implements DriverInterface
     }
 
     /**
+     * @param resource $handle
+     * @param string   $identifier
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setClientModuleName($handle, $identifier)
+    {
+        $result = oci_set_module_name($handle, $identifier);
+        $this->throwExceptionIfFalse($result, $handle);
+
+        return $this;
+    }
+
+    /**
      * @param string $edition Oracle Database edition name previously created with the SQL "CREATE EDITION" command.
      *
      * @return $this
@@ -550,6 +573,56 @@ class OCIDriver implements DriverInterface
         $result = oci_set_edition($edition);
         if ($result === false) {
             throw new Exception("Edition setup failed «{$edition}».");
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param resource $handle
+     * @param int      $size
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setPrefcth($handle, $size)
+    {
+        $setResult = oci_set_prefetch($handle, $size);
+        $this->throwExceptionIfFalse($setResult, $handle);
+
+        return $this;
+    }
+
+    /**
+     * if $mode is in $resultMode return $resultMode
+     * else return $resultMode + $mode
+     *
+     * @param int $resultMode sum of modes
+     * @param int $mode       mode to check
+     *
+     * @return int
+     */
+    protected function addMode($resultMode, $mode)
+    {
+        if (($resultMode & $mode) === 0) {
+            $resultMode = $mode + $resultMode;
+        }
+
+        return $resultMode;
+    }
+
+    /**
+     * @param      $result
+     * @param null $handle
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    protected function throwExceptionIfFalse($result, $handle = null)
+    {
+        if (false === $result) {
+            $error = $this->getError($handle);
+            throw new Exception($error);
         }
 
         return $this;

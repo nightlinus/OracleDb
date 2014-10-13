@@ -29,6 +29,21 @@ interface DriverInterface
     const CONNECTION_TYPE_NEW        = 0x03;
     const CONNECTION_TYPE_PERSISTENT = 0x01;
 
+
+    const DEFAULT_FETCH_MODE = 0x00;
+
+
+    const EXECUTE_AUTO_COMMIT    = 0x02;
+    const EXECUTE_DESCRIBE       = 0x01;
+    const EXECUTE_NO_AUTO_COMMIT = 0x03;
+
+
+    const RETURN_LOBS_AS_STRING = 0x02;
+    const RETURN_NULLS          = 0x01;
+
+
+    const TYPE_CURSOR = 0x01;
+
     /**
      * @param resource $handle
      * @param string   $name
@@ -105,6 +120,14 @@ interface DriverInterface
 
     /**
      * @param resource $handle
+     * @param int      $mode
+     *
+     * @return array
+     */
+    public function fetch($handle, $mode);
+
+    /**
+     * @param resource $handle
      * @param int      $skip
      * @param int      $maxrows
      * @param int      $mode
@@ -120,6 +143,14 @@ interface DriverInterface
      * @return array
      */
     public function fetchArray($handle, $mode);
+
+    /**
+     * @param resource $handle
+     * @param int      $mode
+     *
+     * @return array
+     */
+    public function fetchAssoc($handle, $mode);
 
     /**
      * @param resource $handle
@@ -233,6 +264,13 @@ interface DriverInterface
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
     public function getStatementType($handle);
+
+    /**
+     * @param int $mode
+     *
+     * @return bool
+     */
+    public function isExecuteMode($mode);
 
     /**
      * @param resource $handle
