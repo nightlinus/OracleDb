@@ -719,9 +719,7 @@ class Statement implements \IteratorAggregate
     protected function executeDescribe()
     {
         $driver = $this->driver;
-        if ($this->state < self::STATE_EXECUTED_DESCRIBE) {
-            $this->execute($driver::EXECUTE_DESCRIBE);
-        }
+        $this->execute($driver::EXECUTE_DESCRIBE);
 
         return $this;
     }
