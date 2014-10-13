@@ -9,12 +9,13 @@
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
  */
+namespace nightlinus\OracleDb;
 
 spl_autoload_register(
     function ($class) {
 
         // project-specific namespace prefix
-        $prefix = 'nightlinus\\OracleDb\\';
+        $prefix = __NAMESPACE__;
 
         // base directory for the namespace prefix
         $base_dir = __DIR__ . '/src/';
