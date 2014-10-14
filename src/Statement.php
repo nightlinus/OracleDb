@@ -79,7 +79,7 @@ class Statement implements \IteratorAggregate
     protected $db;
 
     /**
-     * @type Driver\DriverInterface
+     * @type Driver\AbstractDriver
      */
     protected $driver;
 
@@ -714,7 +714,7 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * @return \nightlinus\OracleDb\Driver\DriverInterface
+     * @return \nightlinus\OracleDb\Driver\AbstractDriver
      */
     protected function executeDescribe()
     {

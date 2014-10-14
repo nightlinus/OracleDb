@@ -14,11 +14,11 @@ namespace nightlinus\OracleDb\Driver;
 
 
 /**
- * Class OCIDriver
+ * Class A
  *
  * @package nightlinus\OracleDb\Driver
  */
-interface DriverInterface
+abstract class AbstractDriver
 {
     /**
      *  CACHE = Use existing connection if was started with oci_conect
@@ -55,7 +55,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function bindArray($handle, $name, $variable, $tableLength, $itemLength = -1, $type = SQLT_AFC);
+     abstract public function bindArray($handle, $name, $variable, $tableLength, $itemLength = -1, $type = SQLT_AFC);
 
     /**
      * @param resource   $handle
@@ -66,7 +66,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function bindColumn($handle, $column, $variable, $type = SQLT_CHR);
+    abstract public function bindColumn($handle, $column, $variable, $type = SQLT_CHR);
 
     /**
      * @param resource $handle
@@ -78,7 +78,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function bindValue($handle, $name, $variable, $length = -1, $type = SQLT_CHR);
+    abstract public function bindValue($handle, $name, $variable, $length = -1, $type = SQLT_CHR);
 
     /**
      * @param resource $handle
@@ -86,7 +86,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function commit($handle);
+    abstract public function commit($handle);
 
     /**
      * @param int    $connectionType
@@ -99,7 +99,7 @@ interface DriverInterface
      * @return resource
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function connect($connectionType, $user, $password, $connectionString, $charSet, $sessionMode);
+    abstract public function connect($connectionType, $user, $password, $connectionString, $charSet, $sessionMode);
 
     /**
      * @param resource $handle
@@ -107,7 +107,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function disconnect($handle);
+    abstract public function disconnect($handle);
 
     /**
      * @param resource $handle
@@ -116,7 +116,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function execute($handle, $mode);
+    abstract public function execute($handle, $mode);
 
     /**
      * @param resource $handle
@@ -124,7 +124,7 @@ interface DriverInterface
      *
      * @return array
      */
-    public function fetch($handle, $mode);
+    abstract public function fetch($handle, $mode);
 
     /**
      * @param resource $handle
@@ -134,7 +134,7 @@ interface DriverInterface
      *
      * @return array
      */
-    public function fetchAll($handle, $skip, $maxrows, $mode);
+    abstract public function fetchAll($handle, $skip, $maxrows, $mode);
 
     /**
      * @param resource $handle
@@ -142,7 +142,7 @@ interface DriverInterface
      *
      * @return array
      */
-    public function fetchArray($handle, $mode);
+    abstract public function fetchArray($handle, $mode);
 
     /**
      * @param resource $handle
@@ -150,14 +150,14 @@ interface DriverInterface
      *
      * @return array
      */
-    public function fetchAssoc($handle, $mode);
+    abstract public function fetchAssoc($handle, $mode);
 
     /**
      * @param resource $handle
      *
      * @return object
      */
-    public function fetchObject($handle);
+    abstract public function fetchObject($handle);
 
     /**
      * @param resource $handle
@@ -165,7 +165,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function free(&$handle);
+    abstract public function free(&$handle);
 
     /**
      * @param resource $handle
@@ -173,19 +173,19 @@ interface DriverInterface
      * @return int
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getAffectedRowsNumber($handle);
+    abstract public function getAffectedRowsNumber($handle);
 
     /**
      * @return string
      */
-    public function getClientVersion();
+    abstract public function getClientVersion();
 
     /**
      * @param resource $handle
      *
      * @return array
      */
-    public function getError($handle = null);
+    abstract public function getError($handle = null);
 
     /**
      * @param resource   $handle statement resource
@@ -194,7 +194,7 @@ interface DriverInterface
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldName($handle, $index);
+    abstract public function getFieldName($handle, $index);
 
     /**
      * @param resource $handle statement resource
@@ -202,7 +202,7 @@ interface DriverInterface
      * @return int
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldNumber($handle);
+    abstract public function getFieldNumber($handle);
 
     /**
      * @param resource   $handle statement resource
@@ -211,7 +211,7 @@ interface DriverInterface
      * @return int
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldPrecision($handle, $index);
+    abstract public function getFieldPrecision($handle, $index);
 
     /**
      * @param resource   $handle statement resource
@@ -220,7 +220,7 @@ interface DriverInterface
      * @return int
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldScale($handle, $index);
+    abstract public function getFieldScale($handle, $index);
 
     /**
      * @param resource   $handle statement resource
@@ -229,7 +229,7 @@ interface DriverInterface
      * @return int
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldSize($handle, $index);
+    abstract public function getFieldSize($handle, $index);
 
     /**
      * @param resource   $handle statement resource
@@ -238,7 +238,7 @@ interface DriverInterface
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldType($handle, $index);
+    abstract public function getFieldType($handle, $index);
 
     /**
      * @param resource   $handle statement resource
@@ -247,7 +247,7 @@ interface DriverInterface
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldTypeRaw($handle, $index);
+    abstract public function getFieldTypeRaw($handle, $index);
 
     /**
      * @param resource $handle
@@ -255,7 +255,7 @@ interface DriverInterface
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getServerVersion($handle);
+    abstract public function getServerVersion($handle);
 
     /**
      * @param resource $handle
@@ -263,14 +263,14 @@ interface DriverInterface
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getStatementType($handle);
+    abstract public function getStatementType($handle);
 
     /**
      * @param int $mode
      *
      * @return bool
      */
-    public function isExecuteMode($mode);
+    abstract public function isExecuteMode($mode);
 
     /**
      * @param resource $handle
@@ -278,7 +278,7 @@ interface DriverInterface
      * @return resource
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function newCursor($handle);
+    abstract public function newCursor($handle);
 
     /**
      * @param resource $handle
@@ -287,14 +287,14 @@ interface DriverInterface
      * @return resource
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function parse($handle, $query);
+    abstract public function parse($handle, $query);
 
     /**
      * @param $variable
      *
      * @return string
      */
-    public function quote($variable);
+    abstract public function quote($variable);
 
     /**
      * Rollback changes within session
@@ -304,7 +304,7 @@ interface DriverInterface
      * @throws \nightlinus\OracleDb\Driver\Exception
      * @return $this
      */
-    public function rollback($handle);
+    abstract public function rollback($handle);
 
     /**
      * @param resource $handle
@@ -313,7 +313,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setClientIdentifier($handle, $identifier);
+    abstract public function setClientIdentifier($handle, $identifier);
 
     /**
      * @param resource $handle
@@ -322,7 +322,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setClientInfo($handle, $identifier);
+    abstract public function setClientInfo($handle, $identifier);
 
     /**
      * @param resource $handle
@@ -331,7 +331,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setClientModuleName($handle, $identifier);
+    abstract public function setClientModuleName($handle, $identifier);
 
     /**
      * @param string $edition
@@ -340,7 +340,7 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setEdition($edition);
+    abstract public function setEdition($edition);
 
     /**
      * @param resource $handle
@@ -349,5 +349,5 @@ interface DriverInterface
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setPrefcth($handle, $size);
+    abstract public function setPrefcth($handle, $size);
 }

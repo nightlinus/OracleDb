@@ -237,10 +237,10 @@ class Config implements \ArrayAccess
      */
     public function validate()
     {
-        if (!$this->config[ self::CONNECTION_USER ] === null) {
+        if ($this->get(self::CONNECTION_USER) === null) {
             throw new Exception("User name is not specified");
         }
-        if ($this->config[ self::CONNECTION_PASSWORD ] === null) {
+        if ($this->get(self::CONNECTION_PASSWORD) === null) {
             throw new Exception("Password is not specified");
         }
 

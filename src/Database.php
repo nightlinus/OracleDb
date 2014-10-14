@@ -41,7 +41,7 @@ class Database
     protected $connection;
 
     /**
-     * @type Driver\DriverInterface
+     * @type Driver\AbstractDriver
      */
     protected $driver;
 
@@ -342,7 +342,7 @@ class Database
     }
 
     /**
-     * @return Driver\DriverInterface
+     * @return Driver\AbstractDriver
      */
     public function getDriver()
     {
