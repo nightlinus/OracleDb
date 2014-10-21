@@ -155,11 +155,11 @@ class Statement implements \IteratorAggregate
      */
     public function bind($bindings)
     {
-        $this->prepare();
-
-        if (!is_array($bindings)) {
+        if (!is_array($bindings) || count($bindings) === 0) {
             return $this;
         }
+
+        $this->prepare();
         $driver = $this->driver;
 
         foreach ($bindings as $bindingName => $bindingValue) {
@@ -176,7 +176,6 @@ class Statement implements \IteratorAggregate
             }
 
             $this->bindings[ $bindingName ] = $value;
-
             if ($value instanceof $this) {
                 $type = $driver::TYPE_CURSOR;
                 $value->prepare();
