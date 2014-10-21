@@ -186,7 +186,7 @@ class OCIDriver extends  AbstractDriver
      */
     public function execute($handle, $mode)
     {
-        $result = oci_execute($handle, $mode);
+        $result = @oci_execute($handle, $mode);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
