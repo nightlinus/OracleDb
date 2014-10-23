@@ -57,9 +57,10 @@ class Config implements \ArrayAccess
     /**
      * Session variables
      */
-    const SESSION_CURRENT_SCHEMA = 'session.CURRENT_SCHEMA';
-    const SESSION_DATE_FORMAT    = 'session.NLS_DATE_FORMAT';
-    const SESSION_DATE_LANGUAGE  = 'session.NLS_DATE_LANUAGE';
+    const SESSION_CLASS          = 'session.class';
+    const SESSION_CURRENT_SCHEMA = 'session.schema';
+    const SESSION_DATE_FORMAT    = 'session.date_format';
+    const SESSION_DATE_LANGUAGE  = 'session.date_language';
 
     /**
      *  Statement variables
@@ -86,6 +87,7 @@ class Config implements \ArrayAccess
         self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
         self::SESSION_DATE_LANGUAGE   => null,
         self::SESSION_CURRENT_SCHEMA  => null,
+        self::SESSION_CLASS           => Session\Oracle::class,
         self::CONNECTION_CHARSET      => 'AL32UTF8',
         self::CONNECTION_PERSISTENT   => false,
         self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,

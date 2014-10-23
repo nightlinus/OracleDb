@@ -58,6 +58,11 @@ class Database
     protected $statementCache;
 
     /**
+     * @type \nightlinus\OracleDb\Session\Oracle
+     */
+    protected $session;
+
+    /**
      * Consttructor for Database class implements
      * base parametrs checking
      *
@@ -172,7 +177,7 @@ class Database
         if ($this->connection) {
             return $this;
         }
-        $this->setUpSessionBefore();
+        $this->setupBeforeConnect();
         $driver = $this->driver;
         if ($this->config(Config::CONNECTION_PERSISTENT)) {
             $connectMode = $driver::CONNECTION_TYPE_PERSISTENT;
@@ -189,7 +194,7 @@ class Database
             $this->config(Config::CONNECTION_CHARSET),
             $this->config(Config::CONNECTION_PRIVILEGED)
         );
-        $this->setUpSessionAfter();
+        $this->session->apply();
 
         return $this;
     }
@@ -542,48 +547,6 @@ class Database
     }
 
     /**
-     * Method to set session variables via ALTER SESSION SET variable = value
-     *
-     * @param array $variables
-     *
-     * @return $this
-     */
-    protected function alterSession($variables)
-    {
-        if (count($variables) === 0) {
-            return $this;
-        }
-        $sql = "ALTER SESSION SET ";
-        foreach ($variables as $key => $value) {
-            $sql .= "$key = '$value' ";
-        }
-        $this->query($sql);
-
-        return $this;
-    }
-
-    /**
-     * Gather session information from config
-     *
-     * @return array
-     */
-    protected function collectSessionSettings()
-    {
-        $setUp = [ ];
-        if ($this->config(Config::SESSION_DATE_FORMAT)) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
-        }
-        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
-        }
-        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
-        }
-
-        return $setUp;
-    }
-
-    /**
      * Cleaning memory by dissposing connection
      * handlers
      *
@@ -655,12 +618,17 @@ class Database
     }
 
     /**
-     * Setup session after connection is estabilished
+     * Method to set up connection before call of oci_connect
      *
      * @return $this
+     * @throws Exception
      */
-    protected function setUpSessionAfter()
+    protected function setupBeforeConnect()
     {
+        //Set up profiler
+        $class = $this->config(Config::SESSION_CLASS);
+        $this->session = is_string($class) ? new $class() : $class;
+
         //Set up profiler
         if ($this->config(Config::PROFILER_ENABLED)) {
             $class = $this->config(Config::PROFILER_CLASS);
@@ -673,33 +641,6 @@ class Database
             $cacheSize = $this->config(Config::STATEMENT_CACHE_SIZE);
             $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
         }
-
-        $this->driver->setClientIdentifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
-        $this->driver->setClientInfo($this->connection, $this->config(Config::CLIENT_INFO));
-        $this->driver->setClientModuleName($this->connection, $this->config(Config::CLIENT_MODULE_NAME));
-
-        $this->alterSession($this->collectSessionSettings());
-
-        return $this;
-    }
-
-    /**
-     * Method to set up connection before call of oci_connect
-     *
-     * @return $this
-     * @throws Exception
-     */
-    protected function setUpSessionBefore()
-    {
-        $connectionClass = $this->config(Config::CONNECTION_CLASS);
-        if ($connectionClass) {
-            ini_set('oci8.connection_class', $connectionClass);
-        }
-        $edition = $this->config(Config::CONNECTION_EDITION);
-        if ($edition) {
-            $this->driver->setEdition($edition);
-        }
-
-        return $this;
+        $this->session->setupBeforeConnect();
     }
 }
