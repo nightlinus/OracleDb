@@ -18,7 +18,7 @@ namespace nightlinus\OracleDb\Driver;
  *
  * @package nightlinus\OracleDb\Driver
  */
-class OCIDriver extends  AbstractDriver
+class Oracle extends AbstractDriver
 {
 
     const DEFAULT_FETCH_MODE = OCI_RETURN_NULLS;

@@ -105,7 +105,7 @@ class Config implements \ArrayAccess
         self::STATEMENT_CACHE_ENABLED => true,
         self::STATEMENT_CACHE_SIZE    => 50,
         self::STATEMENT_CACHE_CLASS   => StatementCache::class,
-        self::DRIVER_CLASS            => Driver\OCIDriver::class
+        self::DRIVER_CLASS            => Driver\Oracle::class
     ];
 
     /**

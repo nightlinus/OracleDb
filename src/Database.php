@@ -108,12 +108,17 @@ class Database
      */
     public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
     {
-        $returnName = $this->getUniqueAlias('z__');
-        $bindings[ $returnName ] = [ null, $returnSize ];
-        $sqlText = "BEGIN :$returnName := $sqlText; END;";
+        $return = null;
+        $returnName = null;
+        if ($returnSize) {
+            $returnName = $this->getUniqueAlias('z__');
+            $bindings[ $returnName ] = [ null, $returnSize ];
+            $return = ":$returnName := ";
+        }
+        $sqlText = "BEGIN $return $sqlText; END;";
         $statement = $this->query($sqlText, $bindings, $mode);
 
-        return $statement->bindings[ $returnName ];
+        return $returnSize ? $statement->bindings[ $returnName ] : null;
     }
 
     /**
