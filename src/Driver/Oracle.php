@@ -55,7 +55,7 @@ class Oracle extends AbstractDriver
         if (null === $type) {
             $type = SQLT_AFC;
         }
-        $result = oci_bind_array_by_name($handle, $name, $variable, $tableLength, $itemLength, $type);
+        $result = @oci_bind_array_by_name($handle, $name, $variable, $tableLength, $itemLength, $type);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -76,7 +76,7 @@ class Oracle extends AbstractDriver
         if (null === $type) {
             $type = SQLT_CHR;
         }
-        $result = oci_define_by_name($handle, $column, $variable, $type);
+        $result = @oci_define_by_name($handle, $column, $variable, $type);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -101,7 +101,7 @@ class Oracle extends AbstractDriver
         if (null === $type) {
             $type = SQLT_CHR;
         }
-        $result = oci_bind_by_name($handle, $name, $variable, $length, $type);
+        $result = @oci_bind_by_name($handle, $name, $variable, $length, $type);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -116,7 +116,7 @@ class Oracle extends AbstractDriver
      */
     public function commit($handle)
     {
-        $result = oci_commit($handle);
+        $result = @oci_commit($handle);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -149,7 +149,7 @@ class Oracle extends AbstractDriver
                 $connectFunction = 'oci_connect';
         }
 
-        $connection = $connectFunction(
+        $connection = @$connectFunction(
             $user,
             $password,
             $connectionString,
@@ -170,7 +170,7 @@ class Oracle extends AbstractDriver
      */
     public function disconnect($handle)
     {
-        $result = oci_close($handle);
+        $result = @oci_close($handle);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -269,7 +269,7 @@ class Oracle extends AbstractDriver
      */
     public function free(&$handle)
     {
-        $result = oci_free_statement($handle);
+        $result = @oci_free_statement($handle);
         $this->throwExceptionIfFalse($result, $handle);
         $handle = null;
 
@@ -284,7 +284,7 @@ class Oracle extends AbstractDriver
      */
     public function getAffectedRowsNumber($handle)
     {
-        $rows = oci_num_rows($handle);
+        $rows = @oci_num_rows($handle);
         $this->throwExceptionIfFalse($rows, $handle);
 
         return $rows;
@@ -317,7 +317,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldName($handle, $index)
     {
-        $result = oci_field_name($handle, $index);
+        $result = @oci_field_name($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -331,7 +331,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldNumber($handle)
     {
-        $result = oci_num_fields($handle);
+        $result = @oci_num_fields($handle);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -346,7 +346,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldPrecision($handle, $index)
     {
-        $result = oci_field_precision($handle, $index);
+        $result = @oci_field_precision($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -361,7 +361,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldScale($handle, $index)
     {
-        $result = oci_field_scale($handle, $index);
+        $result = @oci_field_scale($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -376,7 +376,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldSize($handle, $index)
     {
-        $result = oci_field_size($handle, $index);
+        $result = @oci_field_size($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -391,7 +391,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldType($handle, $index)
     {
-        $result = oci_field_type($handle, $index);
+        $result = @oci_field_type($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -406,7 +406,7 @@ class Oracle extends AbstractDriver
      */
     public function getFieldTypeRaw($handle, $index)
     {
-        $result = oci_field_type_raw($handle, $index);
+        $result = @oci_field_type_raw($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $result;
@@ -420,7 +420,7 @@ class Oracle extends AbstractDriver
      */
     public function getServerVersion($handle)
     {
-        $version = oci_server_version($handle);
+        $version = @oci_server_version($handle);
         $this->throwExceptionIfFalse($version, $handle);
 
         return $version;
@@ -434,7 +434,7 @@ class Oracle extends AbstractDriver
      */
     public function getStatementType($handle)
     {
-        $type = oci_statement_type($handle);
+        $type = @oci_statement_type($handle);
         $this->throwExceptionIfFalse($type, $handle);
 
         return $type;
@@ -458,7 +458,7 @@ class Oracle extends AbstractDriver
      */
     public function newCursor($handle)
     {
-        $cursor = oci_new_cursor($handle);
+        $cursor = @oci_new_cursor($handle);
         $this->throwExceptionIfFalse($cursor, $handle);
 
         return $cursor;
@@ -509,7 +509,7 @@ class Oracle extends AbstractDriver
      */
     public function rollback($handle)
     {
-        $rollbackResult = oci_rollback($handle);
+        $rollbackResult = @oci_rollback($handle);
         if ($rollbackResult === false) {
             throw new Exception("Can't rollback");
         }
@@ -587,7 +587,7 @@ class Oracle extends AbstractDriver
      */
     public function setPrefcth($handle, $size)
     {
-        $setResult = oci_set_prefetch($handle, $size);
+        $setResult = @oci_set_prefetch($handle, $size);
         $this->throwExceptionIfFalse($setResult, $handle);
 
         return $this;
