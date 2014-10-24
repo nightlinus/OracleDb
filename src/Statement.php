@@ -860,7 +860,7 @@ class Statement implements \IteratorAggregate
         if (!is_callable($callback)) {
             $callback = function ($result, $item, $index) {
                 $result->key = $index;
-                $result->vaue = $item;
+                $result->value = $item;
 
                 return $result;
             };
