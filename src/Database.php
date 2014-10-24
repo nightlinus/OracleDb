@@ -627,7 +627,7 @@ class Database
     {
         //Set up profiler
         $class = $this->config(Config::SESSION_CLASS);
-        $this->session = is_string($class) ? new $class() : $class;
+        $this->session = is_string($class) ? new $class($this) : $class;
 
         //Set up profiler
         if ($this->config(Config::PROFILER_ENABLED)) {
