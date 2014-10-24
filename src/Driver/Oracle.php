@@ -305,7 +305,7 @@ class Oracle extends AbstractDriver
      */
     public function getError($handle = null)
     {
-        return oci_error($handle);
+        return is_resource($handle) ? oci_error($handle) : oci_error();
     }
 
     /**
