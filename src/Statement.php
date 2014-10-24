@@ -469,7 +469,7 @@ class Statement implements \IteratorAggregate
      */
     public function fetchOne($mode = null)
     {
-        $result = $this->tupleGenerator(null, self::FETCH_ARRAY, $mode)->current();
+        $result = $this->tupleGenerator(null, self::FETCH_BOTH, $mode)->current();
         $this->setState(self::STATE_FETCHED);
 
         return $result;
