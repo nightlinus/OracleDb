@@ -380,8 +380,12 @@ class Statement implements \IteratorAggregate
      */
     public function fetchCallback(callable $callback, $mode = null)
     {
-        $fetchCallback = function ($item, $index) use ($callback) {
-            return $callback($item, $index);
+        $fetchCallback = function ($result, $item, $index) use ($callback) {
+            $cbResult = $callback($item, $index);
+            $result->key = key($cbResult);
+            $result->value = $cbResult[ $result->key ];
+
+            return $result;
         };
 
         return $this->getResultObject($fetchCallback, self::FETCH_ASSOC, $mode);
@@ -406,8 +410,9 @@ class Statement implements \IteratorAggregate
             $fetchMode = self::FETCH_ASSOC;
         }
 
-        $callback = function ($item, $index) use ($column) {
-            $result[ $index ] = $item[ $column ];
+        $callback = function ($result, $item, $index) use ($column) {
+            $result->key = $index;
+            $result->value = $item[ $column ];
 
             return $result;
         };
@@ -434,9 +439,9 @@ class Statement implements \IteratorAggregate
             $fetchMode = self::FETCH_ASSOC;
         }
 
-        $callback = function ($item) use ($mapIndex) {
-            $key = $item[ $mapIndex ];
-            $result[ $key ] = $item;
+        $callback = function ($result, $item) use ($mapIndex) {
+            $result->key = $item[ $mapIndex ];
+            $result->value = $item;
 
             return $result;
         };
@@ -496,9 +501,9 @@ class Statement implements \IteratorAggregate
             $mode = self::FETCH_ASSOC;
         }
 
-        $callback = function ($item) use ($firstCol, $secondCol) {
-            $index = $item[ $firstCol ];
-            $result[ $index ] = $item[ $secondCol ];
+        $callback = function ($result, $item) use ($firstCol, $secondCol) {
+            $result->key = $item[ $firstCol ];
+            $result->value = $item[ $secondCol ];
 
             return $result;
         };
@@ -853,17 +858,18 @@ class Statement implements \IteratorAggregate
         $this->setState(self::STATE_FETCHING);
         $fetchFunction = $this->getFetchFunction($fetchMode, $mode);
         if (!is_callable($callback)) {
-            $callback = function ($item, $index) {
-                $result[ $index ] = $item;
+            $callback = function ($result, $item, $index) {
+                $result->key = $index;
+                $result->vaue = $item;
 
                 return $result;
             };
         }
-        $index = 0;
-        while (false !== ($tuple = $fetchFunction())) {
-            $result = $callback($tuple, $index++);
-            $key = key($result);
-            yield $key => $result[ $key ];
+
+        $result = new CallbackResult();
+        for ($index = 0; false !== ($tuple = $fetchFunction()); $index++) {
+            $callback($result, $tuple, $index);
+            yield $result->key => $result->value;
         }
 
         $this->setState(self::STATE_FETCHED);
