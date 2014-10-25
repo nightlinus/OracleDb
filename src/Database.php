@@ -609,7 +609,7 @@ class Database
      *
      * @return string
      */
-    protected function getUniqueAlias($prefix)
+    public static function getUniqueAlias($prefix = 'y__')
     {
         $hash = uniqid($prefix, true);
         $hash = str_replace('.', '', $hash);
