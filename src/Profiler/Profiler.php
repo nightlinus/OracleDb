@@ -12,7 +12,7 @@
  * @link     https://github.com/nightlinus/OracleDb
  */
 
-namespace nightlinus\OracleDb;
+namespace nightlinus\OracleDb\Profiler;
 
 /**
  * Class Profiler
@@ -32,7 +32,7 @@ class Profiler
     /**
      * Container for profiles
      *
-     * @type array
+     * @type Entry[]
      */
     protected $profiles = [ ];
 
@@ -40,17 +40,15 @@ class Profiler
      * Method to finish current profiling.
      *
      * @return $this
-     * @throws Exception
      */
     public function end()
     {
-        if (!isset($this->profiles[ $this->currentIndex ])) {
-            throw new Exception('A profile must be started before ' . __FUNCTION__ . ' can be called.');
+        if (isset($this->profiles[ $this->currentIndex ])) {
+            $current = &$this->profiles[ $this->currentIndex ];
+            $current->endTime = microtime(true);
+            $current->executeDuration = $current->endTime - $current->startTime;
+            $this->currentIndex++;
         }
-        $current = &$this->profiles[ $this->currentIndex ];
-        $current[ 'end' ] = microtime(true);
-        $current[ 'executeTime' ] = $current[ 'end' ] - $current[ 'start' ];
-        $this->currentIndex++;
 
         return $this;
     }
@@ -85,19 +83,7 @@ class Profiler
      */
     public function start($sql, array $data = null)
     {
-        $profileInformation = [
-            'sql'         => $sql,
-            'parameters'  => $data,
-            'start'       => microtime(true),
-            'end'         => null,
-            'executeTime' => null,
-            'fetchTime'   => null,
-            'stack'       => null
-        ];
-
-        $e = new Exception;
-        $profileInformation[ 'stack' ] = $e->getTrace();
-        $this->profiles[ $this->currentIndex ] = $profileInformation;
+        $this->profiles[ $this->currentIndex ] = new Entry($this->currentIndex, $sql, $data);
 
         return $this->currentIndex;
     }
@@ -111,7 +97,7 @@ class Profiler
      */
     public function startFetch($profileId)
     {
-        $this->profiles[ $profileId ][ 'lastFetchStart' ] = microtime(true);
+        $this->profiles[ $profileId ]->lastFetchStart  = microtime(true);
 
         return $this;
     }
@@ -125,9 +111,8 @@ class Profiler
      */
     public function stopFetch($profileId)
     {
-        $this->profiles[ $profileId ][ 'fetchTime' ] += microtime(true) -
-            $this->profiles[ $profileId ][ 'lastFetchStart' ];
-        unset($this->profiles[ $profileId ][ 'lastFetchStart' ]);
+        $this->profiles[ $profileId ]->fetchDuration += microtime(true) -
+            $this->profiles[ $profileId ]->lastFetchStart;
 
         return $this;
     }

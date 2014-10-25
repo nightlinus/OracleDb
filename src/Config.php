@@ -41,6 +41,8 @@ class Config implements \ArrayAccess
     const CONNECTION_STRING     = 'connection.string';
     const CONNECTION_USER       = 'connection.user';
 
+    const DRIVER_CLASS = 'driver.class';
+
     const GROUP_CLIENT     = 'client';
     const GROUP_CONNECTION = 'connection';
     const GROUP_PROFILER   = 'profiler';
@@ -55,9 +57,10 @@ class Config implements \ArrayAccess
     /**
      * Session variables
      */
-    const SESSION_CURRENT_SCHEMA = 'session.CURRENT_SCHEMA';
-    const SESSION_DATE_FORMAT    = 'session.NLS_DATE_FORMAT';
-    const SESSION_DATE_LANGUAGE  = 'session.NLS_DATE_LANUAGE';
+    const SESSION_CLASS          = 'session.class';
+    const SESSION_CURRENT_SCHEMA = 'session.schema';
+    const SESSION_DATE_FORMAT    = 'session.date_format';
+    const SESSION_DATE_LANGUAGE  = 'session.date_language';
 
     /**
      *  Statement variables
@@ -84,6 +87,7 @@ class Config implements \ArrayAccess
         self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
         self::SESSION_DATE_LANGUAGE   => null,
         self::SESSION_CURRENT_SCHEMA  => null,
+        self::SESSION_CLASS           => Session\Oracle::class,
         self::CONNECTION_CHARSET      => 'AL32UTF8',
         self::CONNECTION_PERSISTENT   => false,
         self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,
@@ -97,12 +101,13 @@ class Config implements \ArrayAccess
         self::CLIENT_INFO             => null,
         self::CLIENT_MODULE_NAME      => null,
         self::PROFILER_ENABLED        => false,
-        self::PROFILER_CLASS          => Profiler::class,
+        self::PROFILER_CLASS          => Profiler\Profiler::class,
         self::STATEMENT_AUTOCOMMIT    => false,
         self::STATEMENT_RETURN_TYPE   => Statement::RETURN_ARRAY,
         self::STATEMENT_CACHE_ENABLED => true,
         self::STATEMENT_CACHE_SIZE    => 50,
-        self::STATEMENT_CACHE_CLASS   => StatementCache::class
+        self::STATEMENT_CACHE_CLASS   => StatementCache::class,
+        self::DRIVER_CLASS            => Driver\Oracle::class
     ];
 
     /**
@@ -224,5 +229,23 @@ class Config implements \ArrayAccess
         } else {
             throw new Exception("Config entry «{$key}» doesn't exists. ");
         }
+    }
+
+    /**
+     * Validates config values
+     *
+     * @return bool
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function validate()
+    {
+        if ($this->get(self::CONNECTION_USER) === null) {
+            throw new Exception("User name is not specified");
+        }
+        if ($this->get(self::CONNECTION_PASSWORD) === null) {
+            throw new Exception("Password is not specified");
+        }
+
+        return true;
     }
 }

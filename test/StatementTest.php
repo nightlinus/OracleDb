@@ -1,81 +1,203 @@
 <?php
 /**
- * Date: 14.11.13
- * Time: 16:18
+ * Date: 14.10.14
+ * Time: 10:20
  *
  * @category
  * @package  OracleDb
- * @author   nightlinus <user@localhost>
+ * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
  * @version
  * @link
  */
 
-namespace nightlinus\OracleDb\test;
+namespace nightlinus\OracleDb\Tests;
 
+use nightlinus\OracleDb\Database;
+use nightlinus\OracleDb\Driver\AbstractDriver;
+use nightlinus\OracleDb\Driver\Oracle;
 use nightlinus\OracleDb\Statement;
 
-/**
- * Class StatementTest
- * @package nightlinus\OracleDb\test
- */
 class StatementTest extends \PHPUnit_Framework_TestCase
 {
-    protected $db;
 
-    protected $instance;
+    /**
+     * @type \PHPUnit_Framework_MockObject_MockObject
+     */
+    protected $dbMock;
 
-    public function testTupleGenerator()
+    /**
+     * @type \PHPUnit_Framework_MockObject_MockObject
+     */
+    protected $driverMock;
+
+    public function setUp()
     {
-        $this->instance = new Statement($this->db, 'test');
-        $arr = [
-            0 => [
-                'TEST_NUMBER' => 1,
-                'TEST_ACTION' => 2,
-                'TEST_STRING' => 'three'
-            ],
-            1 => [
-                'TEST_NUMBER' => 11,
-                'TEST_ACTION' => 12,
-                'TEST_STRING' => 'one three'
-            ],
-            2 => [
-                'TEST_NUMBER' => 21,
-                'TEST_ACTION' => 22,
-                'TEST_STRING' => 'two three'
-            ],
-            3 => [
-                'TEST_NUMBER' => 31,
-                'TEST_ACTION' => 32,
-                'TEST_STRING' => 'three three'
-            ]
-        ];
-        $func = function () use ($arr) {
-            foreach ($arr as $a) {
-                yield $a;
-            }
-        };
-
-        $a = new \ReflectionMethod($this->instance, 'tupleGenerator');
-        $a->setAccessible(true);
-        $i = 0;
-        $gen = $a->invoke($this->instance, $func);
-        foreach ($gen->current() as $ret) {
-            $this->assertEquals(
-                $arr[ $i++ ],
-                $ret,
-                'Returned value from generator must be equal to stubbed one'
-            );
-        }
+        $this->getDbMock();
     }
 
-    protected function setUp()
+    public function testBind()
     {
-        parent::setUp();
-        $arr = [ 'user', 'password', 'connection string' ];
-        $this->db = $this->getMockBuilder('\OracleDb\Db')
-                         ->setConstructorArgs($arr)
-                         ->getMock();
-        $this->instance = null;
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'prepare' ])
+                          ->getMock();
+
+        $bindings = [
+            "lol"  => 1,
+            "digit",
+            [ "values", "length", "type" ],
+            "khan" => [ "value" => '101', "length" => 2000, "type" => "testType" ],
+        ];
+
+        $this->driverMock->expects($this->exactly(4))
+                         ->method("bindValue")
+                         ->withConsecutive(
+                             [ null, "lol", 1 ],
+                             [ null, 0, "digit" ],
+                             [ null, 1, "values", "length", "type" ],
+                             [ null, "khan", 101, 2000, "testType" ]
+                         );
+
+
+        /**
+         * @type Statement $statement
+         */
+        $statement->bind($bindings);
+
+        $this->assertEquals(count($bindings), count($statement->bindings));
+    }
+
+    public function testBindCallPrepare()
+    {
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'prepare' ])
+                          ->getMock();
+        $statement->expects($this->once())->method("prepare");
+
+        $bindings = [ "1" ];
+        /**
+         * @type Statement $statement
+         */
+        $statement->bind($bindings);
+    }
+
+    public function testBindStatement()
+    {
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'prepare' ])
+                          ->getMock();
+
+        $bindStatement = $this->getMockBuilder(Statement::class)
+                              ->setConstructorArgs([ $this->dbMock ])
+                              ->setMethods([ 'prepare' ])
+                              ->getMock();
+        $bindStatement->expects($this->once())
+                      ->method("prepare");
+
+        /**
+         * @type AbstractDriver $driver
+         */
+        $driver = $this->driverMock;
+        $this->driverMock->expects($this->exactly(1))
+                         ->method("bindValue")
+                         ->with(
+                             null,
+                             "statement",
+                             null,
+                             null,
+                             $driver::TYPE_CURSOR
+                         );
+
+
+        $bindings = [ "statement" => $bindStatement ];
+
+        /**
+         * @type Statement $statement
+         */
+        $statement->bind($bindings);
+
+    }
+
+    public function testBindWithEmptyArray()
+    {
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'prepare' ])
+                          ->getMock();
+
+        $this->driverMock->expects($this->never())->method("bindValue");
+        $statement->expects($this->never())->method("prepare");
+        $bindings = [ ];
+
+        /**
+         * @type Statement $statement
+         */
+        $statement->bind($bindings);
+
+    }
+
+    public function testBindWithNotArray()
+    {
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'prepare' ])
+                          ->getMock();
+
+        $this->driverMock->expects($this->never())->method("bindValue");
+        $statement->expects($this->never())->method("prepare");
+        $bindings = 10;
+
+        /**
+         * @type Statement $statement
+         */
+        $statement->bind($bindings);
+
+    }
+
+    public function testFetchArray()
+    {
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'getResultObject' ])
+                          ->getMock();
+
+        $mode = 100;
+        $statement->expects($this->once())
+                  ->method("getResultObject")
+                  ->with(null, Statement::FETCH_ARRAY, $mode);
+
+        /**
+         * @type Statement $statement
+         */
+        $statement->fetchArray($mode);
+    }
+
+    public function testFetchAssoc()
+    {
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods([ 'getResultObject' ])
+                          ->getMock();
+
+        $mode = 500;
+        $statement->expects($this->once())
+                  ->method("getResultObject")
+                  ->with(null, Statement::FETCH_ASSOC, $mode);
+
+        /**
+         * @type Statement $statement
+         */
+        $statement->fetchAssoc($mode);
+    }
+
+    protected function getDbMock()
+    {
+        $this->dbMock = $this->getMock(Database::class, [ ], [ "TEST", "TEST" ]);
+        $this->driverMock = $this->getMock(Oracle::class);
+        $this->dbMock->expects($this->any())->method("getDriver")->will($this->returnValue($this->driverMock));
     }
 }
+

@@ -24,7 +24,7 @@ class Database
     /**
      * Profiler for db instance
      *
-     * @type Profiler
+     * @type Profiler\Profiler
      */
     public $profiler;
 
@@ -41,6 +41,11 @@ class Database
     protected $connection;
 
     /**
+     * @type Driver\AbstractDriver
+     */
+    protected $driver;
+
+    /**
      * last executed statement
      *
      * @type Statement | null
@@ -51,6 +56,11 @@ class Database
      * @type StatementCache
      */
     protected $statementCache;
+
+    /**
+     * @type \nightlinus\OracleDb\Session\Oracle
+     */
+    protected $session;
 
     /**
      * Consttructor for Database class implements
@@ -66,17 +76,23 @@ class Database
      */
     public function __construct(
         $userName,
-        $password,
-        $connectionString,
-        $config = []
+        $password = null,
+        $connectionString = null,
+        $config = [ ]
     ) {
-        if (!isset($userName) || !isset($password) || !isset($connectionString)) {
-            throw new Exception("One of connection parameters is null or not set");
+
+        if (func_num_args() === 1) {
+            $config = $userName;
+        } else {
+            $config[ Config::CONNECTION_USER ] = $userName;
+            $config[ Config::CONNECTION_PASSWORD ] = $password;
+            $config[ Config::CONNECTION_STRING ] = $connectionString;
         }
+
         $this->config = new Config($config);
-        $this->config(Config::CONNECTION_USER, $userName);
-        $this->config(Config::CONNECTION_PASSWORD, $password);
-        $this->config(Config::CONNECTION_STRING, $connectionString);
+        $this->config->validate();
+        $driver = $this->config(Config::DRIVER_CLASS);
+        $this->driver = is_string($driver) ? new $driver() : $driver;
     }
 
     /**
@@ -97,12 +113,17 @@ class Database
      */
     public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
     {
-        $returnName = $this->getUniqueAlias('z__');
-        $bindings[ $returnName ] = [ null, $returnSize ];
-        $sqlText = "BEGIN :$returnName := $sqlText; END;";
+        $return = null;
+        $returnName = null;
+        if ($returnSize) {
+            $returnName = $this->getUniqueAlias('z__');
+            $bindings[ $returnName ] = [ null, $returnSize ];
+            $return = ":$returnName := ";
+        }
+        $sqlText = "BEGIN $return $sqlText; END;";
         $statement = $this->query($sqlText, $bindings, $mode);
 
-        return $statement->bindings[ $returnName ];
+        return $returnSize ? $statement->bindings[ $returnName ] : null;
     }
 
     /**
@@ -113,11 +134,7 @@ class Database
      */
     public function commit()
     {
-        $commitResult = oci_commit($this->connection);
-        if ($commitResult === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $this->driver->commit($this->connection);
 
         return $this;
     }
@@ -160,24 +177,24 @@ class Database
         if ($this->connection) {
             return $this;
         }
-        $this->setUpSessionBefore();
+        $this->setupBeforeConnect();
+        $driver = $this->driver;
         if ($this->config(Config::CONNECTION_PERSISTENT)) {
-            $connectFunction = 'oci_pconnect';
+            $connectMode = $driver::CONNECTION_TYPE_PERSISTENT;
+        } elseif ($this->config(Config::CONNECTION_CACHE)) {
+            $connectMode = $driver::CONNECTION_TYPE_CACHE;
         } else {
-            $connectFunction = $this->config(Config::CONNECTION_CACHE) ? 'oci_connect' : 'oci_new_connect';
+            $connectMode = $driver::CONNECTION_TYPE_NEW;
         }
-        $this->connection = $connectFunction(
+        $this->connection = $driver->connect(
+            $connectMode,
             $this->config(Config::CONNECTION_USER),
             $this->config(Config::CONNECTION_PASSWORD),
             $this->config(Config::CONNECTION_STRING),
             $this->config(Config::CONNECTION_CHARSET),
             $this->config(Config::CONNECTION_PRIVILEGED)
         );
-        if ($this->connection === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
-        $this->setUpSessionAfter();
+        $this->session->apply();
 
         return $this;
     }
@@ -197,6 +214,134 @@ class Database
     }
 
     /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $skip
+     * @param int    $maxRows
+     * @param int    $mode
+     *
+     * @return array
+     */
+    public function fetchAll($sql, $bindings = null, $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
+    {
+        return $this->query($sql, $bindings)->fetchAll($skip, $maxRows, $mode);
+    }
+
+    /**
+     * @param  string $sql
+     * @param array   $bindings
+     * @param int     $mode
+     *
+     * @return \array[]|\Generator
+     */
+    public function fetchArray($sql, $bindings = null, $mode = null)
+    {
+        return $this->query($sql, $bindings)->fetchArray($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
+     *
+     * @return \array[]|\Generator
+     */
+    public function fetchAssoc($sql, $bindings = null, $mode = null)
+    {
+        return $this->query($sql, $bindings)->fetchAssoc($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param null   $callback
+     * @param int    $mode
+     *
+     * @return \Generator|mixed
+     */
+    public function fetchCallback($sql, $bindings = null, $callback = null, $mode = null)
+    {
+        return $this->query($sql, $bindings)->fetchCallback($callback, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $index
+     * @param int    $mode
+     *
+     * @return array|\Generator
+     */
+    public function fetchColumn($sql, $bindings = null, $index = 1, $mode = null)
+    {
+        return $this->query($sql, $bindings)->fetchColumn($index, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mapIndex
+     * @param int    $mode
+     *
+     * @return \array[]|\Generator
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function fetchMap($sql, $bindings = null, $mapIndex = 1, $mode = null)
+    {
+        return $this->query($sql, $bindings)->fetchMap($mapIndex, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     *
+     * @return \array[]|\Generator
+     */
+    public function fetchObject($sql, $bindings = null)
+    {
+        return $this->query($sql, $bindings)->fetchObject();
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
+     *
+     * @return \array[]
+     */
+    public function fetchOne($sql, $bindings = null, $mode = null)
+    {
+        return $this->query($sql, $bindings)->fetchOne($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $firstCol
+     * @param int    $secondCol
+     *
+     * @return array|\Generator
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function fetchPairs($sql, $bindings = null, $firstCol = 1, $secondCol = 2)
+    {
+        return $this->query($sql, $bindings)->fetchPairs($firstCol, $secondCol);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $index
+     *
+     * @return string
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function fetchValue($sql, $bindings = null, $index = 1)
+    {
+        return $this->query($sql, $bindings)->fetchValue($index);
+    }
+
+    /**
      * Function to access current connection
      *
      * @return resource
@@ -204,6 +349,14 @@ class Database
     public function getConnection()
     {
         return $this->connection;
+    }
+
+    /**
+     * @return Driver\AbstractDriver
+     */
+    public function getDriver()
+    {
+        return $this->driver;
     }
 
     /**
@@ -234,16 +387,12 @@ class Database
      * Get oracle RDBMS version
      *
      * @return string
-     * @throws Exception
+     * @throws Driver\Exception
      */
     public function getServerVersion()
     {
         $this->connect();
-        $version = oci_server_version($this->connection);
-        if ($version === false) {
-            $error = $this->getOCIError();
-            throw new Exception($error);
-        }
+        $version = $this->driver->getServerVersion($this->connection);
 
         return $version;
     }
@@ -255,7 +404,7 @@ class Database
      * @param string $sqlText
      *
      * @return Statement
-     * @throws Exception
+     * @throws Driver\Exception
      */
     public function prepare($sqlText)
     {
@@ -271,7 +420,7 @@ class Database
      * statement.
      *
      * @param string     $sqlText
-     * @param array|null &$bindings
+     * @param array|null $bindings
      * @param null       $mode
      *
      * @return Statement
@@ -287,24 +436,15 @@ class Database
     }
 
     /**
+     * Properly quote identifiers
+     *
      * @param $variable
      *
      * @return string
      */
     public function quote($variable)
     {
-        if (!is_array($variable)) {
-            str_replace("'", "''", $variable);
-            $variable = "'" . $variable . "'";
-        } else {
-            foreach ($variable as &$var) {
-                $var = $this->quote($var);
-            }
-
-            $variable = implode(',', $variable);
-        }
-
-        return $variable;
+        return $this->driver->quote($variable);
     }
 
     /**
@@ -315,10 +455,7 @@ class Database
      */
     public function rollback()
     {
-        $rollbackResult = oci_rollback($this->connection);
-        if ($rollbackResult === false) {
-            throw new Exception("Can't rollback");
-        }
+        $this->driver->rollback($this->connection);
 
         return $this;
     }
@@ -343,7 +480,7 @@ class Database
                 if ($len > 0) {
                     $this->query($query);
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $exceptions[ ] = $e;
                 $exceptionMessage .= $e->getMessage() . PHP_EOL;
             }
@@ -406,28 +543,7 @@ class Database
      */
     public function version()
     {
-        return oci_client_version();
-    }
-
-    /**
-     * Method to set session variables via ALTER SESSION SET variable = value
-     *
-     * @param array $variables
-     *
-     * @return $this
-     */
-    protected function alterSession($variables)
-    {
-        if (count($variables) === 0) {
-            return $this;
-        }
-        $sql = "ALTER SESSION SET ";
-        foreach ($variables as $key => $value) {
-            $sql .= "$key = '$value' ";
-        }
-        $this->query($sql);
-
-        return $this;
+        return $this->driver->getClientVersion();
     }
 
     /**
@@ -442,27 +558,9 @@ class Database
         if (!$this->connection) {
             return $this;
         }
-        if (!oci_close($this->connection)) {
-            throw new Exception("Can't close connection");
-        }
+        $this->driver->disconnect($this->connection);
 
         return $this;
-    }
-
-    /**
-     * Method to fetch OCI8 error
-     * Returns associative array with
-     * "code" and "message" keys.
-     *
-     * @return array
-     */
-    protected function getOCIError()
-    {
-        $ociConnection = $this->connection;
-
-        return is_resource($ociConnection) ?
-            oci_error($ociConnection) :
-            oci_error();
     }
 
     /**
@@ -511,7 +609,7 @@ class Database
      *
      * @return string
      */
-    protected function getUniqueAlias($prefix)
+    public static function getUniqueAlias($prefix = 'y__')
     {
         $hash = uniqid($prefix, true);
         $hash = str_replace('.', '', $hash);
@@ -520,12 +618,17 @@ class Database
     }
 
     /**
-     * Setup session after connection is estabilished
+     * Method to set up connection before call of oci_connect
      *
      * @return $this
+     * @throws Exception
      */
-    protected function setUpSessionAfter()
+    protected function setupBeforeConnect()
     {
+        //Set up profiler
+        $class = $this->config(Config::SESSION_CLASS);
+        $this->session = is_string($class) ? new $class($this) : $class;
+
         //Set up profiler
         if ($this->config(Config::PROFILER_ENABLED)) {
             $class = $this->config(Config::PROFILER_CLASS);
@@ -538,45 +641,6 @@ class Database
             $cacheSize = $this->config(Config::STATEMENT_CACHE_SIZE);
             $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
         }
-
-        oci_set_client_identifier($this->connection, $this->config(Config::CLIENT_IDENTIFIER));
-        oci_set_client_info($this->connection, $this->config(Config::CLIENT_INFO));
-        oci_set_module_name($this->connection, $this->config(Config::CLIENT_MODULE_NAME));
-        $setUp = [ ];
-        if ($this->config(Config::SESSION_DATE_FORMAT)) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->config(Config::SESSION_DATE_FORMAT);
-        }
-        if ($this->config(Config::SESSION_DATE_LANGUAGE)) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->config(Config::SESSION_DATE_LANGUAGE);
-        }
-        if ($this->config(Config::SESSION_CURRENT_SCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->config(Config::SESSION_CURRENT_SCHEMA);
-        }
-        $this->alterSession($setUp);
-
-        return $this;
-    }
-
-    /**
-     * Method to set up connection before call of oci_connect
-     *
-     * @return $this
-     * @throws Exception
-     */
-    protected function setUpSessionBefore()
-    {
-        $connectionClass = $this->config(Config::CONNECTION_CLASS);
-        if ($connectionClass) {
-            ini_set('oci8.connection_class', $connectionClass);
-        }
-        $edition = $this->config(Config::CONNECTION_EDITION);
-        if ($edition) {
-            $result = oci_set_edition($edition);
-            if ($result === false) {
-                throw new Exception("Edition setup failed «{$edition}».");
-            }
-        }
-
-        return $this;
+        $this->session->setupBeforeConnect();
     }
 }
