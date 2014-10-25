@@ -222,9 +222,9 @@ class Database
      *
      * @return array
      */
-    public function fetchAll($sql, $bindings = [ ], $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
+    public function fetchAll($sql, $bindings = null, $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchAll($skip, $maxRows, $mode);
+        return $this->query($sql, $bindings)->fetchAll($skip, $maxRows, $mode);
     }
 
     /**
@@ -234,9 +234,9 @@ class Database
      *
      * @return \array[]|\Generator
      */
-    public function fetchArray($sql, $bindings = [ ], $mode = OCI_RETURN_NULLS)
+    public function fetchArray($sql, $bindings = null, $mode = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchArray($mode);
+        return $this->query($sql, $bindings)->fetchArray($mode);
     }
 
     /**
@@ -246,9 +246,9 @@ class Database
      *
      * @return \array[]|\Generator
      */
-    public function fetchAssoc($sql, $bindings = [ ], $mode = OCI_RETURN_NULLS)
+    public function fetchAssoc($sql, $bindings = null, $mode = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchAssoc($mode);
+        return $this->query($sql, $bindings)->fetchAssoc($mode);
     }
 
     /**
@@ -259,9 +259,9 @@ class Database
      *
      * @return \Generator|mixed
      */
-    public function fetchCallback($sql, $bindings = [ ], $callback = null, $mode = OCI_RETURN_NULLS)
+    public function fetchCallback($sql, $bindings = null, $callback = null, $mode = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchCallback($callback, $mode);
+        return $this->query($sql, $bindings)->fetchCallback($callback, $mode);
     }
 
     /**
@@ -272,9 +272,9 @@ class Database
      *
      * @return array|\Generator
      */
-    public function fetchColumn($sql, $bindings = [ ], $index = 1, $mode = OCI_RETURN_NULLS)
+    public function fetchColumn($sql, $bindings = null, $index = 1, $mode = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchColumn($index, $mode);
+        return $this->query($sql, $bindings)->fetchColumn($index, $mode);
     }
 
     /**
@@ -286,9 +286,9 @@ class Database
      * @return \array[]|\Generator
      * @throws \nightlinus\OracleDb\Exception
      */
-    public function fetchMap($sql, $bindings = [ ], $mapIndex = 1, $mode = OCI_RETURN_NULLS)
+    public function fetchMap($sql, $bindings = null, $mapIndex = 1, $mode = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchMap($mapIndex, $mode);
+        return $this->query($sql, $bindings)->fetchMap($mapIndex, $mode);
     }
 
     /**
@@ -297,9 +297,9 @@ class Database
      *
      * @return \array[]|\Generator
      */
-    public function fetchObject($sql, $bindings = [ ])
+    public function fetchObject($sql, $bindings = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchObject();
+        return $this->query($sql, $bindings)->fetchObject();
     }
 
     /**
@@ -309,9 +309,9 @@ class Database
      *
      * @return \array[]
      */
-    public function fetchOne($sql, $bindings = [ ], $mode = OCI_RETURN_NULLS)
+    public function fetchOne($sql, $bindings = null, $mode = null)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchOne($mode);
+        return $this->query($sql, $bindings)->fetchOne($mode);
     }
 
     /**
@@ -323,9 +323,9 @@ class Database
      * @return array|\Generator
      * @throws \nightlinus\OracleDb\Exception
      */
-    public function fetchPairs($sql, $bindings = [ ], $firstCol = 1, $secondCol = 2)
+    public function fetchPairs($sql, $bindings = null, $firstCol = 1, $secondCol = 2)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchPairs($firstCol, $secondCol);
+        return $this->query($sql, $bindings)->fetchPairs($firstCol, $secondCol);
     }
 
     /**
@@ -336,9 +336,9 @@ class Database
      * @return string
      * @throws \nightlinus\OracleDb\Exception
      */
-    public function fetchValue($sql, $bindings = [ ], $index = 1)
+    public function fetchValue($sql, $bindings = null, $index = 1)
     {
-        return (new Statement($this, $sql))->bind($bindings)->fetchValue($index);
+        return $this->query($sql, $bindings)->fetchValue($index);
     }
 
     /**
@@ -420,7 +420,7 @@ class Database
      * statement.
      *
      * @param string     $sqlText
-     * @param array|null &$bindings
+     * @param array|null $bindings
      * @param null       $mode
      *
      * @return Statement

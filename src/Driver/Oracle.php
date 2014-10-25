@@ -185,8 +185,9 @@ class Oracle extends AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function execute($handle, $mode)
+    public function execute($handle, $mode = null)
     {
+        $mode = $this->addMode($mode, OCI_COMMIT_ON_SUCCESS);
         $result = @oci_execute($handle, $mode);
         $this->throwExceptionIfFalse($result, $handle);
 
@@ -217,8 +218,9 @@ class Oracle extends AbstractDriver
      *
      * @return array
      */
-    public function fetchAll($handle, $skip = 0, $maxrows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
+    public function fetchAll($handle, $skip = 0, $maxrows = -1, $mode = null)
     {
+        $mode = $this->addMode($mode, OCI_FETCHSTATEMENT_BY_COLUMN);
         $result = [ ];
         oci_fetch_all($handle, $result, $skip, $maxrows, $mode);
 
