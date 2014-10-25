@@ -761,7 +761,7 @@ class Statement implements \IteratorAggregate
     {
         $driver = $this->driver;
         $defaultMode = $driver::DEFAULT_FETCH_MODE;
-        $mode = $mode ?: $defaultMode;
+        $mode = is_numeric($mode) ? $mode : $defaultMode;
         switch ($fetchMode) {
             case self::FETCH_BOTH:
                 $fetchFunction = function () use ($mode) {
