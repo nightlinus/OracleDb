@@ -193,6 +193,151 @@ class StatementTest extends \PHPUnit_Framework_TestCase
         $statement->fetchAssoc($mode);
     }
 
+    public function testFetchArrayResult()
+    {
+        $expected = [
+            [ 0 => 1, 1 => "col", 2 => "dsd" ],
+            [ 0 => 2, 1 => "col1", 2 => "dsd1" ],
+            [ 0 => 3, 1 => "col2", 2 => "dsd2" ],
+            [ 0 => 4, 1 => "col3", 2 => "dsd3" ],
+            [ 0 => 5, 1 => "col4", 2 => "dsd4" ],
+        ];
+
+        $returns = $expected;
+        $returns[ ] = false;
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods(null)
+                          ->getMock();
+        $this->driverMock->expects($this->exactly(6))
+            ->method('fetchArray')
+            ->will(
+                $this->onConsecutiveCalls(...$returns)
+            );
+
+        /**
+         * @type Statement $statement
+         */
+        $result = $statement->fetchArray();
+        $this->assertEquals($result, $expected);
+    }
+
+    public function testFetchAssocResult()
+    {
+        $expected = [
+            [ 0 => 1, 1 => "col", 2 => "dsd" ],
+            [ 0 => 2, 1 => "col1", 2 => "dsd1" ],
+            [ 0 => 3, 1 => "col2", 2 => "dsd2" ],
+            [ 0 => 4, 1 => "col3", 2 => "dsd3" ],
+            [ 0 => 5, 1 => "col4", 2 => "dsd4" ],
+        ];
+
+        $returns = $expected;
+        $returns[ ] = false;
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods(null)
+                          ->getMock();
+        $this->driverMock->expects($this->exactly(6))
+                         ->method('fetchAssoc')
+                         ->will(
+                             $this->onConsecutiveCalls(...$returns)
+                         );
+
+        /**
+         * @type Statement $statement
+         */
+        $result = $statement->fetchAssoc();
+        $this->assertEquals($result, $expected);
+    }
+
+    public function testFetchOneResult()
+    {
+        $expected = [
+            [ 0 => 1, 1 => "col", 2 => "dsd" ],
+            [ 0 => 2, 1 => "col1", 2 => "dsd1" ],
+            [ 0 => 3, 1 => "col2", 2 => "dsd2" ],
+            [ 0 => 4, 1 => "col3", 2 => "dsd3" ],
+            [ 0 => 5, 1 => "col4", 2 => "dsd4" ],
+        ];
+
+        $returns = $expected;
+        $returns[ ] = false;
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods(null)
+                          ->getMock();
+        $this->driverMock->expects($this->exactly(6))
+                         ->method('fetchAssoc')
+                         ->will(
+                             $this->onConsecutiveCalls(...$returns)
+                         );
+
+        /**
+         * @type Statement $statement
+         */
+        $result = $statement->fetchOne();
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testFetchValueResult()
+    {
+        $expected = [
+            [ 0 => 1, 1 => "col", 2 => "dsd" ],
+            [ 0 => 2, 1 => "col1", 2 => "dsd1" ],
+            [ 0 => 3, 1 => "col2", 2 => "dsd2" ],
+            [ 0 => 4, 1 => "col3", 2 => "dsd3" ],
+            [ 0 => 5, 1 => "col4", 2 => "dsd4" ],
+        ];
+
+        $returns = $expected;
+        $returns[ ] = false;
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods(null)
+                          ->getMock();
+        $this->driverMock->expects($this->exactly(1))
+                         ->method('fetchArray')
+                         ->will(
+                             $this->onConsecutiveCalls(...$returns)
+                         );
+
+        /**
+         * @type Statement $statement
+         */
+        $result = $statement->fetchValue(1);
+        $this->assertEquals($expected[0][0], $result);
+    }
+
+    public function testFetchMapResult()
+    {
+        $expected = [
+            [ 0 => 1, 1 => "col", 2 => "dsd" ],
+            [ 0 => 2, 1 => "col1", 2 => "dsd1" ],
+            [ 0 => 3, 1 => "col2", 2 => "dsd2" ],
+            [ 0 => 4, 1 => "col3", 2 => "dsd3" ],
+            [ 0 => 5, 1 => "col4", 2 => "dsd4" ],
+        ];
+
+        $returns = $expected;
+        $returns[ ] = false;
+        $statement = $this->getMockBuilder(Statement::class)
+                          ->setConstructorArgs([ $this->dbMock, 'sql' ])
+                          ->setMethods(null)
+                          ->getMock();
+        $this->driverMock->expects($this->exactly(6))
+                         ->method('fetchArray')
+                         ->will(
+                             $this->onConsecutiveCalls(...$returns)
+                         );
+
+        /**
+         * @type Statement $statement
+         */
+        $result = $statement->fetchMap(2);
+        $this->assertEquals($result, $expected);
+    }
+
     protected function getDbMock()
     {
         $this->dbMock = $this->getMock(Database::class, [ ], [ "TEST", "TEST" ]);
