@@ -48,7 +48,7 @@ class Oracle extends AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function bindArray($handle, $name, $variable, $tableLength, $itemLength = -1, $type = SQLT_AFC)
+    public function bindArray($handle, $name, &$variable, $tableLength, $itemLength = -1, $type = SQLT_AFC)
     {
         if (null === $itemLength) {
             $itemLength = -1;
@@ -72,7 +72,7 @@ class Oracle extends AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function bindColumn($handle, $column, $variable, $type = SQLT_CHR)
+    public function bindColumn($handle, $column, &$variable, $type = SQLT_CHR)
     {
         if (null === $type) {
             $type = SQLT_CHR;
@@ -94,7 +94,7 @@ class Oracle extends AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function bindValue($handle, $name, $variable, $length = -1, $type = SQLT_CHR)
+    public function bindValue($handle, $name, &$variable, $length = -1, $type = SQLT_CHR)
     {
         if (null === $length) {
             $length = -1;
@@ -187,7 +187,10 @@ class Oracle extends AbstractDriver
      */
     public function execute($handle, $mode = null)
     {
-        $mode = $this->addMode($mode, OCI_COMMIT_ON_SUCCESS);
+        if (null === $mode) {
+            $mode = OCI_COMMIT_ON_SUCCESS;
+        }
+
         $result = @oci_execute($handle, $mode);
         $this->throwExceptionIfFalse($result, $handle);
 

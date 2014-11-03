@@ -55,7 +55,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-     abstract public function bindArray($handle, $name, $variable, $tableLength, $itemLength = -1, $type = SQLT_AFC);
+     abstract public function bindArray($handle, $name, &$variable, $tableLength, $itemLength = -1, $type = SQLT_AFC);
 
     /**
      * @param resource   $handle
@@ -66,7 +66,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    abstract public function bindColumn($handle, $column, $variable, $type = SQLT_CHR);
+    abstract public function bindColumn($handle, $column, &$variable, $type = SQLT_CHR);
 
     /**
      * @param resource $handle
@@ -78,7 +78,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    abstract public function bindValue($handle, $name, $variable, $length = -1, $type = SQLT_CHR);
+    abstract public function bindValue($handle, $name, &$variable, $length = -1, $type = SQLT_CHR);
 
     /**
      * @param resource $handle
