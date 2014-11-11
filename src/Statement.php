@@ -380,9 +380,13 @@ class Statement implements \IteratorAggregate
      */
     public function fetchCallback(callable $callback, $mode = null)
     {
-        $fetchCallback = function ($result, $item, $index) use ($callback) {
+        $fetchCallback = function (CallbackResult $result, $item, $index) use ($callback) {
             $cbResult = $callback($item, $index);
-            $result->key = key($cbResult);
+            $key = key($cbResult);
+            if (!$key) {
+                $key = $index;
+            }
+            $result->key = $key;
             $result->value = $cbResult[ $result->key ];
 
             return $result;
@@ -410,7 +414,7 @@ class Statement implements \IteratorAggregate
             $fetchMode = self::FETCH_ASSOC;
         }
 
-        $callback = function ($result, $item, $index) use ($column) {
+        $callback = function (CallbackResult $result, $item, $index) use ($column) {
             $result->key = $index;
             $result->value = $item[ $column ];
 
@@ -439,7 +443,7 @@ class Statement implements \IteratorAggregate
             $fetchMode = self::FETCH_ASSOC;
         }
 
-        $callback = function ($result, $item) use ($mapIndex) {
+        $callback = function (CallbackResult $result, $item) use ($mapIndex) {
             $result->key = $item[ $mapIndex ];
             $result->value = $item;
 
@@ -501,7 +505,7 @@ class Statement implements \IteratorAggregate
             $mode = self::FETCH_ASSOC;
         }
 
-        $callback = function ($result, $item) use ($firstCol, $secondCol) {
+        $callback = function (CallbackResult $result, $item) use ($firstCol, $secondCol) {
             $result->key = $item[ $firstCol ];
             $result->value = $item[ $secondCol ];
 
@@ -858,7 +862,7 @@ class Statement implements \IteratorAggregate
         $this->setState(self::STATE_FETCHING);
         $fetchFunction = $this->getFetchFunction($fetchMode, $mode);
         if (!is_callable($callback)) {
-            $callback = function ($result, $item, $index) {
+            $callback = function (CallbackResult $result, $item, $index) {
                 $result->key = $index;
                 $result->value = $item;
 
