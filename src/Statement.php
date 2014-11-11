@@ -382,12 +382,17 @@ class Statement implements \IteratorAggregate
     {
         $fetchCallback = function (CallbackResult $result, $item, $index) use ($callback) {
             $cbResult = $callback($item, $index);
-            $key = key($cbResult);
-            if (!$key) {
+
+            if (count($cbResult) > 1) {
                 $key = $index;
+                $value = $cbResult;
+            } else {
+                $key = key($cbResult);
+                $value = $cbResult[$key];
             }
+
             $result->key = $key;
-            $result->value = $cbResult[ $result->key ];
+            $result->value = $value;
 
             return $result;
         };
