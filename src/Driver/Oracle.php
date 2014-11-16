@@ -151,13 +151,13 @@ class Oracle extends AbstractDriver
         }
 
         $connection = @$connectFunction(
-            $user,
-            $password,
-            $connectionString,
-            $charSet,
-            $sessionMode
+            (string) $user,
+            (string) $password,
+            (string) $connectionString,
+            (string) $charSet,
+            (int) $sessionMode
         );
-        $this->throwExceptionIfFalse($connection, null);
+        $this->throwExceptionIfFalse($connection);
 
         return $connection;
     }
@@ -191,7 +191,7 @@ class Oracle extends AbstractDriver
             $mode = OCI_COMMIT_ON_SUCCESS;
         }
 
-        $result = @oci_execute($handle, $mode);
+        $result = @oci_execute($handle, (int) $mode);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -593,7 +593,7 @@ class Oracle extends AbstractDriver
      */
     public function setPrefcth($handle, $size)
     {
-        $setResult = @oci_set_prefetch($handle, $size);
+        $setResult = @oci_set_prefetch($handle, (int) $size);
         $this->throwExceptionIfFalse($setResult, $handle);
 
         return $this;
@@ -626,7 +626,7 @@ class Oracle extends AbstractDriver
      */
     protected function throwExceptionIfFalse($result, $handle = null)
     {
-        if (false === $result) {
+        if (false === $result || $result === null) {
             $error = $this->getError($handle);
             throw new Exception($error);
         }
