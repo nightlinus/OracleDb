@@ -24,10 +24,13 @@ class Exception extends \Exception
     public function __construct($message = "", $code = 0, \Exception $previous = null)
     {
         if (func_num_args() === 1 && is_array($message)) {
-            $code = $message[ 'code' ];
+            $code = isset($message[ 'code' ]) ? $message[ 'code' ] : null;
+            if (!$code) {
+                $code = isset($message[ 'type' ]) ? $message[ 'type' ] : null;
+            }
             $text = $message[ 'message' ];
-            $offset = $message[ 'offset' ];
-            $sql = $message[ 'sqltext' ];
+            $offset = isset($message[ 'offset' ]) ? $message[ 'offset' ] : null;
+            $sql = isset($message[ 'sqltext' ]) ? $message[ 'sqltext' ]: null;
             $message = $text;
             if ($offset && $sql) {
                 $message .= "\nOffset: $offset" .
