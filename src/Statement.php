@@ -41,12 +41,12 @@ class Statement implements \IteratorAggregate
     /**
      * List of statement states
      */
-    const STATE_EXECUTED          = 8;
-    const STATE_EXECUTED_DESCRIBE = 4;
-    const STATE_FETCHED           = 2;
-    const STATE_FETCHING          = 16;
-    const STATE_FREED             = 0;
-    const STATE_PREPARED          = 1;
+    const STATE_EXECUTED          = 0x08;
+    const STATE_EXECUTED_DESCRIBE = 0x04;
+    const STATE_FETCHED           = 0x02;
+    const STATE_FETCHING          = 0x10;
+    const STATE_FREED             = 0x00;
+    const STATE_PREPARED          = 0x01;
 
     /**
      * List of statement types
@@ -167,12 +167,12 @@ class Statement implements \IteratorAggregate
             $type = null;
             $length = null;
             if (is_array($bindingValue)) {
-                $value = isset($bindingValue[ 0 ]) ?
-                    $bindingValue[ 0 ] : (isset($bindingValue[ 'value' ]) ? $bindingValue[ 'value' ] : null);
-                $length = isset($bindingValue[ 1 ]) ?
-                    $bindingValue[ 1 ] : (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : null);
-                $type = isset($bindingValue[ 2 ]) ?
-                    $bindingValue[ 2 ] : (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : null);
+                $value = isset($bindingValue[ 0 ]) ? $bindingValue[ 0 ] :
+                    (isset($bindingValue[ 'value' ]) ? $bindingValue[ 'value' ] : null);
+                $length = isset($bindingValue[ 1 ]) ? $bindingValue[ 1 ] :
+                    (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : null);
+                $type = isset($bindingValue[ 2 ]) ? $bindingValue[ 2 ] :
+                    (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : null);
             }
 
             $this->bindings[ $bindingName ] = $value;
@@ -315,11 +315,8 @@ class Statement implements \IteratorAggregate
         $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
         $this->driver->execute($this->resource, $mode);
         $this->db->endProfile();
-        if ($mode & $driver::EXECUTE_DESCRIBE) {
-            $this->setState(self::STATE_EXECUTED_DESCRIBE);
-        } else {
-            $this->setState(self::STATE_EXECUTED);
-        }
+        $state = $mode & $driver::EXECUTE_DESCRIBE ? self::STATE_EXECUTED_DESCRIBE : self::STATE_EXECUTED;
+        $this->setState($state);
 
         return $this;
     }
@@ -388,7 +385,7 @@ class Statement implements \IteratorAggregate
                 $value = $cbResult;
             } else {
                 $key = key($cbResult);
-                $value = $cbResult[$key];
+                $value = $cbResult[ $key ];
             }
 
             $result->key = $key;
@@ -660,6 +657,16 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * True if handler already exist
+     *
+     * @return bool
+     */
+    public function isPrepared()
+    {
+        return $this->state >= self::STATE_PREPARED;
+    }
+
+    /**
      * Method prepare oci8 statement for execute
      *
      * @return Statement $this
@@ -667,7 +674,7 @@ class Statement implements \IteratorAggregate
      */
     public function prepare()
     {
-        if ($this->state >= self::STATE_PREPARED) {
+        if ($this->isPrepared()) {
             return $this;
         }
 
@@ -856,10 +863,6 @@ class Statement implements \IteratorAggregate
      */
     protected function tupleGenerator($callback = null, $fetchMode = null, $mode = null)
     {
-        if (self::STATE_FETCHED === $this->state) {
-            throw new Exception("Statement is already fetched. Need to execute it before fetching again.");
-        }
-
         if (!$this->isFetchable()) {
             $this->execute();
         }
