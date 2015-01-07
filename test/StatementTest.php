@@ -267,8 +267,8 @@ class StatementTest extends \PHPUnit_Framework_TestCase
                           ->setConstructorArgs([ $this->dbMock, 'sql' ])
                           ->setMethods(null)
                           ->getMock();
-        $this->driverMock->expects($this->exactly(6))
-                         ->method('fetchAssoc')
+        $this->driverMock->expects($this->exactly(1))
+                         ->method('fetch')
                          ->will(
                              $this->onConsecutiveCalls(...$returns)
                          );
@@ -277,7 +277,7 @@ class StatementTest extends \PHPUnit_Framework_TestCase
          * @type Statement $statement
          */
         $result = $statement->fetchOne();
-        $this->assertEquals($expected, $result);
+        $this->assertEquals($expected[0], $result);
     }
 
     public function testFetchValueResult()
@@ -321,6 +321,15 @@ class StatementTest extends \PHPUnit_Framework_TestCase
 
         $returns = $expected;
         $returns[ ] = false;
+
+        $expected = [
+            "col" =>   [ 0 => 1, 1 => "col", 2 => "dsd" ],
+            "col1" => [ 0 => 2, 1 => "col1", 2 => "dsd1" ],
+            "col2" => [ 0 => 3, 1 => "col2", 2 => "dsd2" ],
+            "col3" => [ 0 => 4, 1 => "col3", 2 => "dsd3" ],
+            "col4" => [ 0 => 5, 1 => "col4", 2 => "dsd4" ],
+        ];
+
         $statement = $this->getMockBuilder(Statement::class)
                           ->setConstructorArgs([ $this->dbMock, 'sql' ])
                           ->setMethods(null)
@@ -335,7 +344,7 @@ class StatementTest extends \PHPUnit_Framework_TestCase
          * @type Statement $statement
          */
         $result = $statement->fetchMap(2);
-        $this->assertEquals($result, $expected);
+        $this->assertEquals($expected, $result);
     }
 
     protected function getDbMock()
