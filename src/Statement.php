@@ -3,13 +3,10 @@
  * Class that include database statement functionality
  * this is wrapper above php oci extension.
  *
- * PHP version 5.5
- *
  * @category Database
  * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 
@@ -20,8 +17,6 @@ namespace nightlinus\OracleDb;
  * php extension. Contains method
  * to execute and fetch data from
  * database statements
- *
- * @package OracleDb
  */
 class Statement implements \IteratorAggregate
 {

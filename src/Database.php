@@ -2,21 +2,16 @@
 /**
  * Class that include database functions and configuration
  *
- * PHP version 5.5
- *
  * @category Database
  * @package  nightlinus\OracleDb
- * @author   Ogarkov Mikhail <m.a.ogarkov@gmail.com>
+ * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb;
 
 /**
  * Class Database
- *
- * @package nightlinus\OracleDb
  */
 class Database
 {
@@ -53,14 +48,14 @@ class Database
     protected $lastStatement;
 
     /**
-     * @type StatementCache
-     */
-    protected $statementCache;
-
-    /**
      * @type \nightlinus\OracleDb\Session\Oracle
      */
     protected $session;
+
+    /**
+     * @type StatementCache
+     */
+    protected $statementCache;
 
     /**
      * Consttructor for Database class implements
@@ -79,7 +74,8 @@ class Database
         $password = null,
         $connectionString = null,
         $config = [ ]
-    ) {
+    )
+    {
 
         if (func_num_args() === 1) {
             $config = $userName;
@@ -93,6 +89,22 @@ class Database
         $this->config->validate();
         $driver = $this->config(Config::DRIVER_CLASS);
         $this->driver = is_string($driver) ? new $driver() : $driver;
+    }
+
+    /**
+     * Generate unique alias for naming
+     * host variables or aliases
+     *
+     * @param string $prefix
+     *
+     * @return string
+     */
+    public static function getUniqueAlias($prefix = 'y__')
+    {
+        $hash = uniqid($prefix, true);
+        $hash = str_replace('.', '', $hash);
+
+        return $hash;
     }
 
     /**
@@ -599,22 +611,6 @@ class Database
         }
 
         return $statement;
-    }
-
-    /**
-     * Generate unique alias for naming
-     * host variables or aliases
-     *
-     * @param string $prefix
-     *
-     * @return string
-     */
-    public static function getUniqueAlias($prefix = 'y__')
-    {
-        $hash = uniqid($prefix, true);
-        $hash = str_replace('.', '', $hash);
-
-        return $hash;
     }
 
     /**

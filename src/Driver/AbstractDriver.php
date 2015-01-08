@@ -3,20 +3,16 @@
  * Date: 07.10.14
  * Time: 18:56
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb\Driver;
 
-
 /**
- * Class A
- *
- * @package nightlinus\OracleDb\Driver
+ * Abstract driver implememtation
  */
 abstract class AbstractDriver
 {
@@ -55,7 +51,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-     abstract public function bindArray($handle, $name, &$variable, $tableLength, $itemLength = -1, $type = SQLT_AFC);
+    abstract public function bindArray($handle, $name, &$variable, $tableLength, $itemLength = -1, $type = SQLT_AFC);
 
     /**
      * @param resource   $handle

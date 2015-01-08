@@ -3,12 +3,11 @@
  * Date: 24.10.14
  * Time: 0:06
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb\Session;
@@ -18,8 +17,6 @@ use nightlinus\OracleDb\Database;
 
 /**
  * Class Oracle
- *
- * @package nightlinus\OracleDb\Session
  */
 class Oracle
 {
@@ -36,24 +33,6 @@ class Oracle
     {
         $this->db = $db;
     }
-
-    /**
-     * @return $this
-     */
-    public function setupBeforeConnect()
-    {
-        $connectionClass = $this->db->config(Config::CONNECTION_CLASS);
-        if ($connectionClass) {
-            ini_set('oci8.connection_class', $connectionClass);
-        }
-        $edition = $this->db->config(Config::CONNECTION_EDITION);
-        if ($edition) {
-            $this->db->getDriver()->setEdition($edition);
-        }
-
-        return $this;
-    }
-
 
     /**
      *
@@ -104,6 +83,23 @@ class Oracle
             $sql .= "$key = '$value' ";
         }
         $this->db->query($sql);
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setupBeforeConnect()
+    {
+        $connectionClass = $this->db->config(Config::CONNECTION_CLASS);
+        if ($connectionClass) {
+            ini_set('oci8.connection_class', $connectionClass);
+        }
+        $edition = $this->db->config(Config::CONNECTION_EDITION);
+        if ($edition) {
+            $this->db->getDriver()->setEdition($edition);
+        }
 
         return $this;
     }

@@ -3,17 +3,18 @@
  * Date: 07.10.14
  * Time: 12:55
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb\Driver;
 
-
+/**
+ * Class Exception
+ */
 class Exception extends \Exception
 {
     /**
@@ -30,11 +31,10 @@ class Exception extends \Exception
             }
             $text = $message[ 'message' ];
             $offset = isset($message[ 'offset' ]) ? $message[ 'offset' ] : null;
-            $sql = isset($message[ 'sqltext' ]) ? $message[ 'sqltext' ]: null;
+            $sql = isset($message[ 'sqltext' ]) ? $message[ 'sqltext' ] : null;
             $message = $text;
             if ($offset && $sql) {
-                $message .= "\nOffset: $offset" .
-                    "\n$sql";
+                $message .= "\nOffset: $offset" . "\n$sql";
             }
         }
         parent::__construct($message, $code, $previous);

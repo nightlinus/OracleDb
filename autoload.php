@@ -5,9 +5,11 @@
  * Date: 20.03.14
  * Time: 13:28
  *
+ * @category Database
  * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
+ * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb;
 

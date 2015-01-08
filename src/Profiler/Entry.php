@@ -3,19 +3,21 @@
  * Date: 10.10.14
  * Time: 21:45
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb\Profiler;
 
-
+/**
+ * Class Entry
+ */
 class Entry
 {
+
     public $id;
 
     public $sqlText;
@@ -35,9 +37,9 @@ class Entry
     public $lastFetchStart;
 
     /**
-     * @param int $id
+     * @param int    $id
      * @param string $sql
-     * @param array $bindings
+     * @param array  $bindings
      */
     public function __construct($id, $sql, $bindings)
     {
@@ -47,5 +49,4 @@ class Entry
         $this->startTime = microtime(true);
         $this->trace = (new \Exception())->getTrace();
     }
-
 }

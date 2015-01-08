@@ -3,12 +3,11 @@
  * Date: 14.10.14
  * Time: 10:20
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
 
 namespace nightlinus\OracleDb\Tests;
@@ -18,6 +17,9 @@ use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Oracle;
 use nightlinus\OracleDb\Statement;
 
+/**
+ * Class StatementTest
+ */
 class StatementTest extends \PHPUnit_Framework_TestCase
 {
 
@@ -354,4 +356,3 @@ class StatementTest extends \PHPUnit_Framework_TestCase
         $this->dbMock->expects($this->any())->method("getDriver")->will($this->returnValue($this->driverMock));
     }
 }
-

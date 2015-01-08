@@ -2,13 +2,10 @@
 /**
  * Class for capture timing profiles for sql queries
  *
- * PHP version 5.5
- *
  * @category Database
  * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version  0.1.0
  * @link     https://github.com/nightlinus/OracleDb
  */
 
@@ -16,8 +13,6 @@ namespace nightlinus\OracleDb\Profiler;
 
 /**
  * Class Profiler
- *
- * @package nightlinus\OracleDb
  */
 class Profiler
 {
@@ -97,7 +92,7 @@ class Profiler
      */
     public function startFetch($profileId)
     {
-        $this->profiles[ $profileId ]->lastFetchStart  = microtime(true);
+        $this->profiles[ $profileId ]->lastFetchStart = microtime(true);
 
         return $this;
     }
@@ -111,8 +106,7 @@ class Profiler
      */
     public function stopFetch($profileId)
     {
-        $this->profiles[ $profileId ]->fetchDuration += microtime(true) -
-            $this->profiles[ $profileId ]->lastFetchStart;
+        $this->profiles[ $profileId ]->fetchDuration += microtime(true) - $this->profiles[ $profileId ]->lastFetchStart;
 
         return $this;
     }
