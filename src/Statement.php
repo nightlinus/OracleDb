@@ -64,7 +64,7 @@ class Statement implements \IteratorAggregate
      *
      * @type array|null
      */
-    public $bindings;
+    private $bindings;
 
     /**
      * Instance of parent database object
@@ -232,6 +232,14 @@ class Statement implements \IteratorAggregate
         $this->driver->bindColumn($this->resource, $column, $variable, $type);
 
         return $this;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function bindings()
+    {
+        return $this->bindings;
     }
 
     /**
