@@ -104,7 +104,7 @@ class Config implements \ArrayAccess
         self::STATEMENT_CACHE_ENABLED => true,
         self::STATEMENT_CACHE_SIZE    => 50,
         self::STATEMENT_CACHE_CLASS   => StatementCache::class,
-        self::DRIVER_CLASS            => Driver\Oracle::class
+        self::DRIVER_CLASS            => Driver\Oracle::class,
     ];
 
     /**
@@ -119,6 +119,27 @@ class Config implements \ArrayAccess
         $this->validate();
     }
 
+    /**
+     * @param string $name
+     * @param null   $value
+     *
+     * @return mixed|null
+     * @throws Exception
+     */
+    public function config($name, $value = null)
+    {
+        if (func_num_args() === 1) {
+            if (is_array($name)) {
+                $this->set($name);
+            } else {
+                return $this->get($name);
+            }
+        } else {
+            $this->set($name, $value);
+        }
+
+        return $value;
+    }
 
     /**
      * Get value from config entry

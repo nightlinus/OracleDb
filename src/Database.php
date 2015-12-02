@@ -146,17 +146,7 @@ class Database
      */
     public function config($name, $value = null)
     {
-        if (func_num_args() === 1) {
-            if (is_array($name)) {
-                $this->configuration->set($name);
-            } else {
-                return $this->configuration->get($name);
-            }
-        } else {
-            $this->configuration->set($name, $value);
-        }
-
-        return $value;
+        return $this->configuration->config(...func_get_args());
     }
 
     /**
