@@ -28,7 +28,7 @@ class Database
      *
      * @type Config
      */
-    protected $config;
+    protected $configuration;
 
     /**
      * @type resource connection resource
@@ -61,11 +61,11 @@ class Database
      * Consttructor for Database class implements
      * base parametrs checking
      *
-     * @param string $userName
-     * @param string $password
-     * @param string $connectionString
+     * @param string|array $userName
+     * @param string       $password
+     * @param string       $connectionString
      *
-     * @param array  $config
+     * @param array        $config
      *
      * @throws Exception
      */
@@ -74,8 +74,7 @@ class Database
         $password = null,
         $connectionString = null,
         $config = [ ]
-    )
-    {
+    ) {
 
         if (func_num_args() === 1) {
             $config = $userName;
@@ -85,8 +84,8 @@ class Database
             $config[ Config::CONNECTION_STRING ] = $connectionString;
         }
 
-        $this->config = new Config($config);
-        $this->config->validate();
+        $this->configuration = new Config($config);
+        $this->configuration->validate();
         $driver = $this->config(Config::DRIVER_CLASS);
         $this->driver = is_string($driver) ? new $driver() : $driver;
     }
@@ -155,8 +154,8 @@ class Database
      * General function to get and set
      * configuration values
      *
-     * @param string     $name
-     * @param null|mixed $value
+     * @param string|array $name
+     * @param null|mixed   $value
      *
      * @throws Exception
      * @return mixed
@@ -165,12 +164,12 @@ class Database
     {
         if (func_num_args() === 1) {
             if (is_array($name)) {
-                $this->config->set($name);
+                $this->configuration->set($name);
             } else {
-                return $this->config->get($name);
+                return $this->configuration->get($name);
             }
         } else {
-            $this->config->set($name, $value);
+            $this->configuration->set($name, $value);
         }
 
         return $value;
@@ -209,6 +208,20 @@ class Database
         $this->session->apply();
 
         return $this;
+    }
+
+    /**
+     * @param string     $sql
+     * @param array|null $bindings
+     *
+     * @return int
+     */
+    public function count($sql, $bindings = null)
+    {
+        $statement = $this->prepare($sql);
+        $statement->bind($bindings);
+
+        return $statement->count();
     }
 
     /**
@@ -482,7 +495,7 @@ class Database
      */
     public function runScript($scriptText)
     {
-        $queries = explode(";", $scriptText);
+        $queries = explode(';', $scriptText);
         $exceptions = [ ];
         $exceptionMessage = '';
         foreach ($queries as $query) {
@@ -493,7 +506,7 @@ class Database
                     $this->query($query);
                 }
             } catch (\Exception $e) {
-                $exceptions[ ] = $e;
+                $exceptions[] = $e;
                 $exceptionMessage .= $e->getMessage() . PHP_EOL;
             }
         }
