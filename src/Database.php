@@ -9,6 +9,7 @@
  * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb;
+use nightlinus\OracleDb\Utills\Alias;
 
 /**
  * Class Database
@@ -90,22 +91,6 @@ class Database
     }
 
     /**
-     * Generate unique alias for naming
-     * host variables or aliases
-     *
-     * @param string $prefix
-     *
-     * @return string
-     */
-    public static function getUniqueAlias($prefix = 'y__')
-    {
-        $hash = uniqid($prefix, true);
-        $hash = str_replace('.', '', $hash);
-
-        return $hash;
-    }
-
-    /**
      *  Освобождаем ресурсы в деструкторе
      */
     public function __destruct()
@@ -126,8 +111,8 @@ class Database
         $return = null;
         $returnName = null;
         if ($returnSize) {
-            $returnName = $this->getUniqueAlias('z__');
-            $bindings[ $returnName ] = [ null, $returnSize ];
+            $returnName = Alias::unique();
+            $bindings[ (string) $returnName ] = [ null, $returnSize ];
             $return = ":$returnName := ";
         }
         $sqlText = "BEGIN $return $sqlText; END;";
