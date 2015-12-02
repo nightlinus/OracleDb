@@ -567,7 +567,7 @@ class Statement implements \IteratorAggregate
     /**
      * Get description of data columns
      *
-     * @param $index
+     * @param int $index
      *
      * @return array
      * @throws Exception
@@ -575,7 +575,8 @@ class Statement implements \IteratorAggregate
     public function getFieldDescription($index)
     {
         $this->executeDescribe();
-        if (is_numeric($index) && $index < 1) {
+        $index = (int) $index;
+        if ($index < 1) {
             throw new Exception("Index must be larger then 1, index «{$index}».");
         }
         $result = [
@@ -648,7 +649,7 @@ class Statement implements \IteratorAggregate
      */
     public function isFetchable()
     {
-        return self::STATE_EXECUTED === $this->state ? true : false;
+        return self::STATE_EXECUTED === $this->state;
     }
 
     /**
@@ -848,10 +849,10 @@ class Statement implements \IteratorAggregate
     /**
      * Generator for iterating over fetched rows
      *
-     * @param      $callback
+     * @param callable|null $callback
      *
-     * @param int  $fetchMode
-     * @param null $mode
+     * @param int           $fetchMode
+     * @param null          $mode
      *
      * @throws Exception
      * @return \Generator
