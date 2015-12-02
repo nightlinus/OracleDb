@@ -286,7 +286,7 @@ class Statement implements \IteratorAggregate
         $fieldNmber = $this->getFieldNumber() + 1;
         $result = [ ];
         for ($i = 1; $i < $fieldNmber; $i++) {
-            $result[ ] = $this->getFieldDescription($i);
+            $result[] = $this->getFieldDescription($i);
         }
 
         return $result;
@@ -569,26 +569,25 @@ class Statement implements \IteratorAggregate
      *
      * @param int $index
      *
-     * @return array
-     * @throws Exception
+     * @return FieldDescription
+     * @trows \InvalidArgumentException
      */
     public function getFieldDescription($index)
     {
         $this->executeDescribe();
         $index = (int) $index;
         if ($index < 1) {
-            throw new Exception("Index must be larger then 1, index «{$index}».");
+            throw new \InvalidArgumentException("Index must be larger then 1, given $index.");
         }
-        $result = [
-            'name'      => $this->driver->getFieldName($this->resource, $index),
-            'size'      => $this->driver->getFieldSize($this->resource, $index),
-            'precision' => $this->driver->getFieldPrecision($this->resource, $index),
-            'scale'     => $this->driver->getFieldScale($this->resource, $index),
-            'type'      => $this->driver->getFieldType($this->resource, $index),
-            'typeRaw'   => $this->driver->getFieldTypeRaw($this->resource, $index)
-        ];
 
-        return $result;
+        return new FieldDescription(
+            $this->driver->getFieldName($this->resource, $index),
+            $this->driver->getFieldSize($this->resource, $index),
+            $this->driver->getFieldPrecision($this->resource, $index),
+            $this->driver->getFieldScale($this->resource, $index),
+            $this->driver->getFieldType($this->resource, $index),
+            $this->driver->getFieldTypeRaw($this->resource, $index)
+        );
     }
 
     /**
