@@ -307,7 +307,7 @@ class Oracle extends AbstractDriver
     }
 
     /**
-     * @param null $handle
+     * @param null|resource $handle
      *
      * @return array
      */
@@ -494,7 +494,7 @@ class Oracle extends AbstractDriver
     }
 
     /**
-     * @param $variable
+     * @param array|string $variable
      *
      * @return string
      */
