@@ -115,6 +115,8 @@ class Config implements \ArrayAccess
         foreach ($configuration as $key => $value) {
             $this->set($key, $value);
         }
+
+        $this->validate();
     }
 
 
@@ -206,8 +208,8 @@ class Config implements \ArrayAccess
      * Sets config entry, if array is given,
      * apply self to each key value pair of array
      *
-     * @param string $key
-     * @param mixed  $value
+     * @param string|array $key
+     * @param mixed        $value
      *
      * @throws Exception
      */

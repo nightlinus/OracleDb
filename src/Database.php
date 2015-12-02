@@ -85,7 +85,6 @@ class Database
         }
 
         $this->configuration = new Config($config);
-        $this->configuration->validate();
         $driver = $this->config(Config::DRIVER_CLASS);
         $this->driver = is_string($driver) ? new $driver() : $driver;
     }
