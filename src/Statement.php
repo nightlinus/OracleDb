@@ -71,19 +71,19 @@ class Statement implements \IteratorAggregate
      *
      * @type Database
      */
-    protected $db;
+    private $db;
 
     /**
      * @type Driver\AbstractDriver
      */
-    protected $driver;
+    private $driver;
 
     /**
      * Index of profile associated with statement
      *
      * @type int
      */
-    protected $profileId;
+    private $profileId;
 
     /**
      * Raw sql text, that was used
@@ -91,28 +91,28 @@ class Statement implements \IteratorAggregate
      *
      * @type  string
      */
-    protected $queryString;
+    private $queryString;
 
     /**
      * Rsource of db statement
      *
      * @type resource
      */
-    protected $resource;
+    private $resource;
 
     /**
      * Flag to determine return type: array or iterator
      *
      * @type int
      */
-    protected $returnType;
+    private $returnType;
 
     /**
      * Internal state of Statement
      *
      * @type int
      */
-    protected $state = self::STATE_FREED;
+    private $state = self::STATE_FREED;
 
     /**
      * @param Database $db          ссылка на родительский объект базы данных
@@ -731,7 +731,7 @@ class Statement implements \IteratorAggregate
     /**
      * @return \nightlinus\OracleDb\Driver\AbstractDriver
      */
-    protected function executeDescribe()
+    private function executeDescribe()
     {
         $driver = $this->driver;
         $this->execute($driver::EXECUTE_DESCRIBE);
@@ -747,7 +747,7 @@ class Statement implements \IteratorAggregate
      *
      * @return int
      */
-    protected function getExecuteMode($mode)
+    private function getExecuteMode($mode)
     {
         $driver = $this->driver;
         if (!$driver->isExecuteMode($mode)) {
@@ -768,7 +768,7 @@ class Statement implements \IteratorAggregate
      *
      * @return callable|null
      */
-    protected function getFetchFunction($fetchMode, $mode = null)
+    private function getFetchFunction($fetchMode, $mode = null)
     {
         $driver = $this->driver;
         $defaultMode = $driver::DEFAULT_FETCH_MODE;
@@ -823,7 +823,7 @@ class Statement implements \IteratorAggregate
      * @return \Generator|mixed
      * @throws Exception
      */
-    protected function getResultObject($callback, $fetchMode, $mode = null)
+    private function getResultObject($callback, $fetchMode, $mode = null)
     {
         $result = $this->tupleGenerator($callback, $fetchMode, $mode);
         if (self::RETURN_ITERATOR !== $this->returnType) {
@@ -838,7 +838,7 @@ class Statement implements \IteratorAggregate
      *
      * @return $this
      */
-    protected function setState($state)
+    private function setState($state)
     {
         $this->state = $state;
 
@@ -856,7 +856,7 @@ class Statement implements \IteratorAggregate
      * @throws Exception
      * @return \Generator
      */
-    protected function tupleGenerator($callback = null, $fetchMode = null, $mode = null)
+    private function tupleGenerator($callback = null, $fetchMode = null, $mode = null)
     {
         if (!$this->isFetchable()) {
             $this->execute();
