@@ -235,11 +235,17 @@ class Statement implements \IteratorAggregate
     }
 
     /**
+     * @param string $key
+     *
      * @return array|null
      */
-    public function bindings()
+    public function out($key)
     {
-        return $this->bindings;
+        if (!isset($this->bindings[ $key])) {
+            throw new \InvalidArgumentException("There is no host variable set with name '$key'.");
+        }
+
+        return $this->bindings[$key];
     }
 
     /**

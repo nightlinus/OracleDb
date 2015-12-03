@@ -9,6 +9,7 @@
  * @link     https://github.com/nightlinus/OracleDb
  */
 namespace nightlinus\OracleDb;
+
 use nightlinus\OracleDb\Utills\Alias;
 
 /**
@@ -118,7 +119,7 @@ class Database
         $sqlText = "BEGIN $return $sqlText; END;";
         $statement = $this->query($sqlText, $bindings, $mode);
 
-        return $returnSize ? $statement->bindings[ $returnName ] : null;
+        return $returnSize ? $statement->out($returnName) : null;
     }
 
     /**
