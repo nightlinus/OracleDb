@@ -62,7 +62,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    abstract public function bindColumn($handle, $column, &$variable, $type = SQLT_CHR);
+    abstract public function bindColumn($handle, $column, &$variable, $type);
 
     /**
      * @param resource $handle
@@ -74,7 +74,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    abstract public function bindValue($handle, $name, &$variable, $length = -1, $type = SQLT_CHR);
+    abstract public function bindValue($handle, $name, &$variable, $length, $type);
 
     /**
      * @param resource $handle
