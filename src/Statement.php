@@ -155,39 +155,55 @@ class Statement implements \IteratorAggregate
         }
 
         $this->prepare();
-        $driver = $this->driver;
-
         foreach ($bindings as $bindingName => $bindingValue) {
-            $value = $bindingValue;
-            $type = null;
-            $length = null;
-            if (is_array($bindingValue)) {
-                $value = isset($bindingValue[ 0 ]) ? $bindingValue[ 0 ] :
-                    (isset($bindingValue[ 'value' ]) ? $bindingValue[ 'value' ] : null);
-                $length = isset($bindingValue[ 1 ]) ? $bindingValue[ 1 ] :
-                    (isset($bindingValue[ 'length' ]) ? $bindingValue[ 'length' ] : null);
-                $type = isset($bindingValue[ 2 ]) ? $bindingValue[ 2 ] :
-                    (isset($bindingValue[ 'type' ]) ? $bindingValue[ 'type' ] : null);
-            }
-
-            $this->bindings[ $bindingName ] = $value;
-            if ($value instanceof $this) {
-                $type = $driver::TYPE_CURSOR;
-                $value->prepare();
-                $bindValue = &$this->bindings[ $bindingName ]->resource;
-            } else {
-                $bindValue = &$this->bindings[ $bindingName ];
-            }
-            $driver->bindValue(
-                $this->resource,
-                $bindingName,
-                $bindValue,
-                $length,
-                $type
-            );
+            $this->bindValue($bindingName, $bindingValue);
         }
 
         return $this;
+    }
+
+    /**
+     * @param $name
+     * @param $value
+     *
+     * @return $this
+     */
+    public function bindValue($name, $value)
+    {
+        $driver = $this->driver;
+        $hostVariable = HostVariable::with($value);
+        $hostVariable = $this->transformHostVariable($hostVariable);
+        $this->bindings[ $name ] = $hostVariable->value();
+        $bindValue = &$this->bindings[ $name ];
+
+        $driver->bindValue(
+            $this->resource,
+            $name,
+            $bindValue,
+            $hostVariable->length(),
+            $hostVariable->type()
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param HostVariable $variable
+     *
+     * @return HostVariable
+     */
+    private function transformHostVariable(HostVariable $variable)
+    {
+        $driver = $this->driver;
+        $value = $variable->value();
+        if ($value instanceof Statement) {
+            $value->prepare();
+            $variable->with($value->resource, null, $driver::TYPE_CURSOR);
+        } elseif (is_object($value) && $variable->type() === null) {
+            $variable = $variable->with((string) $value);
+        }
+
+        return $variable;
     }
 
     /**
