@@ -10,7 +10,7 @@
  * @version
  * @link
  */
-namespace nightlinus\OracleDb;
+namespace nightlinus\OracleDb\Statement;
 
 /**
  * Class HostVariable

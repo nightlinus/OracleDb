@@ -13,38 +13,61 @@
 namespace nightlinus\OracleDb\Session;
 
 use nightlinus\OracleDb\Config;
-use nightlinus\OracleDb\Database;
+use nightlinus\OracleDb\Driver\AbstractDriver;
 
 /**
  * Class Oracle
  */
 class Oracle
 {
+    /**
+     * @type AbstractDriver
+     */
+    private $driver;
 
     /**
-     * @type Database
+     * @type Config
      */
-    protected $db;
+    private $config;
 
     /**
-     * @param $db
+     * @param AbstractDriver $driver
+     * @param Config         $config
      */
-    public function __construct($db)
+    public function __construct(AbstractDriver $driver, Config $config)
     {
-        $this->db = $db;
+        $this->config = $config;
+        $this->driver = $driver;
     }
 
     /**
+     * @param $handle
      *
+     * @return string
+     * @throws \nightlinus\OracleDb\Exception
      */
-    public function apply()
+    public function apply($handle)
     {
-        $handle = $this->db->getConnection();
-        $driver = $this->db->getDriver();
-        $driver->setClientIdentifier($handle, $this->db->config(Config::CLIENT_IDENTIFIER));
-        $driver->setClientInfo($handle, $this->db->config(Config::CLIENT_INFO));
-        $driver->setClientModuleName($handle, $this->db->config(Config::CLIENT_MODULE_NAME));
-        $this->setVariables($this->extractFromConfig());
+        $this->driver->setClientIdentifier($handle, $this->config->get(Config::CLIENT_IDENTIFIER));
+        $this->driver->setClientInfo($handle, $this->config->get(Config::CLIENT_INFO));
+        $this->driver->setClientModuleName($handle, $this->config->get(Config::CLIENT_MODULE_NAME));
+
+        return $this->generateSql($this->extractVariablesFromConfig());
+    }
+
+    /**
+     * @return $this
+     */
+    public function setupBeforeConnect()
+    {
+        $connectionClass = $this->config->get(Config::CONNECTION_CLASS);
+        if ($connectionClass) {
+            ini_set('oci8.connection_class', $connectionClass);
+        }
+        $edition = $this->config->get(Config::CONNECTION_EDITION);
+        if ($edition) {
+            $this->driver->setEdition($edition);
+        }
 
         return $this;
     }
@@ -52,17 +75,20 @@ class Oracle
     /**
      * @return array
      */
-    public function extractFromConfig()
+    private function extractVariablesFromConfig()
     {
         $setUp = [ ];
-        if ($this->db->config(Config::SESSION_DATE_FORMAT)) {
-            $setUp[ 'NLS_DATE_FORMAT' ] = $this->db->config(Config::SESSION_DATE_FORMAT);
+        $dateFormat = $this->config->get(Config::SESSION_DATE_FORMAT);
+        if ($dateFormat) {
+            $setUp[ 'NLS_DATE_FORMAT' ] = $dateFormat;
         }
-        if ($this->db->config(Config::SESSION_DATE_LANGUAGE)) {
-            $setUp[ 'NLS_DATE_LANGUAGE' ] = $this->db->config(Config::SESSION_DATE_LANGUAGE);
+        $dateLanguage = $this->config->get(Config::SESSION_DATE_LANGUAGE);
+        if ($dateLanguage) {
+            $setUp[ 'NLS_DATE_LANGUAGE' ] = $dateLanguage;
         }
-        if ($this->db->config(Config::SESSION_CURRENT_SCHEMA)) {
-            $setUp[ 'CURRENT_SCHEMA' ] = $this->db->config(Config::SESSION_CURRENT_SCHEMA);
+        $schema = $this->config->get(Config::SESSION_CURRENT_SCHEMA);
+        if ($schema) {
+            $setUp[ 'CURRENT_SCHEMA' ] = $schema;
         }
 
         return $setUp;
@@ -73,7 +99,7 @@ class Oracle
      *
      * @return $this
      */
-    public function setVariables($variables)
+    private function generateSql($variables)
     {
         if (count($variables) === 0) {
             return $this;
@@ -82,25 +108,7 @@ class Oracle
         foreach ($variables as $key => $value) {
             $sql .= "$key = '$value' ";
         }
-        $this->db->query($sql);
 
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function setupBeforeConnect()
-    {
-        $connectionClass = $this->db->config(Config::CONNECTION_CLASS);
-        if ($connectionClass) {
-            ini_set('oci8.connection_class', $connectionClass);
-        }
-        $edition = $this->db->config(Config::CONNECTION_EDITION);
-        if ($edition) {
-            $this->db->getDriver()->setEdition($edition);
-        }
-
-        return $this;
+        return $sql;
     }
 }

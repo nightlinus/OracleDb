@@ -10,7 +10,7 @@
  * @link     https://github.com/nightlinus/OracleDb
  */
 
-namespace nightlinus\OracleDb;
+namespace nightlinus\OracleDb\Statement;
 
 /**
  * Class CallbackResult

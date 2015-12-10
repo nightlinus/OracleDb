@@ -10,7 +10,14 @@
  * @link     https://github.com/nightlinus/OracleDb
  */
 
-namespace nightlinus\OracleDb;
+namespace nightlinus\OracleDb\Statement;
+
+use nightlinus\OracleDb\Config;
+use nightlinus\OracleDb\Database;
+use nightlinus\OracleDb\Driver\AbstractDriver;
+use nightlinus\OracleDb\Driver\Exception;
+use nightlinus\OracleDb\FieldDescription;
+use nightlinus\OracleDb\Profiler\Profiler;
 
 /**
  * Implements wrapper above oci8
@@ -32,16 +39,6 @@ class Statement implements \IteratorAggregate
 
     const RETURN_ARRAY    = 1;
     const RETURN_ITERATOR = 0;
-
-    /**
-     * List of statement states
-     */
-    const STATE_EXECUTED          = 0x08;
-    const STATE_EXECUTED_DESCRIBE = 0x04;
-    const STATE_FETCHED           = 0x02;
-    const STATE_FETCHING          = 0x10;
-    const STATE_FREED             = 0x00;
-    const STATE_PREPARED          = 0x01;
 
     /**
      * List of statement types
@@ -74,7 +71,7 @@ class Statement implements \IteratorAggregate
     private $db;
 
     /**
-     * @type Driver\AbstractDriver
+     * @type AbstractDriver
      */
     private $driver;
 
@@ -108,22 +105,29 @@ class Statement implements \IteratorAggregate
     private $returnType;
 
     /**
-     * Internal state of Statement
-     *
-     * @type int
+     * @type StatementState
      */
-    private $state = self::STATE_FREED;
+    private $state;
 
     /**
-     * @param Database $db          ссылка на родительский объект базы данных
-     * @param string   $queryString sql выражение стейтмента в текстовом виде
+     * @type Profiler
      */
-    public function __construct(Database $db, $queryString = null)
+    private $profiler;
+
+    /**
+     * @param string         $queryString sql выражение стейтмента в текстовом виде
+     * @param Database       $db          ссылка на родительский объект базы данных
+     * @param AbstractDriver $driver
+     * @param Profiler       $profiler
+     */
+    public function __construct($queryString, Database $db, AbstractDriver $driver, Profiler $profiler)
     {
         $this->queryString = $queryString;
         $this->db = $db;
-        $this->driver = $db->getDriver();
+        $this->driver = $driver;
+        $this->profiler = $profiler;
         $this->returnType = $this->db->config(Config::STATEMENT_RETURN_TYPE);
+        $this->state = StatementState::freed();
     }
 
     /**
@@ -153,57 +157,13 @@ class Statement implements \IteratorAggregate
         if (!is_array($bindings) || count($bindings) === 0) {
             return $this;
         }
-
+        $this->bindings = [ ];
         $this->prepare();
         foreach ($bindings as $bindingName => $bindingValue) {
             $this->bindValue($bindingName, $bindingValue);
         }
 
         return $this;
-    }
-
-    /**
-     * @param $name
-     * @param $value
-     *
-     * @return $this
-     */
-    public function bindValue($name, $value)
-    {
-        $driver = $this->driver;
-        $hostVariable = HostVariable::with($value);
-        $hostVariable = $this->transformHostVariable($hostVariable);
-        $this->bindings[ $name ] = $hostVariable->value();
-        $bindValue = &$this->bindings[ $name ];
-
-        $driver->bindValue(
-            $this->resource,
-            $name,
-            $bindValue,
-            $hostVariable->length(),
-            $hostVariable->type()
-        );
-
-        return $this;
-    }
-
-    /**
-     * @param HostVariable $variable
-     *
-     * @return HostVariable
-     */
-    private function transformHostVariable(HostVariable $variable)
-    {
-        $driver = $this->driver;
-        $value = $variable->value();
-        if ($value instanceof Statement) {
-            $value->prepare();
-            $variable->with($value->resource, null, $driver::TYPE_CURSOR);
-        } elseif (is_object($value) && $variable->type() === null) {
-            $variable = $variable->with((string) $value);
-        }
-
-        return $variable;
     }
 
     /**
@@ -251,17 +211,28 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * @param string $key
+     * @param $name
+     * @param $value
      *
-     * @return array|null
+     * @return $this
      */
-    public function out($key)
+    public function bindValue($name, $value)
     {
-        if (!isset($this->bindings[ $key])) {
-            throw new \InvalidArgumentException("There is no host variable set with name '$key'.");
-        }
+        $driver = $this->driver;
+        $hostVariable = HostVariable::with($value);
+        $hostVariable = $this->transformHostVariable($hostVariable);
+        $this->bindings[ $name ] = $hostVariable->value();
+        $bindValue = &$this->bindings[ $name ];
 
-        return $this->bindings[$key];
+        $driver->bindValue(
+            $this->resource,
+            $name,
+            $bindValue,
+            $hostVariable->length(),
+            $hostVariable->type()
+        );
+
+        return $this;
     }
 
     /**
@@ -271,7 +242,7 @@ class Statement implements \IteratorAggregate
      */
     public function canBeFreed()
     {
-        return $this->state < self::STATE_FETCHING;
+        return $this->state->isSafeToFree();
     }
 
     /**
@@ -294,11 +265,9 @@ class Statement implements \IteratorAggregate
     public function count()
     {
         $type = $this->getType();
-        if (self::TYPE_SELECT === $type && self::STATE_FETCHED !== $this->state) {
+        if (self::TYPE_SELECT === $type && $this->state->isNotFetchedYet()) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
-            $prevStatement = $this->db->getLastStatement();
             $count = $this->db->query($sql, $this->bindings)->fetchValue();
-            $this->db->setLastStatement($prevStatement);
         } else {
             $count = $this->getAffectedRowsNumber();
         }
@@ -336,12 +305,10 @@ class Statement implements \IteratorAggregate
         $this->prepare();
         $driver = $this->driver;
         $mode = $this->getExecuteMode($mode);
-        $this->db->setLastStatement($this);
         $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
         $this->driver->execute($this->resource, $mode);
         $this->db->endProfile();
-        $state = $mode & $driver::EXECUTE_DESCRIBE ? self::STATE_EXECUTED_DESCRIBE : self::STATE_EXECUTED;
-        $this->setState($state);
+        $this->state = $mode & $driver::EXECUTE_DESCRIBE ? $this->state->described() : $this->state->executed();
 
         return $this;
     }
@@ -356,7 +323,7 @@ class Statement implements \IteratorAggregate
     public function fetchAll($skip, $maxRows, $mode)
     {
         $result = $this->driver->fetchAll($this->resource, $skip, $maxRows, $mode);
-        $this->setState(self::STATE_FETCHED);
+        $this->state = $this->state->fetched();
 
         return $result;
     }
@@ -501,7 +468,7 @@ class Statement implements \IteratorAggregate
     public function fetchOne($mode = null)
     {
         $result = $this->tupleGenerator(null, self::FETCH_BOTH, $mode)->current();
-        $this->setState(self::STATE_FETCHED);
+        $this->state = $this->state->fetched();
 
         return $result;
     }
@@ -566,7 +533,7 @@ class Statement implements \IteratorAggregate
             $fetchMode = self::FETCH_ASSOC;
         }
         $result = $this->tupleGenerator(null, $fetchMode)->current()[ $index ];
-        $this->setState(self::STATE_FETCHED);
+        $this->state = $this->state->fetched();
 
         return $result;
     }
@@ -576,7 +543,7 @@ class Statement implements \IteratorAggregate
      */
     public function free()
     {
-        $this->setState(self::STATE_FREED);
+        $this->state = $this->state->freed();
         if ($this->resource) {
             $this->driver->free($this->resource);
         }
@@ -672,23 +639,17 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * True if statement can be fetched, false otherwise
+     * @param string $key
      *
-     * @return bool
+     * @return array|null
      */
-    public function isFetchable()
+    public function out($key)
     {
-        return self::STATE_EXECUTED === $this->state;
-    }
+        if (!isset($this->bindings[ $key ])) {
+            throw new \InvalidArgumentException("There is no host variable set with name '$key'.");
+        }
 
-    /**
-     * True if handler already exist
-     *
-     * @return bool
-     */
-    public function isPrepared()
-    {
-        return $this->state >= self::STATE_PREPARED;
+        return $this->bindings[ $key ];
     }
 
     /**
@@ -699,7 +660,7 @@ class Statement implements \IteratorAggregate
      */
     public function prepare()
     {
-        if ($this->isPrepared()) {
+        if ($this->state->isPrepared()) {
             return $this;
         }
 
@@ -710,7 +671,7 @@ class Statement implements \IteratorAggregate
             // get new cursor handler if no query provided
             $this->resource = $this->driver->newCursor($this->db->getConnection());
         }
-        $this->setState(self::STATE_PREPARED);
+        $this->state = $this->state->prepared();
 
         return $this;
     }
@@ -756,6 +717,25 @@ class Statement implements \IteratorAggregate
         $this->returnType = $returnType;
 
         return $this;
+    }
+
+    /**
+     * @param HostVariable $variable
+     *
+     * @return HostVariable
+     */
+    private function transformHostVariable(HostVariable $variable)
+    {
+        $driver = $this->driver;
+        $value = $variable->value();
+        if ($value instanceof Statement) {
+            $value->prepare();
+            $variable->with($value->resource, null, $driver::TYPE_CURSOR);
+        } elseif (is_object($value) && $variable->type() === null) {
+            $variable = $variable->with((string) $value);
+        }
+
+        return $variable;
     }
 
     /**
@@ -864,18 +844,6 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * @param int $state
-     *
-     * @return $this
-     */
-    private function setState($state)
-    {
-        $this->state = $state;
-
-        return $this;
-    }
-
-    /**
      * Generator for iterating over fetched rows
      *
      * @param callable|null $callback
@@ -888,11 +856,11 @@ class Statement implements \IteratorAggregate
      */
     private function tupleGenerator($callback = null, $fetchMode = null, $mode = null)
     {
-        if (!$this->isFetchable()) {
+        if (!$this->state->isFetchable()) {
             $this->execute();
         }
 
-        $this->setState(self::STATE_FETCHING);
+        $this->state = $this->state->fetching();
         $fetchFunction = $this->getFetchFunction($fetchMode, $mode);
         if (!is_callable($callback)) {
             $callback = function (CallbackResult $result, $item, $index) {
@@ -909,6 +877,6 @@ class Statement implements \IteratorAggregate
             yield $result->key => $result->value;
         }
 
-        $this->setState(self::STATE_FETCHED);
+        $this->state = $this->state->fetched();
     }
 }

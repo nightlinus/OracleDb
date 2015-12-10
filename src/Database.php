@@ -10,6 +10,10 @@
  */
 namespace nightlinus\OracleDb;
 
+use nightlinus\OracleDb\Driver\AbstractDriver;
+use nightlinus\OracleDb\Profiler\Profiler;
+use nightlinus\OracleDb\Statement\Statement;
+use nightlinus\OracleDb\Statement\StatementFactory;
 use nightlinus\OracleDb\Utills\Alias;
 
 /**
@@ -17,72 +21,59 @@ use nightlinus\OracleDb\Utills\Alias;
  */
 class Database
 {
-
     /**
      * Profiler for db instance
      *
-     * @type Profiler\Profiler
+     * @type Profiler
      */
-    public $profiler;
+    private $profiler;
 
     /**
      * Configuration storage
      *
      * @type Config
      */
-    protected $configuration;
+    private $configuration;
 
     /**
      * @type resource connection resource
      */
-    protected $connection;
+    private $connection;
 
     /**
      * @type Driver\AbstractDriver
      */
-    protected $driver;
-
+    private $driver;
 
     /**
      * @type \nightlinus\OracleDb\Session\Oracle
      */
-    protected $session;
+    private $session;
 
     /**
-     * @type StatementCache
+     * @type StatementFactory
      */
-    protected $statementCache;
+    private $statementFactory;
 
     /**
      * Consttructor for Database class implements
      * base parametrs checking
      *
-     * @param string|array $userName
-     * @param string       $password
-     * @param string       $connectionString
-     *
-     * @param array        $config
-     *
-     * @throws Exception
+     * @param StatementFactory $statementFactory
+     * @param Config           $config
+     * @param AbstractDriver   $driver
+     * @param Profiler         $profiler
      */
     public function __construct(
-        $userName,
-        $password = null,
-        $connectionString = null,
-        $config = [ ]
+        StatementFactory $statementFactory,
+        Config $config,
+        AbstractDriver $driver,
+        Profiler $profiler
     ) {
-
-        if (func_num_args() === 1) {
-            $config = $userName;
-        } else {
-            $config[ Config::CONNECTION_USER ] = $userName;
-            $config[ Config::CONNECTION_PASSWORD ] = $password;
-            $config[ Config::CONNECTION_STRING ] = $connectionString;
-        }
-
-        $this->configuration = new Config($config);
-        $driver = $this->config(Config::DRIVER_CLASS);
-        $this->driver = is_string($driver) ? new $driver() : $driver;
+        $this->configuration = $config;
+        $this->driver = $driver;
+        $this->statementFactory = $statementFactory;
+        $this->profiler = $profiler;
     }
 
     /**
@@ -159,22 +150,22 @@ class Database
         }
         $this->setupBeforeConnect();
         $driver = $this->driver;
-        if ($this->config(Config::CONNECTION_PERSISTENT)) {
+        if ($this->configuration->get(Config::CONNECTION_PERSISTENT)) {
             $connectMode = $driver::CONNECTION_TYPE_PERSISTENT;
-        } elseif ($this->config(Config::CONNECTION_CACHE)) {
+        } elseif ($this->configuration->get(Config::CONNECTION_CACHE)) {
             $connectMode = $driver::CONNECTION_TYPE_CACHE;
         } else {
             $connectMode = $driver::CONNECTION_TYPE_NEW;
         }
         $this->connection = $driver->connect(
             $connectMode,
-            $this->config(Config::CONNECTION_USER),
-            $this->config(Config::CONNECTION_PASSWORD),
-            $this->config(Config::CONNECTION_STRING),
-            $this->config(Config::CONNECTION_CHARSET),
-            $this->config(Config::CONNECTION_PRIVILEGED)
+            $this->configuration->get(Config::CONNECTION_USER),
+            $this->configuration->get(Config::CONNECTION_PASSWORD),
+            $this->configuration->get(Config::CONNECTION_STRING),
+            $this->configuration->get(Config::CONNECTION_CHARSET),
+            $this->configuration->get(Config::CONNECTION_PRIVILEGED)
         );
-        $this->session->apply();
+        $this->setupAfterConnect();
 
         return $this;
     }
@@ -379,7 +370,7 @@ class Database
     public function prepare($sqlText)
     {
         $this->connect();
-        $statement = $this->getStatement($sqlText);
+        $statement = $this->statementFactory->make($sqlText, $this);
         $statement->prepare();
 
         return $statement;
@@ -533,51 +524,16 @@ class Database
         return $this;
     }
 
-    /**
-     * @param $sql
-     *
-     * @return Statement
-     * @throws Exception
-     */
-    protected function getStatement($sql)
-    {
-        $statementCacheEnabled = $this->config(Config::STATEMENT_CACHE_ENABLED);
-        $statementCache = null;
-
-        if ($statementCacheEnabled) {
-            $statement = $this->statementCache->get($sql);
-        } else {
-            $statement = new Statement($sql, $this);
-            $this->statementCache->add($statement);
-        }
-
-        return $statement;
-    }
-
-    /**
-     * Method to set up connection before call of oci_connect
-     *
-     * @return $this
-     * @throws Exception
-     */
     protected function setupBeforeConnect()
     {
-        //Set up profiler
         $class = $this->config(Config::SESSION_CLASS);
         $this->session = is_string($class) ? new $class($this) : $class;
-
-        //Set up profiler
-        if ($this->config(Config::PROFILER_ENABLED)) {
-            $class = $this->config(Config::PROFILER_CLASS);
-            $this->profiler = is_string($class) ? new $class() : $class;
-        }
-
-        //Set up cache
-        if ($this->config(Config::STATEMENT_CACHE_ENABLED)) {
-            $class = $this->config(Config::STATEMENT_CACHE_CLASS);
-            $cacheSize = $this->config(Config::STATEMENT_CACHE_SIZE);
-            $this->statementCache = is_string($class) ? new $class($cacheSize) : $class;
-        }
         $this->session->setupBeforeConnect();
+    }
+
+    private function setupAfterConnect()
+    {
+        $sql = $this->session->apply($this->getConnection());
+        $this->query($sql);
     }
 }

@@ -11,6 +11,8 @@
  */
 
 namespace nightlinus\OracleDb;
+use nightlinus\OracleDb\Statement\Statement;
+use nightlinus\OracleDb\Statement\StatementCache;
 
 /**
  * Class Config
@@ -110,13 +112,18 @@ class Config implements \ArrayAccess
     /**
      * @param array $configuration
      */
-    public function __construct(array $configuration = [ ])
+    private function __construct(array $configuration = [ ])
     {
         foreach ($configuration as $key => $value) {
             $this->set($key, $value);
         }
 
         $this->validate();
+    }
+
+    public static function fromArray(array $config = [])
+    {
+        return new self($config);
     }
 
     /**
