@@ -40,10 +40,7 @@ class StatementCache implements \IteratorAggregate
         $this->cacheSize = $cacheSize;
     }
 
-    /**
-     * @param $statement Statement
-     */
-    public function add($statement)
+    public function add(Statement $statement)
     {
         $hash = $this->getHash($statement);
         $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
@@ -55,7 +52,7 @@ class StatementCache implements \IteratorAggregate
         }
     }
 
-    public function garbageCollect()
+    private function garbageCollect()
     {
         $iter = $this->getIterator();
         while ($this->needGarbageCollect()) {
@@ -70,21 +67,22 @@ class StatementCache implements \IteratorAggregate
     /**
      * @param $sql string
      *
-     * @return null
+     * @return null|Statement
      */
     public function get($sql)
     {
         $hash = $this->getHash($sql);
         $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
+        $statement = null;
         if ($inCache) {
             $statement = $this->hashCache[ $hash ][ 'value' ];
             array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
             $this->orderCache[] = $statement;
 
             return $statement;
-        } else {
-            return null;
         }
+
+        return $statement;
     }
 
     /**
@@ -116,14 +114,6 @@ class StatementCache implements \IteratorAggregate
         for ($i = 0; $i < $count; $i++) {
             yield $this->orderCache[ $i ];
         }
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getLast()
-    {
-        return end($this->orderCache);
     }
 
     /**
