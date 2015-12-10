@@ -20,17 +20,17 @@ class StatementCache implements \IteratorAggregate
     /**
      * @type int
      */
-    protected $cacheSize = 50;
+    private $cacheSize = 50;
 
     /**
      * @type Statement[];
      */
-    protected $hashCache = [ ];
+    private $hashCache = [ ];
 
     /**
      * @type Statement[]
      */
-    protected $orderCache = [ ];
+    private $orderCache = [ ];
 
     /**
      * @param $cacheSize
@@ -156,7 +156,7 @@ class StatementCache implements \IteratorAggregate
      *
      * @return string
      */
-    protected function getHash($statement)
+    private function getHash($statement)
     {
         $sql = $statement;
         if ($statement instanceof Statement) {
