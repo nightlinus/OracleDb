@@ -42,22 +42,29 @@ class StatementCache implements \IteratorAggregate
 
     /**
      * @param $statement Statement
-     *
-     * @return \Generator
      */
     public function add($statement)
     {
         $hash = $this->getHash($statement);
-        $toClean = 0;
         $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
         if (!$inCache) {
             $this->hashCache[ $hash ][ 'value' ] = $statement;
-            $this->orderCache[ ] = $statement;
+            $this->orderCache[] = $statement;
             $this->hashCache[ $hash ][ 'position' ] = count($this->orderCache) - 1;
-            $toClean = $this->getCleanCount();
+            $this->garbageCollect();
         }
+    }
 
-        return $toClean;
+    public function garbageCollect()
+    {
+        $iter = $this->getIterator();
+        while ($this->needGarbageCollect()) {
+            $trashStatement = $iter->current();
+            if ($trashStatement->canBeFreed()) {
+                $trashStatement->free();
+            }
+            $iter->next();
+        }
     }
 
     /**
@@ -72,7 +79,7 @@ class StatementCache implements \IteratorAggregate
         if ($inCache) {
             $statement = $this->hashCache[ $hash ][ 'value' ];
             array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
-            $this->orderCache[ ] = $statement;
+            $this->orderCache[] = $statement;
 
             return $statement;
         } else {
@@ -90,14 +97,11 @@ class StatementCache implements \IteratorAggregate
 
     /**
      * @param mixed $cacheSize
-     *
-     * @return \Generator
      */
     public function setCacheSize($cacheSize)
     {
         $this->cacheSize = $cacheSize;
-
-        return $this->getCleanCount();
+        $this->garbageCollect();
     }
 
     /**
@@ -138,13 +142,13 @@ class StatementCache implements \IteratorAggregate
     }
 
     /**
-     * @return int
+     * @return bool
      */
-    protected function getCleanCount()
+    private function needGarbageCollect()
     {
         $count = count($this->orderCache) - $this->cacheSize;
 
-        return $count > 0 ? $count : 0;
+        return $count > 0;
     }
 
     /**

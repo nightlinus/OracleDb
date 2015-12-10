@@ -42,12 +42,6 @@ class Database
      */
     protected $driver;
 
-    /**
-     * last executed statement
-     *
-     * @type Statement | null
-     */
-    protected $lastStatement;
 
     /**
      * @type \nightlinus\OracleDb\Session\Oracle
@@ -360,30 +354,6 @@ class Database
     }
 
     /**
-     * @return Statement
-     */
-    public function getLastStatement()
-    {
-        return $this->lastStatement;
-    }
-
-    /**
-     * Setter for lastStatement
-     *
-     * @see $lastStatement
-     *
-     * @param $statement
-     *
-     * @return $this
-     */
-    public function setLastStatement($statement)
-    {
-        $this->lastStatement = $statement;
-
-        return $this;
-    }
-
-    /**
      * Get oracle RDBMS version
      *
      * @return string
@@ -575,27 +545,10 @@ class Database
         $statementCache = null;
 
         if ($statementCacheEnabled) {
-            $statementCache = $this->statementCache->get($sql);
-        }
-
-        $statement = $statementCache ?: new Statement($this, $sql);
-
-        if ($statementCacheEnabled && $statementCache === null) {
-            $trashStatements = $this->statementCache->add($statement);
-            $iter = $this->statementCache->getIterator();
-            while ($trashStatements) {
-                /**
-                 * @type Statement $trashStatement
-                 */
-                $trashStatement = $iter->current();
-                if ($trashStatement->canBeFreed()) {
-                    $trashStatement->free();
-                    if (--$trashStatements) {
-                        break;
-                    }
-                }
-                $iter->next();
-            }
+            $statement = $this->statementCache->get($sql);
+        } else {
+            $statement = new Statement($sql, $this);
+            $this->statementCache->add($statement);
         }
 
         return $statement;
