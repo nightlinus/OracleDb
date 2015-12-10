@@ -514,7 +514,7 @@ class Database
      * @return $this
      * @throws Exception
      */
-    protected function disconnect()
+    private function disconnect()
     {
         if (!$this->connection) {
             return $this;
@@ -524,7 +524,7 @@ class Database
         return $this;
     }
 
-    protected function setupBeforeConnect()
+    private function setupBeforeConnect()
     {
         $class = $this->config(Config::SESSION_CLASS);
         $this->session = is_string($class) ? new $class($this) : $class;
