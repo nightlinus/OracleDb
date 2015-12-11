@@ -705,16 +705,16 @@ class Statement implements \IteratorAggregate
         return $this;
     }
 
-    /**
-     * Sets return type: array or iteartor
-     *
-     * @param int $returnType
-     *
-     * @return $this
-     */
-    public function setReturnType($returnType)
+    public function returnArray()
     {
-        $this->returnType = $returnType;
+        $this->returnType  = self::RETURN_ARRAY;
+
+        return $this;
+    }
+
+    public function retutnIterator()
+    {
+        $this->returnType = self::RETURN_ITERATOR;
 
         return $this;
     }
