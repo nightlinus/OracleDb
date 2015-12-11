@@ -12,6 +12,7 @@ namespace nightlinus\OracleDb;
 
 use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Profiler\Profiler;
+use nightlinus\OracleDb\Statement\HostVariable;
 use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementFactory;
 use nightlinus\OracleDb\Utills\Alias;
@@ -98,7 +99,7 @@ class Database
         $returnName = null;
         if ($returnSize) {
             $returnName = Alias::unique();
-            $bindings[ (string) $returnName ] = [ null, $returnSize ];
+            $bindings[ (string) $returnName ] = HostVariable::with(null, $returnSize);
             $return = ":$returnName := ";
         }
         $sqlText = "BEGIN $return $sqlText; END;";
