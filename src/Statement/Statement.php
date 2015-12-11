@@ -676,6 +676,20 @@ class Statement implements \IteratorAggregate
         return $this;
     }
 
+    public function returnArray()
+    {
+        $this->returnType = self::RETURN_ARRAY;
+
+        return $this;
+    }
+
+    public function retutnIterator()
+    {
+        $this->returnType = self::RETURN_ITERATOR;
+
+        return $this;
+    }
+
     /**
      * Proxy to db rollback method.
      * Needed here for convinient method chaining.
@@ -701,20 +715,6 @@ class Statement implements \IteratorAggregate
         if ($this->resource) {
             $this->driver->setPrefcth($this->resource, $rowCount);
         }
-
-        return $this;
-    }
-
-    public function returnArray()
-    {
-        $this->returnType  = self::RETURN_ARRAY;
-
-        return $this;
-    }
-
-    public function retutnIterator()
-    {
-        $this->returnType = self::RETURN_ITERATOR;
 
         return $this;
     }
