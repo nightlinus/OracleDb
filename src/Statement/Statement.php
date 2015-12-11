@@ -268,7 +268,7 @@ class Statement implements \IteratorAggregate
         $type = $this->getType();
         if (self::TYPE_SELECT === $type && $this->state->isNotFetchedYet()) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
-            $count = $this->db->query($sql, $this->bindings)->fetchValue();
+            $count = $this->db->fetchValue($sql, $this->bindings);
         } else {
             $count = $this->getAffectedRowsNumber();
         }
