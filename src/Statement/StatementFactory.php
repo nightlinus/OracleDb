@@ -59,7 +59,13 @@ class StatementFactory
             $statement = $this->cache->get($queryString);
         }
 
-        $statement = $statement ?: new Statement($queryString, $db, $this->driver, $this->profiler);
+        $statement = $statement ?: new Statement(
+            $queryString,
+            $db,
+            $this->driver,
+            $this->profiler,
+            $db->config(Config::STATEMENT_RETURN_TYPE)
+        );
 
         if ($statementCacheEnabled) {
             $this->cache->add($statement);

@@ -119,15 +119,16 @@ class Statement implements \IteratorAggregate
      * @param Database       $db          ссылка на родительский объект базы данных
      * @param AbstractDriver $driver
      * @param Profiler       $profiler
+     * @param                $returnType
      */
-    public function __construct($queryString, Database $db, AbstractDriver $driver, Profiler $profiler)
+    public function __construct($queryString, Database $db, AbstractDriver $driver, Profiler $profiler, $returnType)
     {
         $this->queryString = $queryString;
         $this->db = $db;
         $this->driver = $driver;
         $this->profiler = $profiler;
-        $this->returnType = $this->db->config(Config::STATEMENT_RETURN_TYPE);
         $this->state = StatementState::freed();
+        $this->returnType = $returnType;
     }
 
     /**
