@@ -12,7 +12,6 @@
 
 namespace nightlinus\OracleDb\Statement;
 
-use nightlinus\OracleDb\Config;
 use nightlinus\OracleDb\Database;
 use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Exception;
@@ -115,20 +114,33 @@ class Statement implements \IteratorAggregate
     private $profiler;
 
     /**
+     * @type bool
+     */
+    private $defaultMode;
+
+    /**
      * @param string         $queryString sql выражение стейтмента в текстовом виде
      * @param Database       $db          ссылка на родительский объект базы данных
      * @param AbstractDriver $driver
      * @param Profiler       $profiler
-     * @param                $returnType
+     * @param int            $returnType
+     * @param bool           $autoCommit
      */
-    public function __construct($queryString, Database $db, AbstractDriver $driver, Profiler $profiler, $returnType)
-    {
+    public function __construct(
+        $queryString,
+        Database $db,
+        AbstractDriver $driver,
+        Profiler $profiler,
+        $returnType,
+        $autoCommit
+    ) {
         $this->queryString = $queryString;
         $this->db = $db;
         $this->driver = $driver;
         $this->profiler = $profiler;
         $this->state = StatementState::freed();
         $this->returnType = $returnType;
+        $this->defaultMode = (bool) $autoCommit ? $driver::EXECUTE_AUTO_COMMIT : $driver::EXECUTE_NO_AUTO_COMMIT;
     }
 
     /**
@@ -760,14 +772,7 @@ class Statement implements \IteratorAggregate
      */
     private function getExecuteMode($mode)
     {
-        $driver = $this->driver;
-        if (!$driver->isExecuteMode($mode)) {
-            $mode = $this->db->config(
-                Config::STATEMENT_AUTOCOMMIT
-            ) ? $driver::EXECUTE_AUTO_COMMIT : $driver::EXECUTE_NO_AUTO_COMMIT;
-        }
-
-        return $mode;
+        return !$this->driver->isExecuteMode($mode) ? $this->defaultMode : $mode;
     }
 
     /**
