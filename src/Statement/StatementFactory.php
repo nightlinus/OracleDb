@@ -24,16 +24,22 @@ class StatementFactory
      */
     private $cache;
 
+    /**
+     * @type AbstractDriver
+     */
     private $driver;
 
+    /**
+     * @type Profiler
+     */
     private $profiler;
 
     /**
      * StatementFactory constructor.
      *
-     * @param StatementCache $cache
-     * @param                $driver
-     * @param                $profiler
+     * @param StatementCache  $cache
+     * @param  AbstractDriver $driver
+     * @param  Profiler       $profiler
      */
     public function __construct(StatementCache $cache, AbstractDriver $driver, Profiler $profiler)
     {

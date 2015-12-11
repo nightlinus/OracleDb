@@ -12,6 +12,7 @@
  */
 namespace nightlinus\OracleDb;
 
+use nightlinus\OracleDb\Profiler\DisabledProfiler;
 use nightlinus\OracleDb\Statement\StatementFactory;
 
 class DatabaseFactory
@@ -20,26 +21,30 @@ class DatabaseFactory
     {
     }
 
-    public static function fromCredentials($userName, $password = '', $connectionString = '', $config = [ ])
-    {
-        $config[Config::CONNECTION_USER] =  $userName;
-        $config[Config::CONNECTION_PASSWORD] =  $password;
-        $config[Config::CONNECTION_STRING] =  $connectionString;
-        $config = Config::fromArray($config);
-
-        return self::make($config);
-    }
-
     public static function fromConfig(Config $config)
     {
         return self::make($config);
     }
 
+    public static function fromCredentials($userName, $password = '', $connectionString = '', $config = [ ])
+    {
+        $config[ Config::CONNECTION_USER ] = $userName;
+        $config[ Config::CONNECTION_PASSWORD ] = $password;
+        $config[ Config::CONNECTION_STRING ] = $connectionString;
+        $config = Config::fromArray($config);
+
+        return self::make($config);
+    }
+
     private static function makeProfiler(Config $config)
     {
+        if (!$config->get(Config::PROFILER_ENABLED)) {
+            return new DisabledProfiler();
+        }
+
         $class = $config->get(Config::PROFILER_CLASS);
 
-        return ($class) ? new $class() : $class;
+        return is_string($class) ? new $class : $class;
     }
 
     private static function makeDriver(Config $config)

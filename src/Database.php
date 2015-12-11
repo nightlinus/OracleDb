@@ -23,8 +23,6 @@ use nightlinus\OracleDb\Utills\Alias;
 class Database
 {
     /**
-     * Profiler for db instance
-     *
      * @type Profiler
      */
     private $profiler;
@@ -185,19 +183,6 @@ class Database
         return $statement->count();
     }
 
-    /**
-     * Method to stop measuring profile
-     *
-     * @return $this
-     */
-    public function endProfile()
-    {
-        if ($this->config(Config::PROFILER_ENABLED)) {
-            $this->profiler->end();
-        }
-
-        return $this;
-    }
 
     /**
      * @param string $sql
@@ -453,49 +438,6 @@ class Database
         }
 
         return $this;
-    }
-
-    /**
-     * @param $profileId
-     *
-     * @return $this
-     */
-    public function startFetchProfile($profileId)
-    {
-        if ($this->config(Config::PROFILER_ENABLED)) {
-            return $this->profiler->startFetch($profileId);
-        }
-
-        return null;
-    }
-
-    /**
-     * @param $sql
-     * @param $bindings
-     *
-     * @return $this
-     */
-    public function startProfile($sql, $bindings = null)
-    {
-        if ($this->config(Config::PROFILER_ENABLED)) {
-            return $this->profiler->start($sql, $bindings);
-        }
-
-        return null;
-    }
-
-    /**
-     * @param $profileId
-     *
-     * @return $this
-     */
-    public function stopFetchProfile($profileId)
-    {
-        if ($this->config(Config::PROFILER_ENABLED)) {
-            return $this->profiler->stopFetch($profileId);
-        }
-
-        return null;
     }
 
     /**

@@ -1,72 +1,37 @@
 <?php
 /**
- * Class for capture timing profiles for sql queries
+ * Date: 11.12.15
+ * Time: 12:23
  *
- * @category Database
- * @package  nightlinus\OracleDb
+ * @category
+ * @package  OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @link     https://github.com/nightlinus/OracleDb
+ * @version
+ * @link
  */
-
 namespace nightlinus\OracleDb\Profiler;
 
-/**
- * Class Profiler
- */
-class Profiler
+interface Profiler
 {
-
-    /**
-     * Index of current profile
-     *
-     * @type int
-     */
-    protected $currentIndex = 0;
-
-    /**
-     * Container for profiles
-     *
-     * @type Entry[]
-     */
-    protected $profiles = [ ];
-
     /**
      * Method to finish current profiling.
-     *
-     * @return $this
      */
-    public function end()
-    {
-        if (isset($this->profiles[ $this->currentIndex ])) {
-            $current = &$this->profiles[ $this->currentIndex ];
-            $current->endTime = microtime(true);
-            $current->executeDuration = $current->endTime - $current->startTime;
-            $this->currentIndex++;
-        }
-
-        return $this;
-    }
+    public function end();
 
     /**
      * Method to get last profile
      *
-     * @return array|null
+     * @return Entry|null
      */
-    public function getLastProfile()
-    {
-        return end($this->profiles);
-    }
+    public function lastProfile();
 
     /**
      * Return full stack of profiles
      *
-     * @return array
+     * @return Entry[]
      */
-    public function getProfiles()
-    {
-        return $this->profiles;
-    }
+    public function profiles();
 
     /**
      * Function that start profiling code
@@ -76,12 +41,7 @@ class Profiler
      *
      * @return $this
      */
-    public function start($sql, array $data = null)
-    {
-        $this->profiles[ $this->currentIndex ] = new Entry($this->currentIndex, $sql, $data);
-
-        return $this->currentIndex;
-    }
+    public function start($sql, array $data = null);
 
     /**
      * Start profiling fetching time
@@ -90,12 +50,7 @@ class Profiler
      *
      * @return $this
      */
-    public function startFetch($profileId)
-    {
-        $this->profiles[ $profileId ]->lastFetchStart = microtime(true);
-
-        return $this;
-    }
+    public function startFetch($profileId);
 
     /**
      * Stop profiling fetching time
@@ -104,10 +59,5 @@ class Profiler
      *
      * @return $this
      */
-    public function stopFetch($profileId)
-    {
-        $this->profiles[ $profileId ]->fetchDuration += microtime(true) - $this->profiles[ $profileId ]->lastFetchStart;
-
-        return $this;
-    }
+    public function stopFetch($profileId);
 }

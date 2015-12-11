@@ -305,9 +305,9 @@ class Statement implements \IteratorAggregate
         $this->prepare();
         $driver = $this->driver;
         $mode = $this->getExecuteMode($mode);
-        $this->profileId = $this->db->startProfile($this->queryString, $this->bindings);
+        $this->profileId = $this->profiler->start($this->queryString, $this->bindings);
         $this->driver->execute($this->resource, $mode);
-        $this->db->endProfile();
+        $this->profiler->end();
         $this->state = $mode & $driver::EXECUTE_DESCRIBE ? $this->state->described() : $this->state->executed();
 
         return $this;
@@ -812,9 +812,9 @@ class Statement implements \IteratorAggregate
 
         if ($this->profileId) {
             $fetchFunction = function () use ($fetchFunction) {
-                $this->db->startFetchProfile($this->profileId);
+                $this->profiler->startFetch($this->profileId);
                 $res = $fetchFunction();
-                $this->db->stopFetchProfile($this->profileId);
+                $this->profiler->stopFetch($this->profileId);
 
                 return $res;
             };

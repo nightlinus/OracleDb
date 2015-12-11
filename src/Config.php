@@ -48,7 +48,7 @@ class Config implements \ArrayAccess
     const GROUP_SESSION    = 'session';
 
     /**
-     * Profiler variables
+     * BasicProfiler variables
      */
     const PROFILER_CLASS   = 'profiler.class';
     const PROFILER_ENABLED = 'profiler.enabled';
@@ -100,7 +100,7 @@ class Config implements \ArrayAccess
         self::CLIENT_INFO             => null,
         self::CLIENT_MODULE_NAME      => null,
         self::PROFILER_ENABLED        => false,
-        self::PROFILER_CLASS          => Profiler\Profiler::class,
+        self::PROFILER_CLASS          => Profiler\BasicProfiler::class,
         self::STATEMENT_AUTOCOMMIT    => false,
         self::STATEMENT_RETURN_TYPE   => Statement::RETURN_ARRAY,
         self::STATEMENT_CACHE_ENABLED => true,
