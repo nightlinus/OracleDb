@@ -73,14 +73,14 @@ class Config implements \ArrayAccess
     /**
      * Array to store current values of configuration entrys
      *
-     * @type array
+     * @var array
      */
     protected $config = [ ];
 
     /**
      * Array to store default configuretion values
      *
-     * @type array
+     * @var array
      */
     protected $defaults = [
         self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',

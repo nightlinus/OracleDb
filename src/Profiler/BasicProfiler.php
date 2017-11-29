@@ -20,14 +20,14 @@ class BasicProfiler implements Profiler
     /**
      * Index of current profile
      *
-     * @type int
+     * @var int
      */
     private $currentIndex = 0;
 
     /**
      * Container for profiles
      *
-     * @type Entry[]
+     * @var Entry[]
      */
     private $profiles = [ ];
 

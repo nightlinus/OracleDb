@@ -33,51 +33,51 @@ class Statement implements \IteratorAggregate
      */
     const FETCH_ARRAY = 1;
     const FETCH_ASSOC = 2;
-    const FETCH_BOTH  = 3;
-    const FETCH_OBJ   = 4;
+    const FETCH_BOTH = 3;
+    const FETCH_OBJ = 4;
 
-    const RETURN_ARRAY    = 1;
+    const RETURN_ARRAY = 1;
     const RETURN_ITERATOR = 0;
 
     /**
      * List of statement types
      */
-    const TYPE_ALTER   = 'ALTER';
-    const TYPE_BEGIN   = 'BEGIN';
-    const TYPE_CALL    = 'CALL';
-    const TYPE_CREATE  = 'CREATE';
+    const TYPE_ALTER = 'ALTER';
+    const TYPE_BEGIN = 'BEGIN';
+    const TYPE_CALL = 'CALL';
+    const TYPE_CREATE = 'CREATE';
     const TYPE_DECLARE = 'DECLARE';
-    const TYPE_DELETE  = 'DELETE';
-    const TYPE_DROP    = 'DROP';
-    const TYPE_INSERT  = 'INSERT';
-    const TYPE_SELECT  = 'SELECT';
+    const TYPE_DELETE = 'DELETE';
+    const TYPE_DROP = 'DROP';
+    const TYPE_INSERT = 'INSERT';
+    const TYPE_SELECT = 'SELECT';
     const TYPE_UNKNOWN = 'UNKNOWN';
-    const TYPE_UPDATE  = 'UPDATE';
+    const TYPE_UPDATE = 'UPDATE';
 
     /**
      * array that contains all
      * host-variable bindings
      *
-     * @type array|null
+     * @var array|null
      */
     private $bindings;
 
     /**
      * Instance of parent database object
      *
-     * @type Database
+     * @var Database
      */
     private $db;
 
     /**
-     * @type AbstractDriver
+     * @var AbstractDriver
      */
     private $driver;
 
     /**
      * Index of profile associated with statement
      *
-     * @type int
+     * @var int
      */
     private $profileId;
 
@@ -85,36 +85,36 @@ class Statement implements \IteratorAggregate
      * Raw sql text, that was used
      * in oci_parse function
      *
-     * @type  string
+     * @var  string
      */
     private $queryString;
 
     /**
      * Rsource of db statement
      *
-     * @type resource
+     * @var resource
      */
     private $resource;
 
     /**
      * Flag to determine return type: array or iterator
      *
-     * @type int
+     * @var int
      */
     private $returnType;
 
     /**
-     * @type StatementState
+     * @var StatementState
      */
     private $state;
 
     /**
-     * @type Profiler
+     * @var Profiler
      */
     private $profiler;
 
     /**
-     * @type bool
+     * @var bool
      */
     private $defaultMode;
 
@@ -170,7 +170,7 @@ class Statement implements \IteratorAggregate
         if (!is_array($bindings) || count($bindings) === 0) {
             return $this;
         }
-        $this->bindings = [ ];
+        $this->bindings = [];
         $this->prepare();
         foreach ($bindings as $bindingName => $bindingValue) {
             $this->bindValue($bindingName, $bindingValue);
@@ -296,7 +296,7 @@ class Statement implements \IteratorAggregate
     public function describe()
     {
         $fieldNmber = $this->getFieldNumber() + 1;
-        $result = [ ];
+        $result = [];
         for ($i = 1; $i < $fieldNmber; $i++) {
             $result[] = $this->getFieldDescription($i);
         }

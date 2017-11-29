@@ -21,12 +21,12 @@ use nightlinus\OracleDb\Driver\AbstractDriver;
 class Oracle
 {
     /**
-     * @type AbstractDriver
+     * @var AbstractDriver
      */
     private $driver;
 
     /**
-     * @type Config
+     * @var Config
      */
     private $config;
 

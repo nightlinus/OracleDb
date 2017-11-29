@@ -18,17 +18,17 @@ class StatementCache implements \IteratorAggregate
 {
 
     /**
-     * @type int
+     * @var int
      */
     private $cacheSize = 50;
 
     /**
-     * @type Statement[];
+     * @var Statement[];
      */
     private $hashCache = [ ];
 
     /**
-     * @type Statement[]
+     * @var Statement[]
      */
     private $orderCache = [ ];
 

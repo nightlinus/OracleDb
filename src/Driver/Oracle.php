@@ -30,7 +30,7 @@ class Oracle extends AbstractDriver
     const TYPE_CURSOR = OCI_B_CURSOR;
 
     /**
-     * @type array
+     * @var array
      */
     protected $executeModes = [ OCI_NO_AUTO_COMMIT, OCI_COMMIT_ON_SUCCESS, OCI_DESCRIBE_ONLY ];
 

@@ -20,17 +20,17 @@ use nightlinus\OracleDb\Profiler\Profiler;
 class StatementFactory
 {
     /**
-     * @type StatementCache
+     * @var StatementCache
      */
     private $cache;
 
     /**
-     * @type AbstractDriver
+     * @var AbstractDriver
      */
     private $driver;
 
     /**
-     * @type Profiler
+     * @var Profiler
      */
     private $profiler;
 

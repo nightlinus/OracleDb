@@ -25,7 +25,7 @@ class StatementState
     const FETCHED   = 0x02;
 
     /**
-     * @type int
+     * @var int
      */
     private $state;
 

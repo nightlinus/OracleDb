@@ -20,17 +20,17 @@ namespace nightlinus\OracleDb\Statement;
 class HostVariable
 {
     /**
-     * @type mixed
+     * @var mixed
      */
     private $value;
 
     /**
-     * @type int
+     * @var int
      */
     private $length;
 
     /**
-     * @type int
+     * @var int
      */
     private $type;
 

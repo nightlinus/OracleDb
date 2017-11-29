@@ -21,12 +21,12 @@ class Query
 {
 
     /**
-     * @type string
+     * @var string
      */
     public $text;
 
     /**
-     * @type array
+     * @var array
      */
     public $parameters;
 

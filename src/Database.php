@@ -23,34 +23,34 @@ use nightlinus\OracleDb\Utills\Alias;
 class Database
 {
     /**
-     * @type Profiler
+     * @var Profiler
      */
     private $profiler;
 
     /**
      * Configuration storage
      *
-     * @type Config
+     * @var Config
      */
     private $configuration;
 
     /**
-     * @type resource connection resource
+     * @var resource connection resource
      */
     private $connection;
 
     /**
-     * @type Driver\AbstractDriver
+     * @var Driver\AbstractDriver
      */
     private $driver;
 
     /**
-     * @type \nightlinus\OracleDb\Session\Oracle
+     * @var \nightlinus\OracleDb\Session\Oracle
      */
     private $session;
 
     /**
-     * @type StatementFactory
+     * @var StatementFactory
      */
     private $statementFactory;
 
