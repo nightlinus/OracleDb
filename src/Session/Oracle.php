@@ -77,7 +77,7 @@ class Oracle
      */
     private function extractVariablesFromConfig()
     {
-        $setUp = [ ];
+        $setUp = [];
         $dateFormat = $this->config->get(Config::SESSION_DATE_FORMAT);
         if ($dateFormat) {
             $setUp[ 'NLS_DATE_FORMAT' ] = $dateFormat;

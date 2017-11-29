@@ -8,6 +8,7 @@
  * @license  http://opensource.org/licenses/MIT MIT
  * @link     https://github.com/nightlinus/OracleDb
  */
+
 namespace nightlinus\OracleDb;
 
 use nightlinus\OracleDb\Driver\AbstractDriver;
@@ -17,9 +18,6 @@ use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementFactory;
 use nightlinus\OracleDb\Utills\Alias;
 
-/**
- * Class Database
- */
 class Database
 {
     /**
@@ -54,15 +52,6 @@ class Database
      */
     private $statementFactory;
 
-    /**
-     * Consttructor for Database class implements
-     * base parametrs checking
-     *
-     * @param StatementFactory $statementFactory
-     * @param Config           $config
-     * @param AbstractDriver   $driver
-     * @param Profiler         $profiler
-     */
     public function __construct(
         StatementFactory $statementFactory,
         Config $config,
@@ -77,6 +66,8 @@ class Database
 
     /**
      *  Освобождаем ресурсы в деструкторе
+     *
+     * @throws Driver\Exception
      */
     public function __destruct()
     {
@@ -90,6 +81,8 @@ class Database
      * @param null   $mode
      *
      * @return mixed
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
     {
@@ -109,8 +102,8 @@ class Database
     /**
      * Commit session changes to server
      *
-     * @throws Exception
      * @return $this
+     * @throws Driver\Exception
      */
     public function commit()
     {
@@ -141,6 +134,7 @@ class Database
      *
      * @return $this
      * @throws Exception
+     * @throws Driver\Exception
      */
     public function connect()
     {
@@ -174,6 +168,8 @@ class Database
      * @param array|null $bindings
      *
      * @return int
+     * @throws Driver\Exception
+     * @throws Exception
      */
     public function count($sql, $bindings = null)
     {
@@ -192,6 +188,8 @@ class Database
      * @param int    $mode
      *
      * @return array
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchAll($sql, $bindings = null, $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
     {
@@ -204,6 +202,8 @@ class Database
      * @param int     $mode
      *
      * @return \array[]|\Generator
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchArray($sql, $bindings = null, $mode = null)
     {
@@ -216,6 +216,8 @@ class Database
      * @param int    $mode
      *
      * @return \array[]|\Generator
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchAssoc($sql, $bindings = null, $mode = null)
     {
@@ -229,6 +231,8 @@ class Database
      * @param int    $mode
      *
      * @return \Generator|mixed
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchCallback($sql, $bindings = null, $callback = null, $mode = null)
     {
@@ -242,6 +246,8 @@ class Database
      * @param int    $mode
      *
      * @return array|\Generator
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchColumn($sql, $bindings = null, $index = 1, $mode = null)
     {
@@ -255,7 +261,8 @@ class Database
      * @param int    $mode
      *
      * @return \array[]|\Generator
-     * @throws \nightlinus\OracleDb\Exception
+     * @throws Driver\Exception
+     * @throws Exception
      */
     public function fetchMap($sql, $bindings = null, $mapIndex = 1, $mode = null)
     {
@@ -267,6 +274,8 @@ class Database
      * @param array  $bindings
      *
      * @return \array[]|\Generator
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchObject($sql, $bindings = null)
     {
@@ -279,6 +288,8 @@ class Database
      * @param int    $mode
      *
      * @return \array[]
+     * @throws Exception
+     * @throws Driver\Exception
      */
     public function fetchOne($sql, $bindings = null, $mode = null)
     {
@@ -293,6 +304,7 @@ class Database
      *
      * @return array|\Generator
      * @throws \nightlinus\OracleDb\Exception
+     * @throws Driver\Exception
      */
     public function fetchPairs($sql, $bindings = null, $firstCol = 1, $secondCol = 2)
     {
@@ -306,6 +318,7 @@ class Database
      *
      * @return string
      * @throws \nightlinus\OracleDb\Exception
+     * @throws Driver\Exception
      */
     public function fetchValue($sql, $bindings = null, $index = 1)
     {
@@ -335,13 +348,13 @@ class Database
      *
      * @return string
      * @throws Driver\Exception
+     * @throws Exception
      */
     public function getServerVersion()
     {
         $this->connect();
-        $version = $this->driver->getServerVersion($this->connection);
 
-        return $version;
+        return $this->driver->getServerVersion($this->connection);
     }
 
     /**
@@ -352,6 +365,7 @@ class Database
      *
      * @return Statement
      * @throws Driver\Exception
+     * @throws Exception
      */
     public function prepare($sqlText)
     {
@@ -372,6 +386,9 @@ class Database
      *
      * @return Statement
      * @throws Exception
+     * @throws Driver\Exception
+     * @throws Driver\Exception
+     * @throws Driver\Exception
      */
     public function query($sqlText, $bindings = null, $mode = null)
     {
@@ -398,7 +415,7 @@ class Database
      * Rollback changes within session
      *
      * @return $this
-     * @throws Exception
+     * @throws Driver\Exception
      */
     public function rollback()
     {
@@ -418,7 +435,7 @@ class Database
     public function runScript($scriptText)
     {
         $queries = explode(';', $scriptText);
-        $exceptions = [ ];
+        $exceptions = [];
         $exceptionMessage = '';
         foreach ($queries as $query) {
             try {
@@ -455,7 +472,7 @@ class Database
      * handlers
      *
      * @return $this
-     * @throws Exception
+     * @throws Driver\Exception
      */
     private function disconnect()
     {
@@ -467,6 +484,9 @@ class Database
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     private function setupBeforeConnect()
     {
         $class = $this->config(Config::SESSION_CLASS);
@@ -474,6 +494,10 @@ class Database
         $this->session->setupBeforeConnect();
     }
 
+    /**
+     * @throws Driver\Exception
+     * @throws Exception
+     */
     private function setupAfterConnect()
     {
         $sql = $this->session->apply($this->getConnection());
