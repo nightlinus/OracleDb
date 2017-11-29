@@ -129,20 +129,22 @@ class Statement implements \IteratorAggregate
         Database $db,
         AbstractDriver $driver,
         Profiler $profiler,
-        $returnType,
-        $autoCommit
+        int $returnType,
+        bool $autoCommit
     ) {
         $this->queryString = $queryString;
         $this->db = $db;
         $this->driver = $driver;
         $this->profiler = $profiler;
-        $this->state = StatementState::freed();
+        $this->state = StatementState::initialize();
         $this->returnType = $returnType;
-        $this->defaultMode = (bool) $autoCommit ? $driver::EXECUTE_AUTO_COMMIT : $driver::EXECUTE_NO_AUTO_COMMIT;
+        $this->defaultMode = $autoCommit ? $driver::EXECUTE_AUTO_COMMIT : $driver::EXECUTE_NO_AUTO_COMMIT;
     }
 
     /**
      * Class destructor called on script exit;
+     *
+     * @throws Exception
      */
     public function __destruct()
     {
@@ -163,9 +165,9 @@ class Statement implements \IteratorAggregate
      * @return $this
      * @throws Exception
      */
-    public function bind($bindings)
+    public function bind(array $bindings)
     {
-        if (!is_array($bindings) || count($bindings) === 0) {
+        if (\count($bindings) === 0) {
             return $this;
         }
         $this->bindings = [];
@@ -213,6 +215,7 @@ class Statement implements \IteratorAggregate
      * @param int        $type
      *
      * @return $this
+     * @throws Exception
      */
     public function bindColumn($column, &$variable, $type = null)
     {
@@ -226,6 +229,7 @@ class Statement implements \IteratorAggregate
      * @param $value
      *
      * @return $this
+     * @throws Exception
      */
     public function bindValue($name, $value)
     {
@@ -261,6 +265,7 @@ class Statement implements \IteratorAggregate
      * Needed here for convinient method chaining.
      *
      * @return Database
+     * @throws Exception
      */
     public function commit()
     {
@@ -272,6 +277,8 @@ class Statement implements \IteratorAggregate
      * count of affected rows from other stetement types
      *
      * @return int
+     * @throws Exception
+     * @throws \nightlinus\OracleDb\Exception
      */
     public function count()
     {
@@ -290,6 +297,7 @@ class Statement implements \IteratorAggregate
      * Method to get full statement description for each field
      *
      * @return array[]
+     * @throws Exception
      */
     public function describe()
     {
@@ -348,6 +356,7 @@ class Statement implements \IteratorAggregate
      *                     or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
      * @return array[] | \Generator
+     * @throws Exception
      */
     public function fetchArray($mode = null)
     {
@@ -364,6 +373,7 @@ class Statement implements \IteratorAggregate
      *                     or both OCI_ASSOC or OCI_ALL, OCI_NUM
      *
      * @return array[] | \Generator
+     * @throws Exception
      */
     public function fetchAssoc($mode = null)
     {
@@ -377,6 +387,7 @@ class Statement implements \IteratorAggregate
      * @param int      $mode
      *
      * @return \Generator|mixed
+     * @throws Exception
      */
     public function fetchCallback(callable $callback, $mode = null)
     {
@@ -409,6 +420,7 @@ class Statement implements \IteratorAggregate
      * @param int        $mode
      *
      * @return array | \Generator
+     * @throws Exception
      */
     public function fetchColumn($column = 1, $mode = null)
     {
@@ -462,6 +474,7 @@ class Statement implements \IteratorAggregate
      * Fetch data from statement to the php object
      *
      * @return array[] | \Generator
+     * @throws Exception
      */
     public function fetchObject()
     {
@@ -551,6 +564,8 @@ class Statement implements \IteratorAggregate
 
     /**
      * Method for free statement resource
+     *
+     * @throws Exception
      */
     public function free()
     {
@@ -579,8 +594,9 @@ class Statement implements \IteratorAggregate
      *
      * @return FieldDescription
      * @trows \InvalidArgumentException
+     * @throws Exception
      */
-    public function getFieldDescription($index)
+    public function getFieldDescription($index): FieldDescription
     {
         $this->executeDescribe();
         $index = (int) $index;
@@ -604,12 +620,11 @@ class Statement implements \IteratorAggregate
      * @return int
      * @throws Exception
      */
-    public function getFieldNumber()
+    public function getFieldNumber(): int
     {
         $this->executeDescribe();
-        $result = $this->driver->getFieldNumber($this->resource);
 
-        return $result;
+        return $this->driver->getFieldNumber($this->resource);
     }
 
     /**
@@ -617,6 +632,7 @@ class Statement implements \IteratorAggregate
      *
      * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
      * @return \Iterator An instance of an object implementing <b>Iterator</b>
+     * @throws Exception
      */
     public function getIterator()
     {
@@ -644,9 +660,8 @@ class Statement implements \IteratorAggregate
     public function getType()
     {
         $this->prepare();
-        $type = $this->driver->getStatementType($this->resource);
 
-        return $type;
+        return $this->driver->getStatementType($this->resource);
     }
 
     /**
@@ -706,6 +721,7 @@ class Statement implements \IteratorAggregate
      * Needed here for convinient method chaining.
      *
      * @return Database
+     * @throws Exception
      */
     public function rollback()
     {
@@ -734,6 +750,7 @@ class Statement implements \IteratorAggregate
      * @param HostVariable $variable
      *
      * @return HostVariable
+     * @throws Exception
      */
     private function transformHostVariable(HostVariable $variable)
     {
@@ -751,6 +768,7 @@ class Statement implements \IteratorAggregate
 
     /**
      * @return \nightlinus\OracleDb\Driver\AbstractDriver
+     * @throws Exception
      */
     private function executeDescribe()
     {

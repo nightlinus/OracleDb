@@ -10,6 +10,7 @@
  * @version
  * @link
  */
+
 namespace nightlinus\OracleDb\Statement;
 
 class StatementState
@@ -17,12 +18,12 @@ class StatementState
     /**
      * List of statement states
      */
-    const FREED     = 0x00;
-    const PREPARED  = 0x01;
-    const DESCRIBED = 0x04;
-    const EXECUTED  = 0x08;
-    const FETCHING  = 0x10;
-    const FETCHED   = 0x02;
+    private const FREED = 0x00;
+    private const PREPARED = 0x01;
+    private const DESCRIBED = 0x04;
+    private const EXECUTED = 0x08;
+    private const FETCHING = 0x10;
+    private const FETCHED = 0x02;
 
     /**
      * @var int
@@ -33,41 +34,46 @@ class StatementState
     {
     }
 
-
-    public static function described()
-    {
-        return self::in(self::DESCRIBED);
-    }
-
-    public static function executed()
-    {
-        return self::in(self::EXECUTED);
-    }
-
-    public static function fetched()
-    {
-        return self::in(self::FETCHED);
-    }
-
-    public static function fetching()
-    {
-        return self::in(self::FETCHING);
-    }
-
-    public static function freed()
-    {
-        return self::in(self::FREED);
-    }
-
-    public static function in($state = self::FREED)
+    public static function in(string $state): self
     {
         $inst = new self();
         $inst->state = $state;
 
-        return new self($state);
+        return new self();
     }
 
-    public static function prepared()
+    public static function initialize(): self
+    {
+        return self::in(self::FREED);
+    }
+
+
+    public function described()
+    {
+        return self::in(self::DESCRIBED);
+    }
+
+    public function executed()
+    {
+        return self::in(self::EXECUTED);
+    }
+
+    public function fetched()
+    {
+        return self::in(self::FETCHED);
+    }
+
+    public function fetching()
+    {
+        return self::in(self::FETCHING);
+    }
+
+    public function freed()
+    {
+        return self::in(self::FREED);
+    }
+
+    public function prepared()
     {
         return self::in(self::PREPARED);
     }

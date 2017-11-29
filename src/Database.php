@@ -201,11 +201,11 @@ class Database
      * @param array   $bindings
      * @param int     $mode
      *
-     * @return \array[]|\Generator
+     * @return iterable|iterable[]
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchArray($sql, $bindings = null, $mode = null)
+    public function fetchArray($sql, $bindings = null, $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchArray($mode);
     }
@@ -215,11 +215,11 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return \array[]|\Generator
+     * @return iterable|iterable[]
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchAssoc($sql, $bindings = null, $mode = null)
+    public function fetchAssoc($sql, $bindings = null, $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchAssoc($mode);
     }
@@ -245,11 +245,11 @@ class Database
      * @param int    $index
      * @param int    $mode
      *
-     * @return array|\Generator
+     * @return iterable
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchColumn($sql, $bindings = null, $index = 1, $mode = null)
+    public function fetchColumn($sql, $bindings = null, $index = 1, $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchColumn($index, $mode);
     }
@@ -260,11 +260,11 @@ class Database
      * @param int    $mapIndex
      * @param int    $mode
      *
-     * @return \array[]|\Generator
+     * @return iterable|iterable[]
      * @throws Driver\Exception
      * @throws Exception
      */
-    public function fetchMap($sql, $bindings = null, $mapIndex = 1, $mode = null)
+    public function fetchMap($sql, $bindings = null, $mapIndex = 1, $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchMap($mapIndex, $mode);
     }
@@ -273,11 +273,11 @@ class Database
      * @param string $sql
      * @param array  $bindings
      *
-     * @return \array[]|\Generator
+     * @return iterable
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchObject($sql, $bindings = null)
+    public function fetchObject($sql, $bindings = null): iterable
     {
         return $this->query($sql, $bindings)->fetchObject();
     }
@@ -287,11 +287,11 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return \array[]
+     * @return array
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchOne($sql, $bindings = null, $mode = null)
+    public function fetchOne($sql, $bindings = null, $mode = null): array
     {
         return $this->query($sql, $bindings)->fetchOne($mode);
     }
@@ -302,11 +302,11 @@ class Database
      * @param int    $firstCol
      * @param int    $secondCol
      *
-     * @return array|\Generator
+     * @return iterable
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
-    public function fetchPairs($sql, $bindings = null, $firstCol = 1, $secondCol = 2)
+    public function fetchPairs($sql, $bindings = null, $firstCol = 1, $secondCol = 2): iterable
     {
         return $this->query($sql, $bindings)->fetchPairs($firstCol, $secondCol);
     }
@@ -316,11 +316,11 @@ class Database
      * @param array  $bindings
      * @param int    $index
      *
-     * @return string
+     * @return string|null
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
-    public function fetchValue($sql, $bindings = null, $index = 1)
+    public function fetchValue($sql, $bindings = null, $index = 1): ?string
     {
         return $this->query($sql, $bindings)->fetchValue($index);
     }
@@ -338,7 +338,7 @@ class Database
     /**
      * @return Driver\AbstractDriver
      */
-    public function getDriver()
+    public function getDriver(): AbstractDriver
     {
         return $this->driver;
     }
@@ -350,7 +350,7 @@ class Database
      * @throws Driver\Exception
      * @throws Exception
      */
-    public function getServerVersion()
+    public function getServerVersion(): string
     {
         $this->connect();
 
@@ -367,7 +367,7 @@ class Database
      * @throws Driver\Exception
      * @throws Exception
      */
-    public function prepare($sqlText)
+    public function prepare($sqlText): Statement
     {
         $this->connect();
         $statement = $this->statementFactory->make($sqlText, $this);
@@ -387,10 +387,8 @@ class Database
      * @return Statement
      * @throws Exception
      * @throws Driver\Exception
-     * @throws Driver\Exception
-     * @throws Driver\Exception
      */
-    public function query($sqlText, $bindings = null, $mode = null)
+    public function query($sqlText, $bindings = null, $mode = null): Statement
     {
         $statement = $this->prepare($sqlText);
         $statement->bind($bindings);
@@ -460,9 +458,9 @@ class Database
     /**
      * Get current Oracle client version
      *
-     * @return mixed
+     * @return string
      */
-    public function version()
+    public function version(): string
     {
         return $this->driver->getClientVersion();
     }
@@ -487,7 +485,7 @@ class Database
     /**
      * @throws Exception
      */
-    private function setupBeforeConnect()
+    private function setupBeforeConnect(): void
     {
         $class = $this->config(Config::SESSION_CLASS);
         $this->session = is_string($class) ? new $class($this) : $class;
@@ -498,7 +496,7 @@ class Database
      * @throws Driver\Exception
      * @throws Exception
      */
-    private function setupAfterConnect()
+    private function setupAfterConnect(): void
     {
         $sql = $this->session->apply($this->getConnection());
         $this->query($sql);
