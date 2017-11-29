@@ -26,33 +26,31 @@ use nightlinus\OracleDb\Profiler\Profiler;
  */
 class Statement implements \IteratorAggregate
 {
-
-
     /**
      * Describe what fetch function shoud be used
      */
-    const FETCH_ARRAY = 1;
-    const FETCH_ASSOC = 2;
-    const FETCH_BOTH = 3;
-    const FETCH_OBJ = 4;
+    public const FETCH_ARRAY = 1;
+    public const FETCH_ASSOC = 2;
+    public const FETCH_BOTH = 3;
+    public const FETCH_OBJ = 4;
 
-    const RETURN_ARRAY = 1;
-    const RETURN_ITERATOR = 0;
+    public const RETURN_ARRAY = 1;
+    public const RETURN_ITERATOR = 0;
 
     /**
      * List of statement types
      */
-    const TYPE_ALTER = 'ALTER';
-    const TYPE_BEGIN = 'BEGIN';
-    const TYPE_CALL = 'CALL';
-    const TYPE_CREATE = 'CREATE';
-    const TYPE_DECLARE = 'DECLARE';
-    const TYPE_DELETE = 'DELETE';
-    const TYPE_DROP = 'DROP';
-    const TYPE_INSERT = 'INSERT';
-    const TYPE_SELECT = 'SELECT';
-    const TYPE_UNKNOWN = 'UNKNOWN';
-    const TYPE_UPDATE = 'UPDATE';
+    public const TYPE_ALTER = 'ALTER';
+    public const TYPE_BEGIN = 'BEGIN';
+    public const TYPE_CALL = 'CALL';
+    public const TYPE_CREATE = 'CREATE';
+    public const TYPE_DECLARE = 'DECLARE';
+    public const TYPE_DELETE = 'DELETE';
+    public const TYPE_DROP = 'DROP';
+    public const TYPE_INSERT = 'INSERT';
+    public const TYPE_SELECT = 'SELECT';
+    public const TYPE_UNKNOWN = 'UNKNOWN';
+    public const TYPE_UPDATE = 'UPDATE';
 
     /**
      * array that contains all
