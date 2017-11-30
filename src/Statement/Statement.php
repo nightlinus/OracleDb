@@ -339,7 +339,7 @@ class Statement implements \IteratorAggregate
      *
      * @return array
      */
-    public function fetchAll($skip, $maxRows, $mode)
+    public function fetchAll($skip, $maxRows, $mode): iterable
     {
         $result = $this->driver->fetchAll($this->resource, $skip, $maxRows, $mode);
         $this->state = $this->state->fetched();
@@ -358,9 +358,9 @@ class Statement implements \IteratorAggregate
      * @return array[] | \Generator
      * @throws Exception
      */
-    public function fetchArray($mode = null)
+    public function fetchArray($mode = null): iterable
     {
-        return $this->getResultObject(null, self::FETCH_ARRAY, $mode);
+        return $this->result(null, self::FETCH_ARRAY, $mode);
     }
 
     /**
@@ -375,9 +375,9 @@ class Statement implements \IteratorAggregate
      * @return array[] | \Generator
      * @throws Exception
      */
-    public function fetchAssoc($mode = null)
+    public function fetchAssoc($mode = null): iterable
     {
-        return $this->getResultObject(null, self::FETCH_ASSOC, $mode);
+        return $this->result(null, self::FETCH_ASSOC, $mode);
     }
 
     /**
@@ -389,7 +389,7 @@ class Statement implements \IteratorAggregate
      * @return \Generator|mixed
      * @throws Exception
      */
-    public function fetchCallback(callable $callback, $mode = null)
+    public function fetchCallback(callable $callback, $mode = null): iterable
     {
         $fetchCallback = function (CallbackResult $result, $item, $index) use ($callback) {
             $cbResult = $callback($item, $index);
@@ -408,7 +408,7 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($fetchCallback, self::FETCH_ASSOC, $mode);
+        return $this->result($fetchCallback, self::FETCH_ASSOC, $mode);
     }
 
     /**
@@ -422,7 +422,7 @@ class Statement implements \IteratorAggregate
      * @return array | \Generator
      * @throws Exception
      */
-    public function fetchColumn($column = 1, $mode = null)
+    public function fetchColumn($column = 1, $mode = null): iterable
     {
         if (is_numeric($column)) {
             $fetchMode = self::FETCH_ARRAY;
@@ -438,7 +438,7 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($callback, $fetchMode, $mode);
+        return $this->result($callback, $fetchMode, $mode);
     }
 
     /**
@@ -448,7 +448,7 @@ class Statement implements \IteratorAggregate
      * @throws Exception
      * @return \Generator|array[]
      */
-    public function fetchMap($mapIndex = 1, $mode = null)
+    public function fetchMap($mapIndex = 1, $mode = null): iterable
     {
         if (is_numeric($mapIndex)) {
             if ($mapIndex < 1) {
@@ -467,7 +467,7 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($callback, $fetchMode, $mode);
+        return $this->result($callback, $fetchMode, $mode);
     }
 
     /**
@@ -476,9 +476,9 @@ class Statement implements \IteratorAggregate
      * @return array[] | \Generator
      * @throws Exception
      */
-    public function fetchObject()
+    public function fetchObject(): iterable
     {
-        return $this->getResultObject(null, self::FETCH_OBJ);
+        return $this->result(null, self::FETCH_OBJ);
     }
 
     /**
@@ -486,15 +486,15 @@ class Statement implements \IteratorAggregate
      *
      * @param int $mode
      *
-     * @return \array[]
+     * @return iterable
      * @throws Exception
      */
-    public function fetchOne($mode = null)
+    public function fetchOne($mode = null): iterable
     {
         $result = $this->tupleGenerator(null, self::FETCH_BOTH, $mode)->current();
         $this->state = $this->state->fetched();
 
-        return $result;
+        return (array) $result;
     }
 
     /**
@@ -509,7 +509,7 @@ class Statement implements \IteratorAggregate
      * @throws Exception
      * @return array | \Generator
      */
-    public function fetchPairs($firstCol = 1, $secondCol = 2)
+    public function fetchPairs($firstCol = 1, $secondCol = 2): iterable
     {
         if (is_numeric($firstCol) && is_numeric($secondCol)) {
             if ($firstCol < 1 || $secondCol < 1) {
@@ -530,7 +530,7 @@ class Statement implements \IteratorAggregate
             return $result;
         };
 
-        return $this->getResultObject($callback, $mode);
+        return $this->result($callback, $mode);
     }
 
     /**
@@ -542,9 +542,9 @@ class Statement implements \IteratorAggregate
      *                          to fetch value from
      *
      * @throws Exception
-     * @return string
+     * @return string|null
      */
-    public function fetchValue($index = 1)
+    public function fetchValue($index = 1): ?string
     {
         if (is_numeric($index)) {
             if ($index < 1) {
@@ -852,10 +852,10 @@ class Statement implements \IteratorAggregate
      * @param $fetchMode
      * @param $mode
      *
-     * @return \Generator|mixed
+     * @return iterable
      * @throws Exception
      */
-    private function getResultObject($callback, $fetchMode, $mode = null)
+    private function result($callback, $fetchMode, $mode = null): iterable
     {
         $result = $this->tupleGenerator($callback, $fetchMode, $mode);
         if (self::RETURN_ITERATOR !== $this->returnType) {
