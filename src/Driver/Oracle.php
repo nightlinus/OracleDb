@@ -501,7 +501,7 @@ class Oracle extends AbstractDriver
     public function quote($variable)
     {
         if (!is_array($variable)) {
-            str_replace("'", "''", $variable);
+            $variable = str_replace("'", "''", $variable);
             $variable = "'" . $variable . "'";
         } else {
             foreach ($variable as &$var) {
