@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection MoreThanThreeArgumentsInspection */
+
 /**
  * Class that include database functions and configuration
  *
@@ -11,13 +12,13 @@
 
 namespace nightlinus\OracleDb;
 
+use Generator;
 use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Statement\HostVariable;
 use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementFactory;
 use nightlinus\OracleDb\Utills\Alias;
 use function is_string;
-use function spl_object_hash;
 use const PHP_EOL;
 
 class Database
@@ -226,7 +227,7 @@ class Database
      * @param null   $callback
      * @param int    $mode
      *
-     * @return \Generator|mixed
+     * @return Generator|mixed
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -322,6 +323,94 @@ class Database
     }
 
     /**
+     * @param  string $sql
+     * @param array   $bindings
+     * @param int     $mode
+     *
+     * @return iterable|iterable[]
+     * @throws Exception
+     * @throws Driver\Exception
+     */
+    public function yieldArray($sql, array $bindings = [], $mode = null): iterable
+    {
+        return $this->queryGenerator($sql, $bindings)->fetchArray($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
+     *
+     * @return iterable|iterable[]
+     * @throws Exception
+     * @throws Driver\Exception
+     */
+    public function yieldAssoc($sql, array $bindings = [], $mode = null): iterable
+    {
+        return $this->queryGenerator($sql, $bindings)->fetchAssoc($mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $index
+     * @param int    $mode
+     *
+     * @return iterable
+     * @throws Exception
+     * @throws Driver\Exception
+     */
+    public function yieldColumn($sql, array $bindings = [], $index = 1, $mode = null): iterable
+    {
+        return $this->queryGenerator($sql, $bindings)->fetchColumn($index, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $firstCol
+     * @param int    $secondCol
+     *
+     * @return iterable
+     * @throws \nightlinus\OracleDb\Exception
+     * @throws Driver\Exception
+     */
+    public function yieldPairs($sql, array $bindings = [], $firstCol = 1, $secondCol = 2): iterable
+    {
+        return $this->queryGenerator($sql, $bindings)->fetchPairs($firstCol, $secondCol);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mapIndex
+     * @param int    $mode
+     *
+     * @return iterable|iterable[]
+     * @throws Driver\Exception
+     * @throws Exception
+     */
+    public function yieldMap($sql, array $bindings = [], $mapIndex = 1, $mode = null): iterable
+    {
+        return $this->queryGenerator($sql, $bindings)->fetchMap($mapIndex, $mode);
+    }
+
+    /**
+     * @param string $sql
+     * @param array  $bindings
+     * @param null   $callback
+     * @param int    $mode
+     *
+     * @return iterable
+     * @throws Exception
+     * @throws Driver\Exception
+     */
+    public function yieldCallback($sql, array $bindings = [], $callback = null, $mode = null): iterable
+    {
+        return $this->queryGenerator($sql, $bindings)->fetchCallback($callback, $mode);
+    }
+
+    /**
      * Function to access current connection
      *
      * @return resource
@@ -387,6 +476,28 @@ class Database
     public function query(string $sqlText, array $bindings = [], $mode = null): Statement
     {
         $statement = $this->prepare($sqlText);
+        $statement->bind($bindings);
+        $statement->execute($mode);
+
+        return $statement;
+    }
+
+    /**
+     * Shortcut method to prepare and fetch
+     * generator statement.
+     *
+     * @param string     $sqlText
+     * @param array|null $bindings
+     * @param null       $mode
+     *
+     * @return Statement
+     * @throws Exception
+     * @throws Driver\Exception
+     */
+    private function queryGenerator(string $sqlText, array $bindings = [], $mode = null): Statement
+    {
+        $statement = $this->prepare($sqlText);
+        $statement->retutnIterator();
         $statement->bind($bindings);
         $statement->execute($mode);
 
@@ -496,6 +607,6 @@ class Database
     {
         $sql = $this->session->apply($this->getConnection());
         $statement = $this->query($sql);
-        //$statement->free();
+        $statement->free();
     }
 }

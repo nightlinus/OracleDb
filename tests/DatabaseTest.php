@@ -15,7 +15,7 @@ use nightlinus\OracleDb\Database;
 use nightlinus\OracleDb\DatabaseFactory;
 use PHPUnit\Framework\TestCase;
 use function getenv;
-use const PHP_EOL;
+use function iterator_to_array;
 
 class DatabaseTest extends TestCase
 {
@@ -89,11 +89,279 @@ class DatabaseTest extends TestCase
         $this->assertNotEquals($expected, $actual);
     }
 
+    /**
+     * @test
+     */
+    public function it_binds_variables()
+    {
+        $sut = $this->sut();
+        $sql = "SELECT :0, :1 FROM DUAL";
+
+        $actual = $sut->fetchArray($sql, [ '23', 'xyz' ]);
+
+        $this->assertEquals([ [ '23', 'xyz' ] ], $actual);
+    }
+
+    /**
+     * @test
+     */
+    public function it_fetch_assoc()
+    {
+        $sut = $this->sut();
+        $actual = $sut->fetchAssoc($this->testSql());
+        $this->assertInternalType('array', $actual);
+        $this->assertEquals(
+            [
+                [
+                    'TEXT' => 'a',
+                    'IDX' => '1',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'b',
+                    'IDX' => '2',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'c',
+                    'IDX' => '3',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'd',
+                    'IDX' => '4',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'e',
+                    'IDX' => '5',
+                    'CONST' => 'const',
+                ],
+            ],
+            $actual
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_fetch_array()
+    {
+        $sut = $this->sut();
+        $actual = $sut->fetchArray($this->testSql());
+        $this->assertInternalType('array', $actual);
+        $this->assertEquals(
+            [
+                [
+                    'a',
+                    '1',
+                    'const',
+                ],
+                [
+                    'b',
+                    '2',
+                    'const',
+                ],
+                [
+                    'c',
+                    '3',
+                    'const',
+                ],
+                [
+                    'd',
+                    '4',
+                    'const',
+                ],
+                [
+                    'e',
+                    '5',
+                    'const',
+                ],
+            ],
+            $actual
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_fetch_one()
+    {
+        $sut = $this->sut();
+        $actual = $sut->fetchOne($this->testSql());
+        $this->assertInternalType('array', $actual);
+        $this->assertEquals(
+            [
+                'TEXT' => 'a',
+                'IDX' => '1',
+                'CONST' => 'const',
+            ],
+            $actual
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_fetch_value()
+    {
+        $sut = $this->sut();
+        $actual = $sut->fetchValue($this->testSql());
+        $this->assertInternalType('string', $actual);
+        $this->assertEquals('a', $actual);
+    }
+
+    /**
+     * @test
+     */
+    public function it_yields_assoc()
+    {
+        $sut = $this->sut();
+        $actual = $sut->yieldAssoc($this->testSql());
+
+        $this->assertInstanceOf(\Generator::class, $actual);
+        $this->assertEquals(
+            [
+                [
+                    'TEXT' => 'a',
+                    'IDX' => '1',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'b',
+                    'IDX' => '2',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'c',
+                    'IDX' => '3',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'd',
+                    'IDX' => '4',
+                    'CONST' => 'const',
+                ],
+                [
+                    'TEXT' => 'e',
+                    'IDX' => '5',
+                    'CONST' => 'const',
+                ],
+            ],
+            iterator_to_array($actual)
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_yields_array()
+    {
+        $sut = $this->sut();
+        $actual = $sut->yieldArray($this->testSql());
+
+        $this->assertInstanceOf(\Generator::class, $actual);
+        $this->assertEquals(
+            [
+                [
+                    'a',
+                    '1',
+                    'const',
+                ],
+                [
+                    'b',
+                    '2',
+                    'const',
+                ],
+                [
+                    'c',
+                    '3',
+                    'const',
+                ],
+                [
+                    'd',
+                    '4',
+                    'const',
+                ],
+                [
+                    'e',
+                    '5',
+                    'const',
+                ],
+            ],
+            iterator_to_array($actual)
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_yields_column()
+    {
+        $sut = $this->sut();
+        $actual = $sut->yieldColumn($this->testSql());
+
+        $this->assertInstanceOf(\Generator::class, $actual);
+        $this->assertEquals(
+            [
+                'a',
+                'b',
+                'c',
+                'd',
+                'e',
+            ],
+            iterator_to_array($actual)
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_yields_callback()
+    {
+        $sut = $this->sut();
+        $callback = function ($row, $key) {
+            return [ $key => $row[ 'TEXT' ] . $row[ 'IDX' ] ];
+        };
+        $actual = $sut->yieldCallback($this->testSql(), [], $callback);
+
+        $this->assertInstanceOf(\Generator::class, $actual);
+        $this->assertEquals(
+            [
+                'a1',
+                'b2',
+                'c3',
+                'd4',
+                'e5',
+            ],
+            iterator_to_array($actual)
+        );
+    }
+
     private function handlerAsString(Database $sut): string
     {
         $sut->connect();
 
         return (string) $sut->getConnection();
+    }
+
+    private function testSql(): string
+    {
+        return "WITH TEST_DATA (TEXT, IDX, CONST) AS (SELECT
+                           'a',
+                           1,
+                           'const'
+                         FROM DUAL
+                         UNION ALL
+                         SELECT
+                           chr(ascii(TEXT) + 1),
+                           IDX + 1,
+                           'const'
+                         FROM TEST_DATA
+                         WHERE IDX < 5)
+
+                SELECT *
+                FROM TEST_DATA";
     }
 }
 

@@ -337,7 +337,7 @@ class Statement implements \IteratorAggregate
         $this->profileId = $this->profiler->start($this->queryString, $this->bindings);
         $this->driver->execute($this->resource, $mode);
         $this->profiler->end();
-        $this->state = $mode & $driver::EXECUTE_DESCRIBE ? $this->state->described() : $this->state->executed();
+        $this->state = ($mode & $driver::EXECUTE_DESCRIBE) ? $this->state->described() : $this->state->executed();
 
         return $this;
     }
@@ -722,6 +722,21 @@ class Statement implements \IteratorAggregate
     public function retutnIterator()
     {
         $this->returnType = self::RETURN_ITERATOR;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     * Sets return type: array or iteartor
+     *
+     * @param int $returnType
+     *
+     * @return $this
+     */
+    public function setReturnType($returnType)
+    {
+        $this->returnType = $returnType;
 
         return $this;
     }

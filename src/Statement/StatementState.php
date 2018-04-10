@@ -39,7 +39,7 @@ class StatementState
         $inst = new self();
         $inst->state = $state;
 
-        return new self();
+        return $inst;
     }
 
     public static function initialize(): self
