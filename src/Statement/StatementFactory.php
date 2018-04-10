@@ -45,7 +45,6 @@ class StatementFactory
     public function make($queryString, Database $db): Statement
     {
         $statementCacheEnabled = $db->config(Config::STATEMENT_CACHE_ENABLED);
-        $statementCache = null;
         $statement = null;
 
         if ($statementCacheEnabled) {
