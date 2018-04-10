@@ -12,7 +12,6 @@
 
 namespace nightlinus\OracleDb\Statement;
 
-use nightlinus\OracleDb\Database;
 use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Exception;
 use nightlinus\OracleDb\FieldDescription;
@@ -59,13 +58,6 @@ class Statement implements \IteratorAggregate
      * @var array|null
      */
     private $bindings;
-
-    /**
-     * Instance of parent database object
-     *
-     * @var Database
-     */
-    private $db;
 
     /**
      * @var AbstractDriver
@@ -117,8 +109,15 @@ class Statement implements \IteratorAggregate
     private $defaultMode;
 
     /**
+     * Db connection handler
+     *
+     * @var resource
+     */
+    private $connection;
+
+    /**
      * @param string         $queryString sql выражение стейтмента в текстовом виде
-     * @param Database       $db          ссылка на родительский объект базы данных
+     * @param resource       $connection  ссылка на родительский объект базы данных
      * @param AbstractDriver $driver
      * @param Profiler       $profiler
      * @param int            $returnType
@@ -126,14 +125,14 @@ class Statement implements \IteratorAggregate
      */
     public function __construct(
         $queryString,
-        Database $db,
+        &$connection,
         AbstractDriver $driver,
         Profiler $profiler,
         int $returnType,
         bool $autoCommit
     ) {
         $this->queryString = $queryString;
-        $this->db = $db;
+        $this->connection = $connection;
         $this->driver = $driver;
         $this->profiler = $profiler;
         $this->state = StatementState::initialize();
@@ -261,15 +260,16 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Proxy to db commit method
      * Needed here for convinient method chaining.
      *
-     * @return Database
+     * @return self
      * @throws Exception
      */
-    public function commit()
+    public function commit(): self
     {
-        return $this->db->commit();
+        $this->driver->commit($this->getConnection());
+
+        return $this;
     }
 
     /**
@@ -285,7 +285,17 @@ class Statement implements \IteratorAggregate
         $type = $this->getType();
         if (self::TYPE_SELECT === $type && $this->state->isNotFetchedYet()) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
-            $count = $this->db->fetchValue($sql, $this->bindings);
+            $st = new self(
+                $sql,
+                $this->getConnection(),
+                $this->driver,
+                $this->profiler,
+                $this->returnType,
+                $this->defaultMode
+            );
+            $st->bind($this->bindings);
+            $count = $st->fetchValue();
+            $st->free();
         } else {
             $count = $this->getAffectedRowsNumber();
         }
@@ -692,10 +702,10 @@ class Statement implements \IteratorAggregate
 
         if ($this->queryString) {
             // get oci8 statement resource
-            $this->resource = $this->driver->parse($this->db->getConnection(), $this->queryString);
+            $this->resource = $this->driver->parse($this->getConnection(), $this->queryString);
         } else {
             // get new cursor handler if no query provided
-            $this->resource = $this->driver->newCursor($this->db->getConnection());
+            $this->resource = $this->driver->newCursor($this->getConnection());
         }
         $this->state = $this->state->prepared();
 
@@ -717,15 +727,16 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * Proxy to db rollback method.
      * Needed here for convinient method chaining.
      *
-     * @return Database
+     * @return self
      * @throws Exception
      */
-    public function rollback()
+    public function rollback(): self
     {
-        return $this->db->rollback();
+        $this->driver->rollback($this->getConnection());
+
+        return $this;
     }
 
     /**
@@ -900,5 +911,13 @@ class Statement implements \IteratorAggregate
         }
 
         $this->state = $this->state->fetched();
+    }
+
+    /**
+     * @return resource
+     */
+    private function getConnection()
+    {
+        return $this->connection;
     }
 }

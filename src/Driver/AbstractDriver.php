@@ -103,7 +103,7 @@ abstract class AbstractDriver
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    abstract public function disconnect($handle);
+    abstract public function disconnect(&$handle);
 
     /**
      * @param resource $handle

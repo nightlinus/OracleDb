@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection MoreThanThreeArgumentsInspection */
+
 /**
  * Date: 07.10.14
  * Time: 12:50
@@ -12,22 +13,27 @@
 
 namespace nightlinus\OracleDb\Driver;
 
+use stdClass;
+use function in_array;
+use function is_array;
+use function is_resource;
+use function is_string;
+
 /**
  * Class Oracle
  */
 class Oracle extends AbstractDriver
 {
+    public const DEFAULT_FETCH_MODE = OCI_RETURN_NULLS;
 
-    const DEFAULT_FETCH_MODE = OCI_RETURN_NULLS;
+    public const EXECUTE_AUTO_COMMIT = OCI_COMMIT_ON_SUCCESS;
+    public const EXECUTE_DESCRIBE = OCI_DESCRIBE_ONLY;
+    public const EXECUTE_NO_AUTO_COMMIT = OCI_NO_AUTO_COMMIT;
 
-    const EXECUTE_AUTO_COMMIT    = OCI_COMMIT_ON_SUCCESS;
-    const EXECUTE_DESCRIBE       = OCI_DESCRIBE_ONLY;
-    const EXECUTE_NO_AUTO_COMMIT = OCI_NO_AUTO_COMMIT;
+    public const RETURN_LOBS_AS_STRING = OCI_RETURN_LOBS;
+    public const RETURN_NULLS = OCI_RETURN_NULLS;
 
-    const RETURN_LOBS_AS_STRING = OCI_RETURN_LOBS;
-    const RETURN_NULLS          = OCI_RETURN_NULLS;
-
-    const TYPE_CURSOR = OCI_B_CURSOR;
+    public const TYPE_CURSOR = OCI_B_CURSOR;
 
     /**
      * @var array
@@ -165,15 +171,16 @@ class Oracle extends AbstractDriver
 
 
     /**
-     * @param resource $handle
+     * @param resource|null $handle
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function disconnect($handle)
+    public function disconnect(&$handle)
     {
         $result = @oci_close($handle);
         $this->throwExceptionIfFalse($result, $handle);
+        $handle = null;
 
         return $this;
     }
@@ -226,7 +233,7 @@ class Oracle extends AbstractDriver
     public function fetchAll($handle, $skip = 0, $maxrows = -1, $mode = null)
     {
         $mode = $this->addMode($mode, OCI_FETCHSTATEMENT_BY_COLUMN);
-        $result = [ ];
+        $result = [];
         oci_fetch_all($handle, $result, $skip, $maxrows, $mode);
 
         return $result;
@@ -262,7 +269,7 @@ class Oracle extends AbstractDriver
     /**
      * @param resource $handle
      *
-     * @return object
+     * @return stdClass
      */
     public function fetchObject($handle)
     {
@@ -270,7 +277,7 @@ class Oracle extends AbstractDriver
     }
 
     /**
-     * @param resource $handle
+     * @param resource|null $handle
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
@@ -301,7 +308,7 @@ class Oracle extends AbstractDriver
     /**
      * @return string
      */
-    public function getClientVersion()
+    public function getClientVersion(): string
     {
         return oci_client_version();
     }
@@ -311,7 +318,7 @@ class Oracle extends AbstractDriver
      *
      * @return array
      */
-    public function getError($handle = null)
+    public function getError($handle = null): array
     {
         $error = is_resource($handle) ? oci_error($handle) : oci_error();
         if (!$error) {
@@ -328,7 +335,7 @@ class Oracle extends AbstractDriver
      * @return string
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldName($handle, $index)
+    public function getFieldName($handle, $index): string
     {
         $result = @oci_field_name($handle, $index);
         $this->throwExceptionIfFalse($result, $handle);
@@ -342,7 +349,7 @@ class Oracle extends AbstractDriver
      * @return int
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function getFieldNumber($handle)
+    public function getFieldNumber($handle): int
     {
         $result = @oci_num_fields($handle);
         $this->throwExceptionIfFalse($result, $handle);
@@ -458,9 +465,9 @@ class Oracle extends AbstractDriver
      *
      * @return bool
      */
-    public function isExecuteMode($mode)
+    public function isExecuteMode($mode): bool
     {
-        return array_search($mode, $this->executeModes, true) !== false;
+        return in_array($mode, $this->executeModes, true);
     }
 
     /**
@@ -486,7 +493,6 @@ class Oracle extends AbstractDriver
      */
     public function parse($handle, $query)
     {
-
         $result = oci_parse($handle, $query);
         $this->throwExceptionIfFalse($result, $handle);
 
@@ -498,14 +504,18 @@ class Oracle extends AbstractDriver
      *
      * @return string
      */
-    public function quote($variable)
+    public function quote($variable): string
     {
-        if (!is_array($variable)) {
+        if (is_string($variable)) {
             $variable = str_replace("'", "''", $variable);
             $variable = "'" . $variable . "'";
-        } else {
-            foreach ($variable as &$var) {
-                $var = $this->quote($var);
+
+            return $variable;
+        }
+
+        if (is_array($variable)) {
+            foreach ($variable as $key => $var) {
+                $variable[ $key ] = $this->quote($var);
             }
 
             $variable = implode(',', $variable);

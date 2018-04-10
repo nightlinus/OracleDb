@@ -3,13 +3,13 @@
  * Date: 02.12.15
  * Time: 15:38
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
+
 namespace nightlinus\OracleDb\Statement;
 
 use nightlinus\OracleDb\Config;
@@ -34,13 +34,6 @@ class StatementFactory
      */
     private $profiler;
 
-    /**
-     * StatementFactory constructor.
-     *
-     * @param StatementCache  $cache
-     * @param  AbstractDriver $driver
-     * @param  Profiler       $profiler
-     */
     public function __construct(StatementCache $cache, AbstractDriver $driver, Profiler $profiler)
     {
         $this->cache = $cache;
@@ -49,7 +42,7 @@ class StatementFactory
     }
 
 
-    public function make($queryString, Database $db)
+    public function make($queryString, Database $db): Statement
     {
         $statementCacheEnabled = $db->config(Config::STATEMENT_CACHE_ENABLED);
         $statementCache = null;
@@ -59,9 +52,10 @@ class StatementFactory
             $statement = $this->cache->get($queryString);
         }
 
+        $connection = $db->getConnection();
         $statement = $statement ?: new Statement(
             $queryString,
-            $db,
+            $connection,
             $this->driver,
             $this->profiler,
             $db->config(Config::STATEMENT_RETURN_TYPE),

@@ -12,6 +12,7 @@
  */
 namespace nightlinus\OracleDb;
 
+use function is_string;
 use nightlinus\OracleDb\Profiler\DisabledProfiler;
 use nightlinus\OracleDb\Statement\StatementFactory;
 
@@ -50,18 +51,16 @@ class DatabaseFactory
     private static function makeDriver(Config $config)
     {
         $driverClass = $config->get(Config::DRIVER_CLASS);
-        $driver = is_string($driverClass) ? new $driverClass() : $driverClass;
 
-        return $driver;
+        return is_string($driverClass) ? new $driverClass() : $driverClass;
     }
 
     private static function makeStatementCache(Config $config)
     {
         $class = $config->get(Config::STATEMENT_CACHE_CLASS);
         $cacheSize = $config->get(Config::STATEMENT_CACHE_SIZE);
-        $cache = is_string($class) ? new $class($cacheSize) : $class;
 
-        return $cache;
+        return is_string($class) ? new $class($cacheSize) : $class;
     }
 
     private static function make(Config $config)
@@ -72,6 +71,6 @@ class DatabaseFactory
 
         $factory = new StatementFactory($cache, $driver, $profiler);
 
-        return new Database($factory, $config, $driver, $profiler);
+        return new Database($factory, $config, $driver);
     }
 }

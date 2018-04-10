@@ -12,19 +12,16 @@
 namespace nightlinus\OracleDb;
 
 use nightlinus\OracleDb\Driver\AbstractDriver;
-use nightlinus\OracleDb\Profiler\Profiler;
 use nightlinus\OracleDb\Statement\HostVariable;
 use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementFactory;
 use nightlinus\OracleDb\Utills\Alias;
+use function is_string;
+use function spl_object_hash;
+use const PHP_EOL;
 
 class Database
 {
-    /**
-     * @var Profiler
-     */
-    private $profiler;
-
     /**
      * Configuration storage
      *
@@ -55,22 +52,21 @@ class Database
     public function __construct(
         StatementFactory $statementFactory,
         Config $config,
-        AbstractDriver $driver,
-        Profiler $profiler
+        AbstractDriver $driver
     ) {
         $this->configuration = $config;
         $this->driver = $driver;
         $this->statementFactory = $statementFactory;
-        $this->profiler = $profiler;
     }
 
     /**
-     *  Освобождаем ресурсы в деструкторе
+     * Освобождаем ресурсы в деструкторе
      *
      * @throws Driver\Exception
      */
     public function __destruct()
     {
+        $this->statementFactory = null;
         $this->disconnect();
     }
 
@@ -84,7 +80,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function call($sqlText, $returnSize = 4000, $bindings = null, $mode = null)
+    public function call($sqlText, $returnSize = 4000, array $bindings = [], $mode = null)
     {
         $return = null;
         $returnName = null;
@@ -105,7 +101,7 @@ class Database
      * @return $this
      * @throws Driver\Exception
      */
-    public function commit()
+    public function commit(): self
     {
         $this->driver->commit($this->connection);
 
@@ -136,7 +132,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function connect()
+    public function connect(): self
     {
         if ($this->connection) {
             return $this;
@@ -171,7 +167,7 @@ class Database
      * @throws Driver\Exception
      * @throws Exception
      */
-    public function count($sql, $bindings = null)
+    public function count($sql, array $bindings = [])
     {
         $statement = $this->prepare($sql);
         $statement->bind($bindings);
@@ -191,7 +187,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchAll($sql, $bindings = null, $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
+    public function fetchAll($sql, array $bindings = [], $skip = 0, $maxRows = -1, $mode = OCI_FETCHSTATEMENT_BY_COLUMN)
     {
         return $this->query($sql, $bindings)->fetchAll($skip, $maxRows, $mode);
     }
@@ -205,7 +201,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchArray($sql, $bindings = null, $mode = null): iterable
+    public function fetchArray($sql, array $bindings = [], $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchArray($mode);
     }
@@ -219,7 +215,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchAssoc($sql, $bindings = null, $mode = null): iterable
+    public function fetchAssoc($sql, array $bindings = [], $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchAssoc($mode);
     }
@@ -234,7 +230,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchCallback($sql, $bindings = null, $callback = null, $mode = null)
+    public function fetchCallback($sql, array $bindings = [], $callback = null, $mode = null)
     {
         return $this->query($sql, $bindings)->fetchCallback($callback, $mode);
     }
@@ -249,7 +245,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchColumn($sql, $bindings = null, $index = 1, $mode = null): iterable
+    public function fetchColumn($sql, array $bindings = [], $index = 1, $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchColumn($index, $mode);
     }
@@ -264,7 +260,7 @@ class Database
      * @throws Driver\Exception
      * @throws Exception
      */
-    public function fetchMap($sql, $bindings = null, $mapIndex = 1, $mode = null): iterable
+    public function fetchMap($sql, array $bindings = [], $mapIndex = 1, $mode = null): iterable
     {
         return $this->query($sql, $bindings)->fetchMap($mapIndex, $mode);
     }
@@ -277,7 +273,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchObject($sql, $bindings = null): iterable
+    public function fetchObject($sql, array $bindings = []): iterable
     {
         return $this->query($sql, $bindings)->fetchObject();
     }
@@ -291,7 +287,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function fetchOne($sql, $bindings = null, $mode = null): array
+    public function fetchOne($sql, array $bindings = [], $mode = null): array
     {
         return $this->query($sql, $bindings)->fetchOne($mode);
     }
@@ -306,7 +302,7 @@ class Database
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
-    public function fetchPairs($sql, $bindings = null, $firstCol = 1, $secondCol = 2): iterable
+    public function fetchPairs($sql, array $bindings = [], $firstCol = 1, $secondCol = 2): iterable
     {
         return $this->query($sql, $bindings)->fetchPairs($firstCol, $secondCol);
     }
@@ -320,7 +316,7 @@ class Database
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
-    public function fetchValue($sql, $bindings = null, $index = 1): ?string
+    public function fetchValue($sql, array $bindings = [], $index = 1): ?string
     {
         return $this->query($sql, $bindings)->fetchValue($index);
     }
@@ -388,7 +384,7 @@ class Database
      * @throws Exception
      * @throws Driver\Exception
      */
-    public function query($sqlText, $bindings = null, $mode = null): Statement
+    public function query(string $sqlText, array $bindings = [], $mode = null): Statement
     {
         $statement = $this->prepare($sqlText);
         $statement->bind($bindings);
@@ -488,7 +484,7 @@ class Database
     private function setupBeforeConnect(): void
     {
         $class = $this->config(Config::SESSION_CLASS);
-        $this->session = is_string($class) ? new $class($this) : $class;
+        $this->session = is_string($class) ? new $class($this->getDriver(), $this->configuration) : $class;
         $this->session->setupBeforeConnect();
     }
 
@@ -499,6 +495,7 @@ class Database
     private function setupAfterConnect(): void
     {
         $sql = $this->session->apply($this->getConnection());
-        $this->query($sql);
+        $statement = $this->query($sql);
+        //$statement->free();
     }
 }

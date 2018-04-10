@@ -16,7 +16,6 @@ namespace nightlinus\OracleDb\Statement;
  */
 class StatementCache implements \IteratorAggregate
 {
-
     /**
      * @var int
      */
@@ -25,12 +24,12 @@ class StatementCache implements \IteratorAggregate
     /**
      * @var Statement[];
      */
-    private $hashCache = [ ];
+    private $hashCache = [];
 
     /**
      * @var Statement[]
      */
-    private $orderCache = [ ];
+    private $orderCache = [];
 
     /**
      * @param $cacheSize
