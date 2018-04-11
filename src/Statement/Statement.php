@@ -52,12 +52,13 @@ class Statement implements \IteratorAggregate
     public const TYPE_UPDATE = 'UPDATE';
 
     /**
+     * @internal use out($name) instead
      * array that contains all
      * host-variable bindings
      *
      * @var array|null
      */
-    private $bindings;
+    public $bindings;
 
     /**
      * @var AbstractDriver
