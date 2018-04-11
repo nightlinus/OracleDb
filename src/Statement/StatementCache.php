@@ -11,6 +11,8 @@
 
 namespace nightlinus\OracleDb\Statement;
 
+use function count;
+
 /**
  * Class StatementCache
  */
@@ -41,9 +43,8 @@ class StatementCache implements \IteratorAggregate
 
     public function add(Statement $statement)
     {
-        $hash = $this->getHash($statement);
-        $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
-        if (!$inCache) {
+        $hash = $this->find($statement);
+        if (!$hash) {
             $this->hashCache[ $hash ][ 'value' ] = $statement;
             $this->orderCache[] = $statement;
             $this->hashCache[ $hash ][ 'position' ] = count($this->orderCache) - 1;
@@ -51,51 +52,40 @@ class StatementCache implements \IteratorAggregate
         }
     }
 
-    private function garbageCollect()
+    private function garbageCollect(): void
     {
         $iter = $this->getIterator();
-        while ($this->needGarbageCollect()) {
+        while ($this->needGarbageCollect() && $iter->valid()) {
             $trashStatement = $iter->current();
             if ($trashStatement->canBeFreed()) {
                 $trashStatement->free();
+                $this->remove($trashStatement);
             }
             $iter->next();
         }
     }
 
-    /**
-     * @param $sql string
-     *
-     * @return null|Statement
-     */
-    public function get($sql)
+    public function get(string $sql): ?Statement
     {
-        $hash = $this->getHash($sql);
-        $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
-        $statement = null;
-        if ($inCache) {
+        $hash = $this->find($sql);
+        if ($hash) {
             $statement = $this->hashCache[ $hash ][ 'value' ];
-            array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
+            $this->removeFromOrderedCache($hash);
             $this->orderCache[] = $statement;
+            $this->hashCache[ $hash ][ 'position' ] = count($this->orderCache) - 1;
 
             return $statement;
         }
 
-        return $statement;
+        return null;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getCacheSize()
+    public function getCacheSize(): int
     {
         return $this->cacheSize;
     }
 
-    /**
-     * @param mixed $cacheSize
-     */
-    public function setCacheSize($cacheSize)
+    public function setCacheSize(int $cacheSize): void
     {
         $this->cacheSize = $cacheSize;
         $this->garbageCollect();
@@ -109,31 +99,27 @@ class StatementCache implements \IteratorAggregate
      */
     public function getIterator()
     {
-        $count = count($this->orderCache);
-        for ($i = 0; $i < $count; $i++) {
-            yield $this->orderCache[ $i ];
-        }
+        yield from $this->orderCache;
     }
 
     /**
-     * @param $statement
+     * @param $statement Statement|string
      *
-     * @return mixed
-     */
-    public function remove($statement)
-    {
-        $hash = $this->getHash($statement);
-        $position = $this->hashCache[ $hash ][ 'position' ];
-        array_splice($this->orderCache, $position, 1);
-        unset($this->hashCache[ $hash ]);
-
-        return $statement;
-    }
-
-    /**
      * @return bool
      */
-    private function needGarbageCollect()
+    public function remove($statement): bool
+    {
+        $hash = $this->find($statement);
+        if (!$hash) {
+            return false;
+        }
+        $this->removeFromOrderedCache($hash);
+        unset($this->hashCache[ $hash ]);
+
+        return true;
+    }
+
+    private function needGarbageCollect(): bool
     {
         $count = count($this->orderCache) - $this->cacheSize;
 
@@ -145,7 +131,7 @@ class StatementCache implements \IteratorAggregate
      *
      * @return string
      */
-    private function getHash($statement)
+    private function getHash($statement): string
     {
         $sql = $statement;
         if ($statement instanceof Statement) {
@@ -153,5 +139,23 @@ class StatementCache implements \IteratorAggregate
         }
 
         return hash('md5', $sql);
+    }
+
+    /**
+     * @param string|Statement $statement
+     *
+     * @return null|string
+     */
+    private function find($statement): ?string
+    {
+        $hash = $this->getHash($statement);
+        $inCache = isset($this->hashCache[ $hash ][ 'value' ]);
+
+        return $inCache ? $hash : null;
+    }
+
+    private function removeFromOrderedCache(string $hash): void
+    {
+        array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
     }
 }
