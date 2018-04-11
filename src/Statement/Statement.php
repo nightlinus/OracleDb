@@ -286,9 +286,10 @@ class Statement implements \IteratorAggregate
         $type = $this->getType();
         if (self::TYPE_SELECT === $type && $this->state->isNotFetchedYet()) {
             $sql = "SELECT COUNT(*) FROM ({$this->queryString})";
+            $connection = $this->getConnection();
             $st = new self(
                 $sql,
-                $this->getConnection(),
+                $connection,
                 $this->driver,
                 $this->profiler,
                 $this->returnType,
@@ -680,7 +681,7 @@ class Statement implements \IteratorAggregate
      *
      * @return array|null
      */
-    public function out($key)
+    public function out(string $key)
     {
         if (!isset($this->bindings[ $key ])) {
             throw new \InvalidArgumentException("There is no host variable set with name '$key'.");
