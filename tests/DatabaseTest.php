@@ -108,7 +108,7 @@ class DatabaseTest extends TestCase
     public function it_fetch_assoc()
     {
         $sut = $this->sut();
-        $actual = $sut->fetchAssoc($this->testSql());
+        $actual = $sut->fetchAssoc($this->sql());
         $this->assertInternalType('array', $actual);
         $this->assertEquals(
             [
@@ -148,7 +148,7 @@ class DatabaseTest extends TestCase
     public function it_fetch_array()
     {
         $sut = $this->sut();
-        $actual = $sut->fetchArray($this->testSql());
+        $actual = $sut->fetchArray($this->sql());
         $this->assertInternalType('array', $actual);
         $this->assertEquals(
             [
@@ -188,7 +188,7 @@ class DatabaseTest extends TestCase
     public function it_fetch_one()
     {
         $sut = $this->sut();
-        $actual = $sut->fetchOne($this->testSql());
+        $actual = $sut->fetchOne($this->sql());
         $this->assertInternalType('array', $actual);
         $this->assertEquals(
             [
@@ -206,7 +206,7 @@ class DatabaseTest extends TestCase
     public function it_fetch_value()
     {
         $sut = $this->sut();
-        $actual = $sut->fetchValue($this->testSql());
+        $actual = $sut->fetchValue($this->sql());
         $this->assertInternalType('string', $actual);
         $this->assertEquals('a', $actual);
     }
@@ -217,7 +217,7 @@ class DatabaseTest extends TestCase
     public function it_yields_assoc()
     {
         $sut = $this->sut();
-        $actual = $sut->yieldAssoc($this->testSql());
+        $actual = $sut->yieldAssoc($this->sql());
 
         $this->assertInstanceOf(\Generator::class, $actual);
         $this->assertEquals(
@@ -258,7 +258,7 @@ class DatabaseTest extends TestCase
     public function it_yields_array()
     {
         $sut = $this->sut();
-        $actual = $sut->yieldArray($this->testSql());
+        $actual = $sut->yieldArray($this->sql());
 
         $this->assertInstanceOf(\Generator::class, $actual);
         $this->assertEquals(
@@ -299,7 +299,7 @@ class DatabaseTest extends TestCase
     public function it_yields_column()
     {
         $sut = $this->sut();
-        $actual = $sut->yieldColumn($this->testSql());
+        $actual = $sut->yieldColumn($this->sql());
 
         $this->assertInstanceOf(\Generator::class, $actual);
         $this->assertEquals(
@@ -323,7 +323,7 @@ class DatabaseTest extends TestCase
         $callback = function ($row, $key) {
             return [ $key => $row[ 'TEXT' ] . $row[ 'IDX' ] ];
         };
-        $actual = $sut->yieldCallback($this->testSql(), [], $callback);
+        $actual = $sut->yieldCallback($this->sql(), [], $callback);
 
         $this->assertInstanceOf(\Generator::class, $actual);
         $this->assertEquals(
@@ -345,7 +345,7 @@ class DatabaseTest extends TestCase
         return (string) $sut->getConnection();
     }
 
-    private function testSql(): string
+    private function sql(): string
     {
         return "WITH TEST_DATA (TEXT, IDX, CONST) AS (SELECT
                            'a',
