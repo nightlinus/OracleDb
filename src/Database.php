@@ -93,7 +93,7 @@ class Database
         $sqlText = "BEGIN $return $sqlText; END;";
         $statement = $this->query($sqlText, $bindings, $mode);
 
-        return $returnSize ? $statement->out($returnName) : null;
+        return $returnSize ? $statement->out($returnName->__toString()) : null;
     }
 
     /**
