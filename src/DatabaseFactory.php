@@ -3,18 +3,18 @@
  * Date: 10.12.15
  * Time: 14:33
  *
- * @category
- * @package  OracleDb
+ * @category Database
+ * @package  nightlinus\OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
+ * @link     https://github.com/nightlinus/OracleDb
  */
+
 namespace nightlinus\OracleDb;
 
-use function is_string;
 use nightlinus\OracleDb\Profiler\DisabledProfiler;
 use nightlinus\OracleDb\Statement\StatementFactory;
+use function is_string;
 
 class DatabaseFactory
 {
@@ -22,19 +22,23 @@ class DatabaseFactory
     {
     }
 
-    public static function fromConfig(Config $config)
+    public static function fromConfig(Config $config): Database
     {
         return self::make($config);
     }
 
-    public static function fromCredentials($userName, $password = '', $connectionString = '', $config = [ ])
-    {
+    /** @noinspection MoreThanThreeArgumentsInspection */
+    public static function fromCredentials(
+        string $userName,
+        string $password = '',
+        string $connectionString = '',
+        array $config = []
+    ): Database {
         $config[ Config::CONNECTION_USER ] = $userName;
         $config[ Config::CONNECTION_PASSWORD ] = $password;
         $config[ Config::CONNECTION_STRING ] = $connectionString;
-        $config = Config::fromArray($config);
 
-        return self::make($config);
+        return self::make(Config::fromArray($config));
     }
 
     private static function makeProfiler(Config $config)
@@ -63,7 +67,7 @@ class DatabaseFactory
         return is_string($class) ? new $class($cacheSize) : $class;
     }
 
-    private static function make(Config $config)
+    private static function make(Config $config): Database
     {
         $cache = self::makeStatementCache($config);
         $driver = self::makeDriver($config);

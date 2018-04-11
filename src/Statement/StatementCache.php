@@ -45,6 +45,7 @@ class StatementCache implements \IteratorAggregate
     {
         $hash = $this->find($statement);
         if (!$hash) {
+            $hash = $this->getHash($statement);
             $this->hashCache[ $hash ][ 'value' ] = $statement;
             $this->orderCache[] = $statement;
             $this->hashCache[ $hash ][ 'position' ] = count($this->orderCache) - 1;
