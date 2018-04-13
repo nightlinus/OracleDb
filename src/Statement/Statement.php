@@ -12,6 +12,7 @@
 
 namespace nightlinus\OracleDb\Statement;
 
+use function array_key_exists;
 use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Exception;
 use nightlinus\OracleDb\FieldDescription;
@@ -58,7 +59,7 @@ class Statement implements \IteratorAggregate
      *
      * @var array|null
      */
-    public $bindings;
+    public $bindings = [];
 
     /**
      * @var AbstractDriver
@@ -295,7 +296,7 @@ class Statement implements \IteratorAggregate
                 $this->returnType,
                 $this->defaultMode
             );
-            $st->bind($this->bindings);
+            $st->bind((array) $this->bindings);
             $count = $st->fetchValue();
             $st->free();
         } else {
@@ -683,7 +684,7 @@ class Statement implements \IteratorAggregate
      */
     public function out(string $key)
     {
-        if (!isset($this->bindings[ $key ])) {
+        if (!array_key_exists($key, $this->bindings)) {
             throw new \InvalidArgumentException("There is no host variable set with name '$key'.");
         }
 
