@@ -338,6 +338,18 @@ class DatabaseTest extends TestCase
         );
     }
 
+    /**
+     * @test
+     */
+    public function it_count_statement_rows()
+    {
+        $sut = $this->sut();
+        $statement = $sut->prepare($this->sql());
+        $actual = $statement->count();
+
+        $this->assertEquals(5, $actual);
+    }
+
     private function handlerAsString(Database $sut): string
     {
         $sut->connect();
