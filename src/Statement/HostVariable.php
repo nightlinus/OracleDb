@@ -10,14 +10,12 @@
  * @version
  * @link
  */
+
 namespace nightlinus\OracleDb\Statement;
 
-/**
- * Class HostVariable
- *
- * @package nightlinus\OracleDb
- */
-class HostVariable
+use function is_array;
+
+final class HostVariable
 {
     /**
      * @var mixed
@@ -34,13 +32,6 @@ class HostVariable
      */
     private $type;
 
-    /**
-     * HostVariable constructor.
-     *
-     * @param $value
-     * @param $length
-     * @param $type
-     */
     private function __construct($value, $length = null, $type = null)
     {
         $this->value = $value;
@@ -55,13 +46,20 @@ class HostVariable
      *
      * @return HostVariable
      */
-    public static function with($value, $length = null, $type = null)
+    public static function with($value, $length = null, $type = null): self
     {
-        if ($value instanceof HostVariable) {
+        if ($value instanceof self) {
             return $value;
         }
 
-        return new self($value, $length, $type);
+        $bindValue = $value;
+        if (is_array($value)) {
+            $bindValue = $value[ 0 ] ?? $value[ 'value' ] ?? null;
+            $length = $value[ 1 ] ?? $value[ 'length' ] ?? null;
+            $type = $value[ 2 ] ?? $value[ 'type' ] ?? null;
+        }
+
+        return new self($bindValue, $length, $type);
     }
 
     /**
