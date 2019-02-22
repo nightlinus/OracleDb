@@ -1,14 +1,9 @@
 <?php
+declare(strict_types=1);
 /**
- * Date: 08.12.15
- * Time: 13:18
- *
- * @category
  * @package  OracleDb
  * @author   nightlinus <m.a.ogarkov@gmail.com>
  * @license  http://opensource.org/licenses/MIT MIT
- * @version
- * @link
  */
 
 namespace nightlinus\OracleDb\Statement;
@@ -25,16 +20,14 @@ class StatementState
     private const FETCHING = 0x10;
     private const FETCHED = 0x02;
 
-    /**
-     * @var int
-     */
+    /** @var int */
     private $state;
 
     private function __construct()
     {
     }
 
-    public static function in(string $state): self
+    private static function in(int $state): self
     {
         $inst = new self();
         $inst->state = $state;
@@ -47,53 +40,52 @@ class StatementState
         return self::in(self::FREED);
     }
 
-
-    public function described()
+    public function described(): self
     {
         return self::in(self::DESCRIBED);
     }
 
-    public function executed()
+    public function executed(): self
     {
         return self::in(self::EXECUTED);
     }
 
-    public function fetched()
+    public function fetched(): self
     {
         return self::in(self::FETCHED);
     }
 
-    public function fetching()
+    public function fetching(): self
     {
         return self::in(self::FETCHING);
     }
 
-    public function freed()
+    public function freed(): self
     {
         return self::in(self::FREED);
     }
 
-    public function prepared()
+    public function prepared(): self
     {
         return self::in(self::PREPARED);
     }
 
-    public function isFetchable()
+    public function isFetchable(): bool
     {
         return $this->state === self::EXECUTED;
     }
 
-    public function isNotFetchedYet()
+    public function isNotFetchedYet(): bool
     {
         return $this->state !== self::FETCHED;
     }
 
-    public function isPrepared()
+    public function isPrepared(): bool
     {
         return $this->state >= self::PREPARED;
     }
 
-    public function isSafeToFree()
+    public function isSafeToFree(): bool
     {
         return $this->state < self::FETCHING;
     }
