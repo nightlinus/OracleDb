@@ -12,8 +12,11 @@
 
 namespace nightlinus\OracleDb;
 
+use Closure;
 use Generator;
 use nightlinus\OracleDb\Driver\AbstractDriver;
+use nightlinus\OracleDb\Driver\Exception;
+use nightlinus\OracleDb\Driver\NotConnected;
 use nightlinus\OracleDb\Statement\HostVariable;
 use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementFactory;
@@ -23,32 +26,26 @@ use const PHP_EOL;
 
 class Database
 {
-    /**
-     * Configuration storage
-     *
-     * @var Config
-     */
+    /** @var Config */
     private $configuration;
 
-    /**
-     * @var resource connection resource
-     */
+    /** @var resource connection resource */
     private $connection;
 
-    /**
-     * @var Driver\AbstractDriver
-     */
+    /** @var Driver\AbstractDriver */
     private $driver;
 
-    /**
-     * @var \nightlinus\OracleDb\Session\Oracle
-     */
+    /** @var \nightlinus\OracleDb\Session\Oracle */
     private $session;
 
-    /**
-     * @var StatementFactory
-     */
+    /** @var StatementFactory */
     private $statementFactory;
+
+    /** @var int */
+    private $timeoutInMilliseconds = 0;
+
+    /** @var Closure[] */
+    private $afterOperation = [];
 
     public function __construct(
         StatementFactory $statementFactory,
@@ -67,8 +64,8 @@ class Database
      */
     public function __destruct()
     {
-        $this->statementFactory = null;
         $this->disconnect();
+        @$this->statementFactory = null;
     }
 
     /**
@@ -116,8 +113,8 @@ class Database
      * @param string|array $name
      * @param null|mixed   $value
      *
-     * @throws Exception
      * @return mixed
+     * @throws Exception
      */
     public function config($name, $value = null)
     {
@@ -132,6 +129,7 @@ class Database
      * @return $this
      * @throws Exception
      * @throws Driver\Exception
+     * @throws \nightlinus\OracleDb\Exception
      */
     public function connect(): self
     {
@@ -139,16 +137,8 @@ class Database
             return $this;
         }
         $this->setupBeforeConnect();
-        $driver = $this->driver;
-        if ($this->configuration->get(Config::CONNECTION_PERSISTENT)) {
-            $connectMode = $driver::CONNECTION_TYPE_PERSISTENT;
-        } elseif ($this->configuration->get(Config::CONNECTION_CACHE)) {
-            $connectMode = $driver::CONNECTION_TYPE_CACHE;
-        } else {
-            $connectMode = $driver::CONNECTION_TYPE_NEW;
-        }
-        $this->connection = $driver->connect(
-            $connectMode,
+        $this->connection = $this->driver->connect(
+            $this->connectionMode(),
             $this->configuration->get(Config::CONNECTION_USER),
             $this->configuration->get(Config::CONNECTION_PASSWORD),
             $this->configuration->get(Config::CONNECTION_STRING),
@@ -194,9 +184,9 @@ class Database
     }
 
     /**
-     * @param  string $sql
-     * @param array   $bindings
-     * @param int     $mode
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
      *
      * @return iterable|iterable[]
      * @throws Exception
@@ -323,9 +313,9 @@ class Database
     }
 
     /**
-     * @param  string $sql
-     * @param array   $bindings
-     * @param int     $mode
+     * @param string $sql
+     * @param array  $bindings
+     * @param int    $mode
      *
      * @return iterable|iterable[]
      * @throws Exception
@@ -475,9 +465,16 @@ class Database
      */
     public function query(string $sqlText, array $bindings = [], $mode = null): Statement
     {
-        $statement = $this->prepare($sqlText);
-        $statement->bind($bindings);
-        $statement->execute($mode);
+        $function = function () use ($sqlText, $bindings, $mode) {
+            $statement = $this->prepare($sqlText);
+            $statement->bind($bindings);
+            $statement->execute($mode);
+
+            return $statement;
+        };
+
+        $statement = $this->retry($function);
+        $this->afterOperation();
 
         return $statement;
     }
@@ -496,12 +493,44 @@ class Database
      */
     private function queryGenerator(string $sqlText, array $bindings = [], $mode = null): Statement
     {
-        $statement = $this->prepare($sqlText);
-        $statement->retutnIterator();
-        $statement->bind($bindings);
-        $statement->execute($mode);
+        $function = function () use ($sqlText, $bindings, $mode) {
+            $statement = $this->prepare($sqlText);
+            $statement->retutnIterator();
+            $statement->bind($bindings);
+            $statement->execute($mode);
 
-        return $statement;
+            return $statement;
+        };
+
+        return $this->retry($function);
+    }
+
+    /**
+     * @param Closure $function
+     * @param int     $triesLimit
+     *
+     * @return mixed
+     * @throws Exception
+     * @throws NotConnected
+     */
+    private function retry(Closure $function, int $triesLimit = 3)
+    {
+        $tries = 0;
+        retry:
+        try {
+            $tries++;
+
+            return $function();
+        } catch (NotConnected $e) {
+            try {
+                $this->disconnect();
+            } catch (Exception $e) {
+            }
+            if ($tries >= $triesLimit) {
+                throw $e;
+            }
+            goto retry;
+        }
     }
 
     /**
@@ -534,8 +563,8 @@ class Database
      *
      * @param $scriptText
      *
-     * @throws Exception
      * @return $this
+     * @throws Exception
      */
     public function runScript($scriptText)
     {
@@ -584,6 +613,7 @@ class Database
         if (!$this->connection) {
             return $this;
         }
+        $this->statementFactory->clearCache();
         $this->driver->disconnect($this->connection);
 
         return $this;
@@ -602,11 +632,71 @@ class Database
     /**
      * @throws Driver\Exception
      * @throws Exception
+     * @throws \nightlinus\OracleDb\Exception
      */
     private function setupAfterConnect(): void
     {
         $sql = $this->session->apply($this->getConnection());
         $statement = $this->query($sql);
         $statement->free();
+    }
+
+    /**
+     * Sets timeout for current connection
+     *
+     * @param int $milliseconds
+     *
+     * @return $this
+     * @throws Driver\Exception
+     * @throws Exception
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    public function setTimeoutForAllOperations(int $milliseconds = 0): self
+    {
+        $this->connect();
+        $this->driver->setTimeout($this->connection, $milliseconds);
+        $this->timeoutInMilliseconds = $milliseconds;
+
+        return $this;
+    }
+
+    public function withOneTimeTimeout(int $milliseconds): self
+    {
+        $oldTimeout = $this->timeoutInMilliseconds;
+        $this->setTimeoutForAllOperations($milliseconds);
+        $this->afterOperation[] = function () use ($oldTimeout) {
+            $this->setTimeoutForAllOperations($oldTimeout);
+        };
+
+        return $this;
+    }
+
+    /**
+     * return connection mode constant
+     *
+     * @return int
+     * @throws \nightlinus\OracleDb\Exception
+     */
+    private function connectionMode(): int
+    {
+        $driver = $this->driver;
+        if ($this->configuration->get(Config::CONNECTION_PERSISTENT)) {
+            $connectMode = $driver::CONNECTION_TYPE_PERSISTENT;
+        } elseif ($this->configuration->get(Config::CONNECTION_CACHE)) {
+            $connectMode = $driver::CONNECTION_TYPE_CACHE;
+        } else {
+            $connectMode = $driver::CONNECTION_TYPE_NEW;
+        }
+
+        return $connectMode;
+    }
+
+    private function afterOperation(): void
+    {
+        $functions = $this->afterOperation;
+        $this->afterOperation = [];
+        foreach ($functions as $function) {
+            $function();
+        }
     }
 }

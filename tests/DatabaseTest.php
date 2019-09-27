@@ -13,6 +13,7 @@ namespace nightlinus\OracleDb\tests;
 use nightlinus\OracleDb\Config;
 use nightlinus\OracleDb\Database;
 use nightlinus\OracleDb\DatabaseFactory;
+use nightlinus\OracleDb\Driver\OperationTimeout;
 use PHPUnit\Framework\TestCase;
 use function getenv;
 use function iterator_to_array;
@@ -348,6 +349,21 @@ class DatabaseTest extends TestCase
         $actual = $statement->count();
 
         $this->assertEquals(5, $actual);
+    }
+
+    /**
+     * @test
+     */
+    public function it_set_zero_timeout()
+    {
+        $sut = $this->sut();
+        try {
+            $sut->withOneTimeTimeout(1)
+                ->query("begin dbms_lock.sleep(8); end;");
+            $this->fail("No timeout occured");
+        } catch (\Exception $e) {
+            $this->assertInstanceOf(OperationTimeout::class, $e);
+        }
     }
 
     private function handlerAsString(Database $sut): string

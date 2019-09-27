@@ -18,6 +18,7 @@ use function in_array;
 use function is_array;
 use function is_resource;
 use function is_string;
+use function oci_set_prefetch;
 
 /**
  * Class Oracle
@@ -617,6 +618,15 @@ class Oracle extends AbstractDriver
         return $this;
     }
 
+    public function setTimeout($handle, int $milliseconds = 0)
+    {
+        $setResult = @oci_set_call_timeout($handle, $milliseconds);
+        $this->throwExceptionIfFalse($setResult, $handle);
+
+        return $this;
+    }
+
+
     /**
      * if $mode is in $resultMode return $resultMode
      * else return $resultMode + $mode
@@ -646,7 +656,15 @@ class Oracle extends AbstractDriver
     {
         if (false === $result || $result === null) {
             $error = $this->getError($handle);
-            throw new Exception($error);
+            $message = $error[ 'message' ] ?? '';
+            switch ($error[ 'code' ] ?? 0) {
+                case "3136":
+                    throw new OperationTimeout($message);
+                case "3114":
+                    throw new NotConnected($message);
+                default:
+                    throw new Exception($message);
+            }
         }
 
         return $this;

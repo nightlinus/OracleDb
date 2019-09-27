@@ -346,4 +346,13 @@ abstract class AbstractDriver
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
     abstract public function setPrefcth($handle, $size);
+
+    /**
+     * @param resource $handle
+     * @param int      $milliseconds
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    abstract public function setTimeout($handle, int $milliseconds = 0);
 }

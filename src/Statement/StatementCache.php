@@ -53,6 +53,17 @@ class StatementCache implements \IteratorAggregate
         }
     }
 
+    public function clear()
+    {
+        $iter = $this->getIterator();
+        while ($iter->valid()) {
+            $trashStatement = $iter->current();
+            $trashStatement->free();
+            $this->remove($trashStatement);
+            $iter->next();
+        }
+    }
+
     private function garbageCollect(): void
     {
         $iter = $this->getIterator();
@@ -158,5 +169,10 @@ class StatementCache implements \IteratorAggregate
     private function removeFromOrderedCache(string $hash): void
     {
         array_splice($this->orderCache, $this->hashCache[ $hash ][ 'position' ], 1);
+    }
+
+    public function __destruct()
+    {
+        $this->clear();
     }
 }

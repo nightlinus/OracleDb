@@ -67,4 +67,9 @@ class StatementFactory
 
         return $statement;
     }
+
+    public function clearCache(): void
+    {
+        $this->cache->clear();
+    }
 }
