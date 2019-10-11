@@ -649,24 +649,22 @@ class Oracle extends AbstractDriver
      * @param      $result
      * @param null $handle
      *
-     * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    protected function throwExceptionIfFalse($result, $handle = null)
+    protected function throwExceptionIfFalse($result, $handle = null): void
     {
         if (false === $result || $result === null) {
             $error = $this->getError($handle);
             $message = $error[ 'message' ] ?? '';
-            switch ($error[ 'code' ] ?? 0) {
-                case "3136":
-                    throw new OperationTimeout($message);
-                case "3114":
-                    throw new NotConnected($message);
+            $code = $error[ 'code' ] ?? 0;
+            switch ($code) {
+                case '3136':
+                    throw new OperationTimeout($message, $code);
+                case '3114':
+                    throw new NotConnected($message, $code);
                 default:
-                    throw new Exception($message);
+                    throw new Exception($message, $code);
             }
         }
-
-        return $this;
     }
 }
