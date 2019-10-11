@@ -12,11 +12,11 @@
 
 namespace nightlinus\OracleDb\Statement;
 
-use function array_key_exists;
 use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Exception;
 use nightlinus\OracleDb\FieldDescription;
 use nightlinus\OracleDb\Profiler\Profiler;
+use function array_key_exists;
 
 /**
  * Implements wrapper above oci8
@@ -569,7 +569,7 @@ class Statement implements \IteratorAggregate
         } else {
             $fetchMode = self::FETCH_ASSOC;
         }
-        $result = $this->tupleGenerator(null, $fetchMode)->current()[ $index ];
+        $result = $this->tupleGenerator(null, $fetchMode, OCI_RETURN_LOBS)->current()[ $index ];
         $this->state = $this->state->fetched();
 
         return $result;
