@@ -569,7 +569,7 @@ class Statement implements \IteratorAggregate
         } else {
             $fetchMode = self::FETCH_ASSOC;
         }
-        $result = $this->tupleGenerator(null, $fetchMode, OCI_RETURN_LOBS)->current()[ $index ] ?? '';
+        $result = $this->tupleGenerator(null, $fetchMode, OCI_RETURN_LOBS)->current()[ $index ] ?? null;
         $this->state = $this->state->fetched();
 
         return $result;
