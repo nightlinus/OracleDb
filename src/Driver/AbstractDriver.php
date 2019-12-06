@@ -322,12 +322,22 @@ abstract class AbstractDriver
 
     /**
      * @param resource $handle
-     * @param string   $identifier
+     * @param string   $moduleName
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    abstract public function setClientModuleName($handle, $identifier);
+    abstract public function setClientModuleName($handle, string $moduleName);
+
+
+    /**
+     * @param resource $handle
+     * @param string   $action
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    abstract public function setAction($handle, string $action);
 
     /**
      * @param string $edition

@@ -25,7 +25,7 @@ class DatabaseTest extends TestCase
         $server = getenv('DB_HOST');
         $user = getenv('DB_USER');
         $password = getenv('DB_PASSWORD');
-        $config = [ Config::CONNECTION_CACHE => 1 ];
+        $config = [ Config::CONNECTION_CACHE => 1, Config::CLIENT_UPDATE_MODULE_AND_ACTION => true ];
 
         return DatabaseFactory::fromCredentials($user, $password, $server, $config);
     }

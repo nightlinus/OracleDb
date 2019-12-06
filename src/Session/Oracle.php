@@ -50,7 +50,7 @@ class Oracle
     {
         $this->driver->setClientIdentifier($handle, $this->config->get(Config::CLIENT_IDENTIFIER));
         $this->driver->setClientInfo($handle, $this->config->get(Config::CLIENT_INFO));
-        $this->driver->setClientModuleName($handle, $this->config->get(Config::CLIENT_MODULE_NAME));
+        $this->driver->setClientModuleName($handle, (string) $this->config->get(Config::CLIENT_MODULE_NAME));
 
         return $this->generateSql($this->extractVariablesFromConfig());
     }

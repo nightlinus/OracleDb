@@ -16,7 +16,14 @@ use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Exception;
 use nightlinus\OracleDb\FieldDescription;
 use nightlinus\OracleDb\Profiler\Profiler;
+use function array_filter;
 use function array_key_exists;
+use function array_slice;
+use function array_values;
+use function debug_backtrace;
+use function explode;
+use function implode;
+use function strpos;
 
 /**
  * Implements wrapper above oci8
@@ -117,6 +124,9 @@ class Statement implements \IteratorAggregate
      */
     private $connection;
 
+    /** @var bool */
+    private $updateActionOnExecute;
+
     /**
      * @param string         $queryString sql выражение стейтмента в текстовом виде
      * @param resource       $connection  ссылка на родительский объект базы данных
@@ -124,6 +134,7 @@ class Statement implements \IteratorAggregate
      * @param Profiler       $profiler
      * @param int            $returnType
      * @param bool           $autoCommit
+     * @param bool           $setAction
      */
     public function __construct(
         $queryString,
@@ -131,7 +142,8 @@ class Statement implements \IteratorAggregate
         AbstractDriver $driver,
         Profiler $profiler,
         int $returnType,
-        bool $autoCommit
+        bool $autoCommit,
+        bool $updateActionOnExecute
     ) {
         $this->queryString = $queryString;
         $this->connection = $connection;
@@ -140,6 +152,7 @@ class Statement implements \IteratorAggregate
         $this->state = StatementState::initialize();
         $this->returnType = $returnType;
         $this->defaultMode = $autoCommit ? $driver::EXECUTE_AUTO_COMMIT : $driver::EXECUTE_NO_AUTO_COMMIT;
+        $this->updateActionOnExecute = $updateActionOnExecute;
     }
 
     /**
@@ -294,7 +307,8 @@ class Statement implements \IteratorAggregate
                 $this->driver,
                 $this->profiler,
                 $this->returnType,
-                $this->defaultMode
+                $this->defaultMode,
+                $this->updateActionOnExecute
             );
             $st->bind((array) $this->bindings);
             $count = $st->fetchValue();
@@ -334,6 +348,7 @@ class Statement implements \IteratorAggregate
      */
     public function execute($mode = null)
     {
+        $this->setActionAndModule();
         $this->prepare();
         $driver = $this->driver;
         $mode = $this->getExecuteMode($mode);
@@ -937,5 +952,85 @@ class Statement implements \IteratorAggregate
     private function getConnection()
     {
         return $this->connection;
+    }
+
+    private function setActionAndModule(): void
+    {
+        if (!$this->updateActionOnExecute) {
+            return;
+        }
+
+        $libraryCallDepth = 12;
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $libraryCallDepth + 2);
+
+        $externalCode = $this->removeLibraryFrames($trace);
+        $externalCode = $this->firstNonClosure($externalCode);
+        if (!$externalCode) {
+            return;
+        }
+
+        $module = $this->module($externalCode);
+        $action = $this->action($externalCode);
+
+        $this->driver->setClientModuleName($this->connection, $module);
+        $this->driver->setAction($this->connection, $action);
+    }
+
+    private function libraryNamespace(): string
+    {
+        return $this->partofNamesapce(__NAMESPACE__, 2);
+    }
+
+    private function partofNamesapce(string $namespace, int $partsFromStart): string
+    {
+        $offset = $partsFromStart > 0 ? 0 : -1;
+        $exploded = explode('\\', $namespace);
+
+        return implode('\\', array_slice($exploded, $offset, abs($partsFromStart)));
+    }
+
+    private function removeLibraryFrames(array $trace): array
+    {
+        $libraryNamespace = $this->libraryNamespace();
+        $notLibrary = function (array $frame) use ($libraryNamespace) {
+            $class = (string) ($frame[ 'class' ] ?? '');
+
+            return strpos($class, $libraryNamespace) !== 0;
+        };
+
+        return array_values(array_filter($trace, $notLibrary));
+    }
+
+    private function firstNonClosure(array $externalCode): array
+    {
+        foreach ($externalCode as $frame) {
+            $class = (string) ($frame[ 'class' ] ?? '');
+            if (strpos($class, '{closure}', -9) !== false) {
+                continue;
+            }
+
+            return $frame;
+        }
+
+        return [];
+    }
+
+    private function module(array $stackFrame): string
+    {
+        $class = (string) ($stackFrame[ 'class' ] ?? '');
+
+        return $this->partofNamesapce($class, 3);
+    }
+
+    private function action(array $stackFrame): string
+    {
+        $function = (string) ($stackFrame[ 'function' ] ?? '');
+        if ($function !== '__invoke') {
+            return $function;
+        }
+
+        $class = (string) ($stackFrame[ 'class' ] ?? '');
+
+        return $this->partofNamesapce($class, -1);
     }
 }

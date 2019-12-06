@@ -18,6 +18,9 @@ use function in_array;
 use function is_array;
 use function is_resource;
 use function is_string;
+use function oci_set_action;
+use function oci_set_edition;
+use function oci_set_module_name;
 use function oci_set_prefetch;
 
 /**
@@ -573,14 +576,14 @@ class Oracle extends AbstractDriver
 
     /**
      * @param resource $handle
-     * @param string   $identifier
+     * @param string   $moduleName
      *
      * @return $this
      * @throws \nightlinus\OracleDb\Driver\Exception
      */
-    public function setClientModuleName($handle, $identifier)
+    public function setClientModuleName($handle, string $moduleName)
     {
-        $result = oci_set_module_name($handle, $identifier);
+        $result = @oci_set_module_name($handle, $moduleName);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -594,9 +597,26 @@ class Oracle extends AbstractDriver
      */
     public function setEdition($edition)
     {
-        $result = oci_set_edition($edition);
+        $result = @oci_set_edition($edition);
         if ($result === false) {
             throw new Exception("Edition setup failed «{$edition}».");
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param resource $handle
+     * @param string   $action Oracle Database action for debug information
+     *
+     * @return $this
+     * @throws \nightlinus\OracleDb\Driver\Exception
+     */
+    public function setAction($handle, string $action): self
+    {
+        $result = @oci_set_action($handle, $action);
+        if ($result === false) {
+            throw new Exception("Action setup failed «{$action}».");
         }
 
         return $this;

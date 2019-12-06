@@ -23,59 +23,60 @@ class Config implements \ArrayAccess
     /**
      * Client variables
      */
-    const CLIENT_IDENTIFIER  = 'client.identifier';
-    const CLIENT_INFO        = 'client.info';
-    const CLIENT_MODULE_NAME = 'client.module_name';
+    public const CLIENT_IDENTIFIER = 'client.identifier';
+    public const CLIENT_INFO = 'client.info';
+    public const CLIENT_MODULE_NAME = 'client.module_name';
+    public const CLIENT_UPDATE_MODULE_AND_ACTION = 'client.update_module_and_action';
 
     /**
      * Connection variables
      */
-    const CONNECTION_CACHE      = 'connection.cache';
-    const CONNECTION_CHARSET    = 'connection.charset';
-    const CONNECTION_CLASS      = 'connection.class';
-    const CONNECTION_EDITION    = 'connection.edition';
-    const CONNECTION_PASSWORD   = 'connection.password';
-    const CONNECTION_PERSISTENT = 'connection.persistent';
-    const CONNECTION_PRIVILEGED = 'connection.privileged';
-    const CONNECTION_STRING     = 'connection.string';
-    const CONNECTION_USER       = 'connection.user';
+    public const CONNECTION_CACHE = 'connection.cache';
+    public const CONNECTION_CHARSET = 'connection.charset';
+    public const CONNECTION_CLASS = 'connection.class';
+    public const CONNECTION_EDITION = 'connection.edition';
+    public const CONNECTION_PASSWORD = 'connection.password';
+    public const CONNECTION_PERSISTENT = 'connection.persistent';
+    public const CONNECTION_PRIVILEGED = 'connection.privileged';
+    public const CONNECTION_STRING = 'connection.string';
+    public const CONNECTION_USER = 'connection.user';
 
-    const DRIVER_CLASS = 'driver.class';
+    public const DRIVER_CLASS = 'driver.class';
 
-    const GROUP_CLIENT     = 'client';
-    const GROUP_CONNECTION = 'connection';
-    const GROUP_PROFILER   = 'profiler';
-    const GROUP_SESSION    = 'session';
+    public const GROUP_CLIENT = 'client';
+    public const GROUP_CONNECTION = 'connection';
+    public const GROUP_PROFILER = 'profiler';
+    public const GROUP_SESSION = 'session';
 
     /**
      * BasicProfiler variables
      */
-    const PROFILER_CLASS   = 'profiler.class';
-    const PROFILER_ENABLED = 'profiler.enabled';
+    public const PROFILER_CLASS = 'profiler.class';
+    public const PROFILER_ENABLED = 'profiler.enabled';
 
     /**
      * Session variables
      */
-    const SESSION_CLASS          = 'session.class';
-    const SESSION_CURRENT_SCHEMA = 'session.schema';
-    const SESSION_DATE_FORMAT    = 'session.date_format';
-    const SESSION_DATE_LANGUAGE  = 'session.date_language';
+    public const SESSION_CLASS = 'session.class';
+    public const SESSION_CURRENT_SCHEMA = 'session.schema';
+    public const SESSION_DATE_FORMAT = 'session.date_format';
+    public const SESSION_DATE_LANGUAGE = 'session.date_language';
 
     /**
      *  Statement variables
      */
-    const STATEMENT_AUTOCOMMIT    = 'statement.autocommit';
-    const STATEMENT_CACHE_CLASS   = 'statement_cache.class';
-    const STATEMENT_CACHE_ENABLED = 'statement_cache.enabled';
-    const STATEMENT_CACHE_SIZE    = 'statement_cache.size';
-    const STATEMENT_RETURN_TYPE   = 'statement.return_type';
+    public const STATEMENT_AUTOCOMMIT = 'statement.autocommit';
+    public const STATEMENT_CACHE_CLASS = 'statement_cache.class';
+    public const STATEMENT_CACHE_ENABLED = 'statement_cache.enabled';
+    public const STATEMENT_CACHE_SIZE = 'statement_cache.size';
+    public const STATEMENT_RETURN_TYPE = 'statement.return_type';
 
     /**
      * Array to store current values of configuration entrys
      *
      * @var array
      */
-    protected $config = [ ];
+    protected $config = [];
 
     /**
      * Array to store default configuretion values
@@ -83,30 +84,31 @@ class Config implements \ArrayAccess
      * @var array
      */
     protected $defaults = [
-        self::SESSION_DATE_FORMAT     => 'DD.MM.YYYY HH24:MI:SS',
-        self::SESSION_DATE_LANGUAGE   => null,
-        self::SESSION_CURRENT_SCHEMA  => null,
-        self::SESSION_CLASS           => Session\Oracle::class,
-        self::CONNECTION_CHARSET      => 'AL32UTF8',
-        self::CONNECTION_PERSISTENT   => false,
-        self::CONNECTION_PRIVILEGED   => OCI_DEFAULT,
-        self::CONNECTION_CACHE        => false,
-        self::CONNECTION_CLASS        => null,
-        self::CONNECTION_EDITION      => null,
-        self::CONNECTION_USER         => null,
-        self::CONNECTION_PASSWORD     => null,
-        self::CONNECTION_STRING       => null,
-        self::CLIENT_IDENTIFIER       => null,
-        self::CLIENT_INFO             => null,
-        self::CLIENT_MODULE_NAME      => null,
-        self::PROFILER_ENABLED        => false,
-        self::PROFILER_CLASS          => Profiler\BasicProfiler::class,
-        self::STATEMENT_AUTOCOMMIT    => false,
-        self::STATEMENT_RETURN_TYPE   => Statement::RETURN_ARRAY,
-        self::STATEMENT_CACHE_ENABLED => true,
-        self::STATEMENT_CACHE_SIZE    => 50,
-        self::STATEMENT_CACHE_CLASS   => StatementCache::class,
-        self::DRIVER_CLASS            => Driver\Oracle::class,
+        self::SESSION_DATE_FORMAT             => 'DD.MM.YYYY HH24:MI:SS',
+        self::SESSION_DATE_LANGUAGE           => null,
+        self::SESSION_CURRENT_SCHEMA          => null,
+        self::SESSION_CLASS                   => Session\Oracle::class,
+        self::CONNECTION_CHARSET              => 'AL32UTF8',
+        self::CONNECTION_PERSISTENT           => false,
+        self::CONNECTION_PRIVILEGED           => OCI_DEFAULT,
+        self::CONNECTION_CACHE                => false,
+        self::CONNECTION_CLASS                => null,
+        self::CONNECTION_EDITION              => null,
+        self::CONNECTION_USER                 => null,
+        self::CONNECTION_PASSWORD             => null,
+        self::CONNECTION_STRING               => null,
+        self::CLIENT_IDENTIFIER               => null,
+        self::CLIENT_INFO                     => null,
+        self::CLIENT_MODULE_NAME              => null,
+        self::CLIENT_UPDATE_MODULE_AND_ACTION => false,
+        self::PROFILER_ENABLED                => false,
+        self::PROFILER_CLASS                  => Profiler\BasicProfiler::class,
+        self::STATEMENT_AUTOCOMMIT            => false,
+        self::STATEMENT_RETURN_TYPE           => Statement::RETURN_ARRAY,
+        self::STATEMENT_CACHE_ENABLED         => true,
+        self::STATEMENT_CACHE_SIZE            => 50,
+        self::STATEMENT_CACHE_CLASS           => StatementCache::class,
+        self::DRIVER_CLASS                    => Driver\Oracle::class,
     ];
 
     /**
@@ -127,7 +129,7 @@ class Config implements \ArrayAccess
     }
 
     /**
-     * @param string $name
+     * @param string|array $name
      * @param null   $value
      *
      * @return mixed|null
