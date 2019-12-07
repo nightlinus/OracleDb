@@ -59,7 +59,8 @@ class StatementFactory
             $this->profiler,
             (int) $db->config(Config::STATEMENT_RETURN_TYPE),
             (bool) $db->config(Config::STATEMENT_AUTOCOMMIT),
-            (bool) $db->config(Config::CLIENT_UPDATE_MODULE_AND_ACTION)
+            (bool) $db->config(Config::CLIENT_UPDATE_MODULE_AND_ACTION),
+            (int) $db->config(Config::CLIENT_MODULE_NAMESPACE_DEPTH)
         );
 
         if ($statementCacheEnabled) {

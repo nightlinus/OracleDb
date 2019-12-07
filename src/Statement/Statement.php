@@ -127,6 +127,9 @@ class Statement implements \IteratorAggregate
     /** @var bool */
     private $updateActionOnExecute;
 
+    /** @var int */
+    private $moduleNameDepth;
+
     /**
      * @param string         $queryString sql выражение стейтмента в текстовом виде
      * @param resource       $connection  ссылка на родительский объект базы данных
@@ -134,7 +137,7 @@ class Statement implements \IteratorAggregate
      * @param Profiler       $profiler
      * @param int            $returnType
      * @param bool           $autoCommit
-     * @param bool           $setAction
+     * @param bool           $updateActionOnExecute
      */
     public function __construct(
         $queryString,
@@ -143,7 +146,8 @@ class Statement implements \IteratorAggregate
         Profiler $profiler,
         int $returnType,
         bool $autoCommit,
-        bool $updateActionOnExecute
+        bool $updateActionOnExecute,
+        int $moduleNameDepth
     ) {
         $this->queryString = $queryString;
         $this->connection = $connection;
@@ -153,6 +157,7 @@ class Statement implements \IteratorAggregate
         $this->returnType = $returnType;
         $this->defaultMode = $autoCommit ? $driver::EXECUTE_AUTO_COMMIT : $driver::EXECUTE_NO_AUTO_COMMIT;
         $this->updateActionOnExecute = $updateActionOnExecute;
+        $this->moduleNameDepth = $moduleNameDepth;
     }
 
     /**
@@ -308,7 +313,8 @@ class Statement implements \IteratorAggregate
                 $this->profiler,
                 $this->returnType,
                 $this->defaultMode,
-                $this->updateActionOnExecute
+                $this->updateActionOnExecute,
+                $this->moduleNameDepth
             );
             $st->bind((array) $this->bindings);
             $count = $st->fetchValue();
@@ -1019,18 +1025,19 @@ class Statement implements \IteratorAggregate
     {
         $class = (string) ($stackFrame[ 'class' ] ?? '');
 
-        return $this->partofNamesapce($class, 3);
+        return $this->partofNamesapce($class, $this->moduleNameDepth);
     }
 
     private function action(array $stackFrame): string
     {
+        $class = (string) ($stackFrame[ 'class' ] ?? '');
+        $action = $this->partofNamesapce($class, -1);
+
         $function = (string) ($stackFrame[ 'function' ] ?? '');
         if ($function !== '__invoke') {
-            return $function;
+            $action .= "::$function";
         }
 
-        $class = (string) ($stackFrame[ 'class' ] ?? '');
-
-        return $this->partofNamesapce($class, -1);
+        return $action;
     }
 }
