@@ -27,7 +27,6 @@ class Config implements \ArrayAccess
     public const CLIENT_INFO = 'client.info';
     public const CLIENT_MODULE_NAME = 'client.module_name';
     public const CLIENT_UPDATE_MODULE_AND_ACTION = 'client.update_module_and_action';
-    public const CLIENT_MODULE_NAMESPACE_DEPTH = 'client.module_namespace_depth';
 
     /**
      * Connection variables
@@ -102,7 +101,6 @@ class Config implements \ArrayAccess
         self::CLIENT_INFO                     => null,
         self::CLIENT_MODULE_NAME              => null,
         self::CLIENT_UPDATE_MODULE_AND_ACTION => false,
-        self::CLIENT_MODULE_NAMESPACE_DEPTH   => 3,
         self::PROFILER_ENABLED                => false,
         self::PROFILER_CLASS                  => Profiler\BasicProfiler::class,
         self::STATEMENT_AUTOCOMMIT            => false,

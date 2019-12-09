@@ -18,6 +18,7 @@ use function in_array;
 use function is_array;
 use function is_resource;
 use function is_string;
+use function mb_substr;
 use function oci_set_action;
 use function oci_set_edition;
 use function oci_set_module_name;
@@ -583,6 +584,7 @@ class Oracle extends AbstractDriver
      */
     public function setClientModuleName($handle, string $moduleName)
     {
+        $moduleName = mb_substr($moduleName, 0, 32);
         $result = @oci_set_module_name($handle, $moduleName);
         $this->throwExceptionIfFalse($result, $handle);
 
@@ -614,10 +616,9 @@ class Oracle extends AbstractDriver
      */
     public function setAction($handle, string $action): self
     {
+        $action = mb_substr($action, 0, 32);
         $result = @oci_set_action($handle, $action);
-        if ($result === false) {
-            throw new Exception("Action setup failed «{$action}».");
-        }
+        $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
     }
