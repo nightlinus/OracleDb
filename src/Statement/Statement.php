@@ -23,6 +23,7 @@ use function array_values;
 use function debug_backtrace;
 use function explode;
 use function implode;
+use function strlen;
 use function strpos;
 
 /**
@@ -1005,7 +1006,7 @@ class Statement implements \IteratorAggregate
     {
         foreach ($externalCode as $frame) {
             $class = (string) ($frame[ 'class' ] ?? '');
-            if (strpos($class, '{closure}', -9) !== false) {
+            if (strlen($class) >= 9 && strpos($class, '{closure}', -9) !== false) {
                 continue;
             }
 
