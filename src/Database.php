@@ -188,7 +188,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return iterable|iterable[]
+     * @return array<array<string>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -202,7 +202,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return iterable|iterable[]
+     * @return array<array<string, string>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -232,7 +232,7 @@ class Database
      * @param int    $index
      * @param int    $mode
      *
-     * @return iterable
+     * @return array<string>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -247,7 +247,7 @@ class Database
      * @param int    $mapIndex
      * @param int    $mode
      *
-     * @return iterable|iterable[]
+     * @return array<string, array<string, string>>
      * @throws Driver\Exception
      * @throws Exception
      */
@@ -274,7 +274,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return array
+     * @return array<string, string>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -289,7 +289,7 @@ class Database
      * @param int    $firstCol
      * @param int    $secondCol
      *
-     * @return iterable
+     * @return array<string, string>
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
@@ -317,7 +317,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return iterable|iterable[]
+     * @return iterable<array<string>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -331,7 +331,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return iterable|iterable[]
+     * @return iterable<array<string, string>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -346,7 +346,7 @@ class Database
      * @param int    $index
      * @param int    $mode
      *
-     * @return iterable
+     * @return iterable<string>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -361,7 +361,7 @@ class Database
      * @param int    $firstCol
      * @param int    $secondCol
      *
-     * @return iterable
+     * @return iterable<string, string>
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
@@ -376,7 +376,7 @@ class Database
      * @param int    $mapIndex
      * @param int    $mode
      *
-     * @return iterable|iterable[]
+     * @return iterable<string, array<string, string>>
      * @throws Driver\Exception
      * @throws Exception
      */
