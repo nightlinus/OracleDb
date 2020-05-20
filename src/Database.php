@@ -101,7 +101,9 @@ class Database
      */
     public function commit(): self
     {
-        $this->driver->commit($this->connection);
+        if ($this->connection) {
+            $this->driver->commit($this->connection);
+        }
 
         return $this;
     }
@@ -553,7 +555,9 @@ class Database
      */
     public function rollback()
     {
-        $this->driver->rollback($this->connection);
+        if ($this->connection) {
+            $this->driver->rollback($this->connection);
+        }
 
         return $this;
     }
