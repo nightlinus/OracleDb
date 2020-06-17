@@ -156,11 +156,10 @@ class Database
      * @param string     $sql
      * @param array|null $bindings
      *
-     * @return int
      * @throws Driver\Exception
      * @throws Exception
      */
-    public function count($sql, array $bindings = [])
+    public function count($sql, array $bindings = []): int
     {
         $statement = $this->prepare($sql);
         $statement->bind($bindings);

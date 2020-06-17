@@ -204,8 +204,8 @@ class Statement implements \IteratorAggregate
      * @param int    $maxItemLength
      * @param int    $type
      *
-     * @throws Exception
      * @return $this
+     * @throws Exception
      */
     public function bindArray($name, $binding, $maxLength, $maxItemLength = null, $type = null)
     {
@@ -292,11 +292,10 @@ class Statement implements \IteratorAggregate
      * Method to get count of rows for SELECT and
      * count of affected rows from other stetement types
      *
-     * @return int
      * @throws Exception
      * @throws \nightlinus\OracleDb\Exception
      */
-    public function count()
+    public function count(): int
     {
         $type = $this->getType();
         if (self::TYPE_SELECT === $type && $this->state->isNotFetchedYet()) {
@@ -318,7 +317,7 @@ class Statement implements \IteratorAggregate
             $count = $this->getAffectedRowsNumber();
         }
 
-        return $count;
+        return (int) $count;
     }
 
     /**
@@ -474,8 +473,8 @@ class Statement implements \IteratorAggregate
      * @param int|string $mapIndex
      * @param int        $mode
      *
-     * @throws Exception
      * @return \Generator|array[]
+     * @throws Exception
      */
     public function fetchMap($mapIndex = 1, $mode = null): iterable
     {
@@ -535,8 +534,8 @@ class Statement implements \IteratorAggregate
      * @param int|string $firstCol  колонка с ключом
      * @param int|string $secondCol колонка со значением
      *
-     * @throws Exception
      * @return array | \Generator
+     * @throws Exception
      */
     public function fetchPairs($firstCol = 1, $secondCol = 2): iterable
     {
@@ -570,8 +569,8 @@ class Statement implements \IteratorAggregate
      *                          that indicates column
      *                          to fetch value from
      *
-     * @throws Exception
      * @return string|null
+     * @throws Exception
      */
     public function fetchValue($index = 1): ?string
     {
@@ -608,8 +607,8 @@ class Statement implements \IteratorAggregate
      * Get the number of rows affected by statement
      * as an integer
      *
-     * @throws Exception
      * @return int
+     * @throws Exception
      */
     public function getAffectedRowsNumber()
     {
@@ -683,8 +682,8 @@ class Statement implements \IteratorAggregate
      * It can return any from:
      * SELECT UPDATE DELETE INSERT CREATE DROP ALTER BEGIN DECLARE CALL
      *
-     * @throws Exception
      * @return string
+     * @throws Exception
      */
     public function getType()
     {
@@ -746,12 +745,12 @@ class Statement implements \IteratorAggregate
     }
 
     /**
-     * @deprecated
-     * Sets return type: array or iteartor
-     *
      * @param int $returnType
      *
      * @return $this
+     * @deprecated
+     * Sets return type: array or iteartor
+     *
      */
     public function setReturnType($returnType)
     {
@@ -918,8 +917,8 @@ class Statement implements \IteratorAggregate
      * @param int           $fetchMode
      * @param null          $mode
      *
-     * @throws Exception
      * @return \Generator
+     * @throws Exception
      */
     private function tupleGenerator($callback = null, $fetchMode = null, $mode = null)
     {
