@@ -243,10 +243,10 @@ class Database
     }
 
     /**
-     * @param string $sql
-     * @param array  $bindings
-     * @param int    $mapIndex
-     * @param int    $mode
+     * @param string     $sql
+     * @param array      $bindings
+     * @param int|string $mapIndex
+     * @param int        $mode
      *
      * @return array<string, array<string, string>>
      * @throws Driver\Exception
