@@ -499,7 +499,7 @@ class Database
     {
         $function = function () use ($sqlText, $bindings, $mode) {
             $statement = $this->prepare($sqlText);
-            $statement->retutnIterator();
+            $statement->returnIterator();
             $statement->bind($bindings);
             $statement->execute($mode);
 
