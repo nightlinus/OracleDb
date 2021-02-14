@@ -21,7 +21,10 @@ use nightlinus\OracleDb\Statement\HostVariable;
 use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementFactory;
 use nightlinus\OracleDb\Utills\Alias;
+use function array_chunk;
+use function implode;
 use function is_string;
+use function sprintf;
 use const PHP_EOL;
 
 class Database
@@ -544,6 +547,20 @@ class Database
     public function quote($variable)
     {
         return $this->driver->quote($variable);
+    }
+
+    public function inFilter(string $fieldName, array $values): string
+    {
+        $chunks = array_chunk($values, 1000);
+        $formChunk = function (array $chunk) use ($fieldName): string {
+            $chunkQuoted = $this->quote($chunk);
+
+            return sprintf("%s IN (%s)", $fieldName, $chunkQuoted);
+        };
+
+        $chunkSql = array_map($formChunk, $chunks);
+
+        return sprintf("(%s)", implode(" OR ", $chunkSql));
     }
 
     /**
