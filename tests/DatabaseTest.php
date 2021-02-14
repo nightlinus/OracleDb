@@ -110,7 +110,7 @@ class DatabaseTest extends TestCase
     {
         $sut = $this->sut();
         $actual = $sut->fetchAssoc($this->sql());
-        $this->assertInternalType('array', $actual);
+        $this->assertIsArray($actual);
         $this->assertEquals(
             [
                 [
@@ -150,7 +150,7 @@ class DatabaseTest extends TestCase
     {
         $sut = $this->sut();
         $actual = $sut->fetchArray($this->sql());
-        $this->assertInternalType('array', $actual);
+        $this->assertIsArray($actual);
         $this->assertEquals(
             [
                 [
@@ -190,7 +190,7 @@ class DatabaseTest extends TestCase
     {
         $sut = $this->sut();
         $actual = $sut->fetchOne($this->sql());
-        $this->assertInternalType('array', $actual);
+        $this->assertIsArray($actual);
         $this->assertEquals(
             [
                 'TEXT' => 'a',
@@ -208,7 +208,7 @@ class DatabaseTest extends TestCase
     {
         $sut = $this->sut();
         $actual = $sut->fetchValue($this->sql());
-        $this->assertInternalType('string', $actual);
+        $this->assertIsString($actual);
         $this->assertEquals('a', $actual);
     }
 
