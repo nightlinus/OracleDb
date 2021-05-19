@@ -192,7 +192,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return array<array<string>>
+     * @return array<array<string|null>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -236,7 +236,7 @@ class Database
      * @param int    $index
      * @param int    $mode
      *
-     * @return array<string>
+     * @return array<string|null>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -251,7 +251,7 @@ class Database
      * @param int|string $mapIndex
      * @param int        $mode
      *
-     * @return array<string, array<string, string>>
+     * @return array<string, array<string, string|null>>
      * @throws Driver\Exception
      * @throws Exception
      */
@@ -278,7 +278,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return array<string, string>
+     * @return array<string, string|null>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -293,7 +293,7 @@ class Database
      * @param int    $firstCol
      * @param int    $secondCol
      *
-     * @return array<string, string>
+     * @return array<string, string|null>
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
@@ -321,7 +321,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return iterable<array<string>>
+     * @return iterable<array<string|null>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -335,7 +335,7 @@ class Database
      * @param array  $bindings
      * @param int    $mode
      *
-     * @return iterable<array<string, string>>
+     * @return iterable<array<string, string|null>>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -350,7 +350,7 @@ class Database
      * @param int    $index
      * @param int    $mode
      *
-     * @return iterable<string>
+     * @return iterable<string|null>
      * @throws Exception
      * @throws Driver\Exception
      */
@@ -365,7 +365,7 @@ class Database
      * @param int    $firstCol
      * @param int    $secondCol
      *
-     * @return iterable<string, string>
+     * @return iterable<string, string|null>
      * @throws \nightlinus\OracleDb\Exception
      * @throws Driver\Exception
      */
@@ -380,7 +380,7 @@ class Database
      * @param int    $mapIndex
      * @param int    $mode
      *
-     * @return iterable<string, array<string, string>>
+     * @return iterable<string, array<string, string|null>>
      * @throws Driver\Exception
      * @throws Exception
      */
