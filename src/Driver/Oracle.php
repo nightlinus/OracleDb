@@ -14,15 +14,57 @@
 namespace nightlinus\OracleDb\Driver;
 
 use stdClass;
+use function error_get_last;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_resource;
 use function is_string;
 use function mb_substr;
+use function oci_bind_array_by_name;
+use function oci_bind_by_name;
+use function oci_client_version;
+use function oci_close;
+use function oci_commit;
+use function oci_define_by_name;
+use function oci_error;
+use function oci_execute;
+use function oci_fetch_all;
+use function oci_fetch_array;
+use function oci_fetch_object;
+use function oci_field_name;
+use function oci_field_precision;
+use function oci_field_scale;
+use function oci_field_size;
+use function oci_field_type;
+use function oci_field_type_raw;
+use function oci_free_statement;
+use function oci_new_cursor;
+use function oci_num_fields;
+use function oci_num_rows;
+use function oci_parse;
+use function oci_rollback;
+use function oci_server_version;
 use function oci_set_action;
+use function oci_set_call_timeout;
+use function oci_set_client_identifier;
+use function oci_set_client_info;
 use function oci_set_edition;
 use function oci_set_module_name;
 use function oci_set_prefetch;
+use function oci_statement_type;
+use function str_replace;
+use const OCI_ASSOC;
+use const OCI_B_CURSOR;
+use const OCI_COMMIT_ON_SUCCESS;
+use const OCI_DESCRIBE_ONLY;
+use const OCI_FETCHSTATEMENT_BY_COLUMN;
+use const OCI_NO_AUTO_COMMIT;
+use const OCI_NUM;
+use const OCI_RETURN_LOBS;
+use const OCI_RETURN_NULLS;
+use const SQLT_AFC;
+use const SQLT_CHR;
 
 /**
  * Class Oracle
@@ -554,7 +596,7 @@ class Oracle extends AbstractDriver
      */
     public function setClientIdentifier($handle, $identifier)
     {
-        $result = oci_set_client_identifier($handle, $identifier);
+        $result = oci_set_client_identifier($handle, (string) $identifier);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;
@@ -569,7 +611,7 @@ class Oracle extends AbstractDriver
      */
     public function setClientInfo($handle, $identifier)
     {
-        $result = oci_set_client_info($handle, $identifier);
+        $result = oci_set_client_info($handle, (string) $identifier);
         $this->throwExceptionIfFalse($result, $handle);
 
         return $this;

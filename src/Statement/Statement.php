@@ -16,6 +16,8 @@ use nightlinus\OracleDb\Driver\AbstractDriver;
 use nightlinus\OracleDb\Driver\Exception;
 use nightlinus\OracleDb\FieldDescription;
 use nightlinus\OracleDb\Profiler\Profiler;
+use Traversable;
+use function abs;
 use function array_filter;
 use function array_key_exists;
 use function array_slice;
@@ -23,8 +25,15 @@ use function array_values;
 use function debug_backtrace;
 use function explode;
 use function implode;
+use function is_callable;
+use function is_numeric;
+use function is_object;
+use function iterator_to_array;
+use function key;
 use function strlen;
 use function strpos;
+use const DEBUG_BACKTRACE_IGNORE_ARGS;
+use const OCI_RETURN_LOBS;
 
 /**
  * Implements wrapper above oci8
@@ -659,10 +668,10 @@ class Statement implements \IteratorAggregate
      * Retrieve an external iterator
      *
      * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
-     * @return \Iterator An instance of an object implementing <b>Iterator</b>
+     * @return \Traversable An instance of an object implementing <b>Iterator</b>
      * @throws Exception
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         return $this->tupleGenerator();
     }
