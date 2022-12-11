@@ -11,7 +11,10 @@
 
 namespace nightlinus\OracleDb\Statement;
 
+use Traversable;
+use function array_splice;
 use function count;
+use function hash;
 
 /**
  * Class StatementCache
@@ -107,9 +110,9 @@ class StatementCache implements \IteratorAggregate
      * Retrieve an external iterator
      *
      * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
-     * @return \Iterator
+     * @return \Traversable
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         yield from $this->orderCache;
     }

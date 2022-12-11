@@ -11,8 +11,13 @@
  */
 
 namespace nightlinus\OracleDb;
+
 use nightlinus\OracleDb\Statement\Statement;
 use nightlinus\OracleDb\Statement\StatementCache;
+use function array_key_exists;
+use function func_num_args;
+use function is_array;
+use const OCI_DEFAULT;
 
 /**
  * Class Config
@@ -84,37 +89,37 @@ class Config implements \ArrayAccess
      * @var array
      */
     protected $defaults = [
-        self::SESSION_DATE_FORMAT             => 'DD.MM.YYYY HH24:MI:SS',
-        self::SESSION_DATE_LANGUAGE           => null,
-        self::SESSION_CURRENT_SCHEMA          => null,
-        self::SESSION_CLASS                   => Session\Oracle::class,
-        self::CONNECTION_CHARSET              => 'AL32UTF8',
-        self::CONNECTION_PERSISTENT           => false,
-        self::CONNECTION_PRIVILEGED           => OCI_DEFAULT,
-        self::CONNECTION_CACHE                => false,
-        self::CONNECTION_CLASS                => null,
-        self::CONNECTION_EDITION              => null,
-        self::CONNECTION_USER                 => null,
-        self::CONNECTION_PASSWORD             => null,
-        self::CONNECTION_STRING               => null,
-        self::CLIENT_IDENTIFIER               => null,
-        self::CLIENT_INFO                     => null,
-        self::CLIENT_MODULE_NAME              => null,
+        self::SESSION_DATE_FORMAT => 'DD.MM.YYYY HH24:MI:SS',
+        self::SESSION_DATE_LANGUAGE => null,
+        self::SESSION_CURRENT_SCHEMA => null,
+        self::SESSION_CLASS => Session\Oracle::class,
+        self::CONNECTION_CHARSET => 'AL32UTF8',
+        self::CONNECTION_PERSISTENT => false,
+        self::CONNECTION_PRIVILEGED => OCI_DEFAULT,
+        self::CONNECTION_CACHE => false,
+        self::CONNECTION_CLASS => null,
+        self::CONNECTION_EDITION => null,
+        self::CONNECTION_USER => null,
+        self::CONNECTION_PASSWORD => null,
+        self::CONNECTION_STRING => null,
+        self::CLIENT_IDENTIFIER => null,
+        self::CLIENT_INFO => null,
+        self::CLIENT_MODULE_NAME => null,
         self::CLIENT_UPDATE_MODULE_AND_ACTION => false,
-        self::PROFILER_ENABLED                => false,
-        self::PROFILER_CLASS                  => Profiler\BasicProfiler::class,
-        self::STATEMENT_AUTOCOMMIT            => false,
-        self::STATEMENT_RETURN_TYPE           => Statement::RETURN_ARRAY,
-        self::STATEMENT_CACHE_ENABLED         => true,
-        self::STATEMENT_CACHE_SIZE            => 50,
-        self::STATEMENT_CACHE_CLASS           => StatementCache::class,
-        self::DRIVER_CLASS                    => Driver\Oracle::class,
+        self::PROFILER_ENABLED => false,
+        self::PROFILER_CLASS => Profiler\BasicProfiler::class,
+        self::STATEMENT_AUTOCOMMIT => false,
+        self::STATEMENT_RETURN_TYPE => Statement::RETURN_ARRAY,
+        self::STATEMENT_CACHE_ENABLED => true,
+        self::STATEMENT_CACHE_SIZE => 50,
+        self::STATEMENT_CACHE_CLASS => StatementCache::class,
+        self::DRIVER_CLASS => Driver\Oracle::class,
     ];
 
     /**
      * @param array $configuration
      */
-    private function __construct(array $configuration = [ ])
+    private function __construct(array $configuration = [])
     {
         foreach ($configuration as $key => $value) {
             $this->set($key, $value);
@@ -130,7 +135,7 @@ class Config implements \ArrayAccess
 
     /**
      * @param string|array $name
-     * @param null   $value
+     * @param null         $value
      *
      * @return mixed|null
      * @throws Exception
@@ -182,7 +187,7 @@ class Config implements \ArrayAccess
      * @return boolean true on success or false on failure.
      * The return value will be casted to boolean if non-boolean was returned.
      */
-    public function offsetExists($offset)
+    public function offsetExists(mixed $offset): bool
     {
         return array_key_exists($offset, $this->defaults);
     }
@@ -197,7 +202,7 @@ class Config implements \ArrayAccess
      *
      * @return mixed Can return all value types.
      */
-    public function offsetGet($offset)
+    public function offsetGet(mixed $offset): mixed
     {
         return $this->get($offset);
     }
@@ -214,7 +219,7 @@ class Config implements \ArrayAccess
      *
      * @return void
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->set($offset, $value);
     }
@@ -229,7 +234,7 @@ class Config implements \ArrayAccess
      *
      * @return void
      */
-    public function offsetUnset($offset)
+    public function offsetUnset(mixed $offset): void
     {
         unset($this->config[ $offset ]);
     }
